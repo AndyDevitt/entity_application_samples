@@ -1,12 +1,12 @@
 package sample1.infrastructure
 
-import sample1.domain.entity.{EntityRepo, EntityVersion, PersistenceRepo, VersionedEntity}
+import sample1.domain.entity.{EntityRepoImpl, EntityVersion, PersistenceRepo, VersionedEntity}
 import sample1.domain.invoice.EntityId
 
 import scala.language.higherKinds
 
 trait InMemoryRepo[F[_], IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType], ErrType]
-  extends EntityRepo[F, IdType, EntType, ErrType, EntType, IdType] {
+  extends EntityRepoImpl[F, IdType, EntType, ErrType, EntType, IdType] {
   self =>
 
   def extractPersistenceKey(persEntity: EntType): IdType = persEntity.id
