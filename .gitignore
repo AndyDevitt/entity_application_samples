@@ -1,2 +1,19 @@
 *.class
 *.log
+
+# IntelliJ stuff
+.idea
+*.iml
+
+# Eclipse stuff
+.project
+.settings
+
+# SBT stuff
+project/project/target/
+project/target/
+target/
+
+# Generic
+.*DS_Store*
+
