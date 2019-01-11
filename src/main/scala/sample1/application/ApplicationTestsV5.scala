@@ -9,7 +9,7 @@ import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
 import sample1.domain.entity.{EntityRepoManager, EntityVersion, Versioned}
 import sample1.domain.invoice.{Invoice, InvoiceId, SiteInvoice, SponsorInvoice}
-import sample1.infrastructure.{ProductionCtaRepo, ProductionRepo, TestCtaRepo, TestRepo}
+import sample1.infrastructure.{ProductionCtaRepo, ProductionInvoiceRepo, TestCtaRepo, TestInvoiceRepo}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -56,10 +56,10 @@ object ApplicationTestsV5 extends App {
   val user1 = UserId("User1")
   val user2 = UserId("User2")
 
-  val prodApp = new ProdApplication(new ProductionRepo(), new ProductionCtaRepo())
-  val testApp = new TestApplication(new TestRepo(), new TestCtaRepo())
-  val testProcessorApp = new TestApplicationWithProcessor(new TestRepo(), new TestCtaRepo())
-  val testRunnerApp = new TestApplicationWithRunner(new TestRepo(), new TestCtaRepo())
+  val prodApp = new ProdApplication(new ProductionInvoiceRepo(), new ProductionCtaRepo())
+  val testApp = new TestApplication(new TestInvoiceRepo(), new TestCtaRepo())
+  val testProcessorApp = new TestApplicationWithProcessor(new TestInvoiceRepo(), new TestCtaRepo())
+  val testRunnerApp = new TestApplicationWithRunner(new TestInvoiceRepo(), new TestCtaRepo())
 
   val res = (for {
     inv <- EitherT(prodApp.createRfiInvoice(CreateRfiInvoiceCmd(user1)))

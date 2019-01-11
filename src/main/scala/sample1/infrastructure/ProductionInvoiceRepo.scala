@@ -6,7 +6,7 @@ import sample1.domain._
 import sample1.domain.entity.Versioned
 import sample1.domain.invoice._
 
-class ProductionRepo()(implicit versioned: Versioned[Invoice]) extends InvoiceRepo[IO] {
+class ProductionInvoiceRepo()(implicit versioned: Versioned[Invoice]) extends InvoiceRepo[IO] {
   val entityRepo: InMemoryInvoiceRepo[IO] = new InMemoryInvoiceRepo[IO] {}
 
   override def save(invoice: Invoice)(implicit monad: Monad[IO]): IO[Either[InvoiceError, Invoice]] =

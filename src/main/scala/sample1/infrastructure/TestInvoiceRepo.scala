@@ -5,7 +5,7 @@ import sample1.domain.entity.Versioned
 import sample1.domain.invoice.{Invoice, InvoiceId}
 import sample1.domain.{InvoiceError, InvoiceRepo}
 
-class TestRepo()(implicit versioned: Versioned[Invoice]) extends InvoiceRepo[Id] {
+class TestInvoiceRepo()(implicit versioned: Versioned[Invoice]) extends InvoiceRepo[Id] {
   val entityRepo: InMemoryInvoiceRepo[Id] = new InMemoryInvoiceRepo[Id] {}
 
   override def save(invoice: Invoice)(implicit monad: Monad[Id]): Id[Either[InvoiceError, Invoice]] =
