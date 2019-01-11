@@ -14,7 +14,7 @@ import sample1.infrastructure.{ProductionInvoiceRepo, TestCtaRepo, TestInvoiceRe
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.language.{higherKinds, postfixOps}
+import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
 object TestImplicits {
@@ -53,6 +53,11 @@ object ApplicationTestsV5 extends App {
 
   val prodApp = new ProdApplication(new ProductionInvoiceRepo())
   val testApp = new TestApplication(new TestInvoiceRepo())
+  // TODO [AD]: need to sort out the injection of the Codecs for the Repo layer (for transforming from persistence to
+  //  domain and handling any business transformation processes), and those for the outer layer for transforming into a
+  //  view to be consumed by a client of the application. Since they are both currently of type Codec[A,B] and are
+  //  implicit parameters, when the types match the same Codec may be used which is never what is intended. Either make
+  //  this non-implicit, or change the types of the type classes so that there can be no ambiguity.
   val testProcessorApp = new TestApplicationWithProcessor(new TestInvoiceRepo(), new TestCtaRepo()(versioned = TestImplicits.ctaVersioned, codec = TestImplicits.ctaRepoCodec))
 
   val res = (for {
