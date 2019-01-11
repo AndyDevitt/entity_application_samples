@@ -11,8 +11,6 @@ trait CommandInput {
   //def repo: InvoiceRepo[F]
 }
 
-class DomainCommandInput[F[_]](val repo: EntityRepo[F, InvoiceId, Invoice, InvoiceError]) extends CommandInput
-
 trait CommandG[F[_], -I <: CommandInput, R, E] extends Command {
   def run[G[_], B](input: I)(implicit monadF: Monad[F], transform: F ~> G, decoder: Decoder[B, Invoice, E]): G[Either[E, R]]
 }

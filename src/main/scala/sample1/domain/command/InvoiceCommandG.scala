@@ -8,6 +8,8 @@ object InvoiceCommandG {
 
 }
 
+class DomainCommandInput[F[_]](val repo: EntityRepo[F, InvoiceId, Invoice, InvoiceError]) extends CommandInput
+
 sealed trait InvoiceCreateCommandG[F[_]] extends EntityCreateCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
   def action(): Either[InvoiceError, Invoice]
 
