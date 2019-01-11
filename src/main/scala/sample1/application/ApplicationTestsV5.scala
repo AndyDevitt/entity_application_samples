@@ -7,7 +7,7 @@ import cats.~>
 import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
-import sample1.domain.entity.{EntityVersion, Versioned}
+import sample1.domain.entity.{EntityRepoCodec, EntityVersion, Versioned}
 import sample1.domain.invoice.{Invoice, SiteInvoice, SponsorInvoice}
 import sample1.infrastructure.{ProductionInvoiceRepo, TestCtaRepo, TestInvoiceRepo}
 
@@ -19,14 +19,23 @@ import scala.util.{Failure, Success}
 
 object TestImplicits {
 
+  /**
+    * Natural transformation from an IO context to a Future
+    */
   implicit val ioToFutureTransform: IO ~> Future = new ~>[IO, Future] {
     override def apply[A](fa: IO[A]): Future[A] = fa.unsafeToFuture()
   }
 
+  /**
+    * Natural transform instance generator for two monads of the same type
+    */
   implicit def sameContextTransform[F[_]]: F ~> F = new ~>[F, F] {
     override def apply[A](fa: F[A]): F[A] = fa
   }
 
+  /**
+    * Versioned instances to support the version increment in the repo.
+    */
   implicit val invoiceVersioned: Versioned[Invoice] = Versioned.instance {
     case i: SiteInvoice => i.copy(version = i.version.nextVersion)
     case i: SponsorInvoice => i.copy(version = i.version.nextVersion)
@@ -35,13 +44,24 @@ object TestImplicits {
   implicit val ctaVersioned: Versioned[ClinicalTrialAgreement] =
     Versioned.instance(cta => cta.copy(version = cta.version.nextVersion))
 
-  implicit val invoiceToViewDecoder: Decoder[InvoiceView, Invoice, InvoiceError] =
+  /**
+    * Application layer transformer that enables the client of the application to inject transformers from the domain
+    * types into an appropriate type to be consumed by the client. This instance enables conversion between an Invoice
+    * and an InvoiceView. The client can then simply specify the generic types on the call to process command to enable
+    * a conversion different from the default.
+    */
+  implicit val invoiceToViewTransformer: ApplicationTransformer[InvoiceView, Invoice, InvoiceError] =
     (b: Invoice) => InvoiceView.create(b)
 
-  val ctaRepoCodec: Codec[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError] =
-    Codec.instance[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError](
+  /**
+    * CTA codec used to encode and decode between domain and persistence types (both the same type in this example) This
+    * is where a business process transformation may be injected (i.e. between the domain repo and persistence repo
+    * layers). Hence the encode must always succeed, but the decode may fail.
+    */
+  implicit val ctaRepoCodec: EntityRepoCodec[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError] =
+    EntityRepoCodec.instance[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError](
       (cta: ClinicalTrialAgreement) => cta,
-      (cta: ClinicalTrialAgreement) => Right(cta.copy(note = "I is flipped!")))
+      (cta: ClinicalTrialAgreement) => Right(cta.copy(note = "I've been flipped!")))
 }
 
 object ApplicationTestsV5 extends App {
@@ -53,12 +73,10 @@ object ApplicationTestsV5 extends App {
 
   val prodApp = new ProdApplication(new ProductionInvoiceRepo())
   val testApp = new TestApplication(new TestInvoiceRepo())
-  // TODO [AD]: need to sort out the injection of the Codecs for the Repo layer (for transforming from persistence to
-  //  domain and handling any business transformation processes), and those for the outer layer for transforming into a
-  //  view to be consumed by a client of the application. Since they are both currently of type Codec[A,B] and are
-  //  implicit parameters, when the types match the same Codec may be used which is never what is intended. Either make
-  //  this non-implicit, or change the types of the type classes so that there can be no ambiguity.
-  val testProcessorApp = new TestApplicationWithProcessor(new TestInvoiceRepo(), new TestCtaRepo()(versioned = TestImplicits.ctaVersioned, codec = TestImplicits.ctaRepoCodec))
+
+  // TODO [AD]: consider naming of the application transformer and the repo codec and also their current inheritance
+  //  structure (i.e. deriving from the Codec family of traits). Also, should these simply be explicit parameters?
+  val testProcessorApp = new TestApplicationWithProcessor(new TestInvoiceRepo(), new TestCtaRepo())
 
   val res = (for {
     inv <- EitherT(prodApp.createRfiInvoice(CreateRfiInvoiceCmd(user1)))

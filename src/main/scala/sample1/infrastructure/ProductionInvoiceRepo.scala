@@ -3,10 +3,10 @@ package sample1.infrastructure
 import cats.Monad
 import cats.effect.IO
 import sample1.domain._
-import sample1.domain.entity.Versioned
+import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice._
 
-class ProductionInvoiceRepo()(implicit versioned: Versioned[Invoice], codec: Codec[Invoice, Invoice, InvoiceError]) extends InvoiceRepo[IO] {
+class ProductionInvoiceRepo()(implicit versioned: Versioned[Invoice], codec: EntityRepoCodec[Invoice, Invoice, InvoiceError]) extends InvoiceRepo[IO] {
   val entityRepo: InMemoryInvoiceRepo[IO] = new InMemoryInvoiceRepo[IO] {}
 
   override def save(invoice: Invoice)(implicit monad: Monad[IO]): IO[Either[InvoiceError, Invoice]] =
