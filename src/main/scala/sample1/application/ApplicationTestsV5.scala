@@ -101,6 +101,7 @@ object ApplicationTestsV5 extends App {
 
   val prodApp = new ProdApplication(new ProductionRepo())
   val testApp = new TestApplication(new TestRepo())
+  val testProcessorApp = new TestApplicationWithProcessor(new TestRepo())
   val testRunnerApp = new TestApplicationWithRunner(new TestRepo())
 
   val res = (for {
@@ -171,4 +172,11 @@ object ApplicationTestsV5 extends App {
   } yield inv2
 
   println(s"res9: $res9")
+
+  val res10 = for {
+    inv1 <- testProcessorApp.processCommand[Invoice,Invoice](CreateRfiInvoiceCmdG(user1))
+    inv2 <- testProcessorApp.processCommand[Invoice,InvoiceView](ApproveCmdG(user2, inv1.id, inv1.version))
+  } yield inv2
+
+  println(s"res10: $res10")
 }

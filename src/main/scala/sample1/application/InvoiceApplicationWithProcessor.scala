@@ -3,7 +3,6 @@ package sample1.application
 import cats.effect.IO
 import cats.{Id, Monad, ~>}
 import sample1.domain.command._
-import sample1.domain.invoice.Invoice
 import sample1.domain.{Decoder, InvoiceError, InvoiceRepo}
 
 import scala.concurrent.Future
@@ -15,10 +14,10 @@ trait InvoiceApplicationWithProcessor[F[_], G[_]] {
 
   final val input: DomainCommandInput[G] = new DomainCommandInput[G](repo)
 
-  def processCommand[R](cmd: CommandG[G, DomainCommandInput[G], R, InvoiceError])
-                       (implicit monadF: Monad[F], monadG: Monad[G], trans: G ~> F, decoder: Decoder[InvoiceView, Invoice, InvoiceError]
-                       ): F[Either[InvoiceError, R]] =
-    cmd.run(input)
+  def processCommand[R, T](cmd: CommandG[G, DomainCommandInput[G], R, InvoiceError])
+                          (implicit monadF: Monad[F], monadG: Monad[G], trans: G ~> F, decoder: Decoder[T, R, InvoiceError]
+                          ): F[Either[InvoiceError, T]] =
+    monadF.map(cmd.run(input))(_.flatMap(decoder.decode))
 
 }
 
