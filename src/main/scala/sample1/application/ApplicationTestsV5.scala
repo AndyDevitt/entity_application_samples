@@ -3,7 +3,7 @@ package sample1.application
 import cats.data.EitherT
 import cats.effect.IO
 import cats.instances.future._
-import cats.{Id, Monad, ~>}
+import cats.{Monad, ~>}
 import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
@@ -79,8 +79,8 @@ object TestImplicits {
     override def apply[A](fa: IO[A]): Future[A] = fa.unsafeToFuture()
   }
 
-  implicit val IdToId: Id ~> Id = new ~>[Id, Id] {
-    override def apply[A](fa: Id[A]): Id[A] = fa
+  implicit def sameContextTransform[F[_]]: F ~> F = new ~>[F, F] {
+    override def apply[A](fa: F[A]): F[A] = fa
   }
 
   implicit val invoiceVersioned: Versioned[Invoice] = Versioned.instance {
