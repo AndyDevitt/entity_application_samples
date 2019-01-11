@@ -37,6 +37,11 @@ object TestImplicits {
 
   implicit val invoiceToViewDecoder: Decoder[InvoiceView, Invoice, InvoiceError] =
     (b: Invoice) => InvoiceView.create(b)
+
+  val ctaRepoCodec: Codec[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError] =
+    Codec.instance[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError](
+      (cta: ClinicalTrialAgreement) => cta,
+      (cta: ClinicalTrialAgreement) => Right(cta.copy(note = "I is flipped!")))
 }
 
 object ApplicationTestsV5 extends App {
@@ -48,7 +53,7 @@ object ApplicationTestsV5 extends App {
 
   val prodApp = new ProdApplication(new ProductionInvoiceRepo())
   val testApp = new TestApplication(new TestInvoiceRepo())
-  val testProcessorApp = new TestApplicationWithProcessor(new TestInvoiceRepo(), new TestCtaRepo())
+  val testProcessorApp = new TestApplicationWithProcessor(new TestInvoiceRepo(), new TestCtaRepo()(versioned = TestImplicits.ctaVersioned, codec = TestImplicits.ctaRepoCodec))
 
   val res = (for {
     inv <- EitherT(prodApp.createRfiInvoice(CreateRfiInvoiceCmd(user1)))
@@ -135,8 +140,14 @@ object ApplicationTestsV5 extends App {
 
   val res12 = for {
     cta <- testProcessorApp.processCommand(CreateCtaCmdG(user1))
+  } yield cta
+
+  println(s"res12: $res12")
+
+  val res13 = for {
+    cta <- testProcessorApp.processCommand(CreateCtaCmdG(user1))
     ctaRetrieved <- testProcessorApp.processCommand(CtaRetrieveCommandG(user1, cta.id))
   } yield ctaRetrieved
 
-  println(s"res12: $res12")
+  println(s"res13: $res13")
 }
