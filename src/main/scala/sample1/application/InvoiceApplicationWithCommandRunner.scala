@@ -25,7 +25,6 @@ trait InvoiceApplicationWithCommandRunner[F[_], G[_]] {
                         (implicit commandRunner: CommandRunner[G, F, CommandG[G, DomainCommandInput[G], R, InvoiceError], DomainCommandInput[G], R, InvoiceError]
                         ): F[Either[InvoiceError, R]] =
     commandRunner.run(cmd, input)
-
 }
 
 class ProdApplicationWithRunner(override val repo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplicationWithCommandRunner[Future, IO]

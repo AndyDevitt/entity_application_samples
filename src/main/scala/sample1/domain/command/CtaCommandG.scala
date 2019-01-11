@@ -4,7 +4,7 @@ import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
 import sample1.domain.entity.EntityRepo
 import sample1.domain.{InvoiceError, StaleCtaError, UserId}
 
-class CtaCommandG {
+object CtaCommandG {
 
 }
 
@@ -26,14 +26,6 @@ final case class CtaRetrieveCommandG[F[_]](userId: UserId, id: ClinicalTrialAgre
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] = input.ctaRepo
 }
 
-//final case class ApproveCmdG[F[_]](userId: UserId, id: ClinicalTrialAgreementId, version: EntityVersion) extends InvoiceUpdateCommandG[F] {
-//  override def action(cta: ClinicalTrialAgreement): Either[InvoiceError, ClinicalTrialAgreement] = InvoiceAlgebra.approveG[F](cta, this)
-//}
-
 final case class CreateCtaCmdG[F[_]](userId: UserId) extends CtaCreateCommandG[F] {
   override def action(): Either[InvoiceError, ClinicalTrialAgreement] = Right(ClinicalTrialAgreement.create(this))
 }
-
-//final case class UpdateRfiCmdG[F[_]](userId: UserId, id: ClinicalTrialAgreementId, version: EntityVersion) extends InvoiceUpdateCommandG[F] {
-//  override def action(cta: ClinicalTrialAgreement): Either[InvoiceError, ClinicalTrialAgreement] = InvoiceAlgebra.updateRfiG(cta, this)
-//}

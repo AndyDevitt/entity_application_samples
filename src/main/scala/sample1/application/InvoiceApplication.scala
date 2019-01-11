@@ -64,8 +64,6 @@ trait InvoiceApplication[F[_], G[_]] {
                        (implicit monadF: Monad[F], monadG: Monad[G], trans: G ~> F, decoder: Decoder[InvoiceView, Invoice, InvoiceError]
                        ): F[Either[InvoiceError, R]] =
     cmd.run(input)
-
-
 }
 
 class ProdApplication(override val repo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplication[Future, IO]

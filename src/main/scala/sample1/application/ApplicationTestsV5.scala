@@ -7,7 +7,7 @@ import cats.{Monad, ~>}
 import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
-import sample1.domain.entity.{EntityVersion, Versioned}
+import sample1.domain.entity.{EntityRepoManager, EntityVersion, Versioned}
 import sample1.domain.invoice.{Invoice, InvoiceId, SiteInvoice, SponsorInvoice}
 import sample1.infrastructure.{ProductionCtaRepo, ProductionRepo, TestCtaRepo, TestRepo}
 
@@ -19,41 +19,6 @@ import scala.util.{Failure, Success}
 
 object TestImplicits {
 
-  //  implicit def invoiceUpdateCommandRunner[F[_], G[_]](implicit transformer: F ~> G, monadF: Monad[F]): CommandRunner[F, G, InvoiceUpdateCommandG[F], DomainCommandInput[F], Invoice, InvoiceError] =
-  //    (command: InvoiceUpdateCommandG[F], input: DomainCommandInput[F]) => InvoiceRepoManager.manageUpdate(input.repo)(command)(command.action)
-
-  //  implicit def invoiceUpdateCommandRunnerX[F[_], G[_], R](implicit transformer: F ~> G, monadF: Monad[F]
-  //                                                         ): CommandRunner[F, G, CommandG[F, DomainCommandInput[F], R, InvoiceError], DomainCommandInput[F], Invoice, InvoiceError] =
-  //    new CommandRunner[F, G, CommandG[F, DomainCommandInput[F], R, InvoiceError], DomainCommandInput[F], Invoice, InvoiceError] {
-  //      override def run(command: CommandG[F, DomainCommandInput[F], R, InvoiceError], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] = ???
-  //    }
-
-  //implicit val idCommandGRunner = new CommandRunner[Id, Id,CommandG] {}
-
-  //  implicit val idInvoiceUpdateCommandRunner: CommandRunner[Id, Id, CommandG[Id, DomainCommandInput[Id], Invoice, InvoiceError], DomainCommandInput[Id], Invoice, InvoiceError] =
-  //    new CommandRunner[Id, Id, CommandG[Id, DomainCommandInput[Id], Invoice, InvoiceError], DomainCommandInput[Id], Invoice, InvoiceError] {
-  //      override def run(command: CommandG[Id, DomainCommandInput[Id], Invoice, InvoiceError], input: DomainCommandInput[Id]): Id[Either[InvoiceError, Invoice]] =
-  //        command match {
-  //          //          case c: InvoiceCreateCommandG[Id] => InvoiceRepoManager.manageCreate[Id, Id, DomainCommandInput[Id], InvoiceCreateCommandG[Id], Invoice](input.repo)(c)(() => c.action())
-  //          //          case c: InvoiceUpdateCommandG[Id] => InvoiceRepoManager.manageUpdate[Id, Id, DomainCommandInput[Id], InvoiceUpdateCommandG[Id], Invoice](input.repo)(c)(c.action)
-  //          case c: InvoiceCreateCommandG[Id] => EntityRepoManager.manageCreate[Id, Id, DomainCommandInput[Id], InvoiceCreateCommandG[Id], InvoiceId, Invoice, Invoice, InvoiceError](c)(input.repo)(() => c.action())
-  //          case c: InvoiceUpdateCommandG[Id] => EntityRepoManager.manageUpdate[Id, Id, DomainCommandInput[Id], InvoiceUpdateCommandG[Id], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(c.action, id => StaleError(id))
-  //        }
-  //
-  //    }
-
-  //  implicit def idInvoiceUpdateCommandRunnerG: CommandRunner[Id, Id, CommandG[Id, DomainCommandInput[Id], Invoice, InvoiceError], DomainCommandInput[Id], Invoice, InvoiceError] =
-  //    new CommandRunner[Id, Id, CommandG[Id, DomainCommandInput[Id], Invoice, InvoiceError], DomainCommandInput[Id], Invoice, InvoiceError] {
-  //      override def run(command: CommandG[Id, DomainCommandInput[Id], Invoice, InvoiceError], input: DomainCommandInput[Id]): Id[Either[InvoiceError, Invoice]] =
-  //        command match {
-  //          //          case c: InvoiceCreateCommandG[Id] => InvoiceRepoManager.manageCreate[Id, Id, DomainCommandInput[Id], InvoiceCreateCommandG[Id], Invoice](input.repo)(c)(() => c.action())
-  //          //          case c: InvoiceUpdateCommandG[Id] => InvoiceRepoManager.manageUpdate[Id, Id, DomainCommandInput[Id], InvoiceUpdateCommandG[Id], Invoice](input.repo)(c)(c.action)
-  //          case c: InvoiceCreateCommandG[Id] => EntityRepoManager.manageCreate[Id, Id, DomainCommandInput[Id], InvoiceCreateCommandG[Id], InvoiceId, Invoice, Invoice, InvoiceError](c)(input.repo)(() => c.action())
-  //          case c: InvoiceUpdateCommandG[Id] => EntityRepoManager.manageUpdate[Id, Id, DomainCommandInput[Id], InvoiceUpdateCommandG[Id], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(c.action, id => StaleError(id))
-  //        }
-  //
-  //    }
-
   implicit def idInvoiceCommandRunnerG[F[_], G[_]](implicit transformer: F ~> G, monad: Monad[F]): CommandRunner[F, G, CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], DomainCommandInput[F], Invoice, InvoiceError] =
     new CommandRunner[F, G, CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], DomainCommandInput[F], Invoice, InvoiceError] {
       override def run(command: CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] =
@@ -62,18 +27,6 @@ object TestImplicits {
           case c: InvoiceUpdateCommandG[F] => EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(c.action, id => StaleInvoiceError(id))
         }
     }
-
-  //  implicit def idInvoiceUpdateCommandRunnerG[F[_], G[_]](implicit transformer: F ~> G, monad: Monad[F]): CommandRunner[F, G, InvoiceUpdateCommandG[F], DomainCommandInput[F], Invoice, InvoiceError] =
-  //    new CommandRunner[F, G, InvoiceUpdateCommandG[F], DomainCommandInput[F], Invoice, InvoiceError] {
-  //      //      override def run(command: CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] =
-  //      //        command match {
-  //      //          case c: InvoiceCreateCommandG[F] => EntityRepoManager.manageCreate[G, F, DomainCommandInput[F], InvoiceCreateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](c)(input.repo)(() => c.action())
-  //      //          case c: InvoiceUpdateCommandG[F] => EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(c.action, id => StaleError(id))
-  //      //        }
-  //      override def run(command: InvoiceUpdateCommandG[F], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] = {
-  //        EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(command)(command.action, id => StaleError(id))
-  //      }
-  //    }
 
   implicit val IoToFuture: IO ~> Future = new ~>[IO, Future] {
     override def apply[A](fa: IO[A]): Future[A] = fa.unsafeToFuture()

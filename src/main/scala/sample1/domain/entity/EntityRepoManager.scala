@@ -1,9 +1,9 @@
-package sample1.domain
+package sample1.domain.entity
 
 import cats.data.EitherT
 import cats.{Monad, ~>}
-import sample1.domain.command._
-import sample1.domain.entity._
+import sample1.domain.Decoder
+import sample1.domain.command.{CommandInput, EntityCreateCommandG, EntityRetrieveCommandG, EntityUpdateCommandG}
 
 object EntityRepoManager {
 

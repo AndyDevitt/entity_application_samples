@@ -21,7 +21,6 @@ trait InvoiceApplicationWithProcessor[F[_], G[_]] {
                           (implicit monadF: Monad[F], monadG: Monad[G], trans: G ~> F, decoder: Decoder[T, R, InvoiceError]
                           ): F[Either[InvoiceError, T]] =
     monadF.map(cmd.run(input))(_.flatMap(decoder.decode))
-
 }
 
 class ProdApplicationWithProcessor(override val repo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplicationWithProcessor[Future, IO]
