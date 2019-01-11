@@ -3,13 +3,13 @@ package sample1.application
 import cats.data.EitherT
 import cats.effect.IO
 import cats.instances.future._
-import cats.{Monad, ~>}
+import cats.~>
 import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
-import sample1.domain.entity.{EntityRepoManager, EntityVersion, Versioned}
-import sample1.domain.invoice.{Invoice, InvoiceId, SiteInvoice, SponsorInvoice}
-import sample1.infrastructure.{ProductionCtaRepo, ProductionInvoiceRepo, TestCtaRepo, TestInvoiceRepo}
+import sample1.domain.entity.{EntityVersion, Versioned}
+import sample1.domain.invoice.{Invoice, SiteInvoice, SponsorInvoice}
+import sample1.infrastructure.{ProductionInvoiceRepo, TestCtaRepo, TestInvoiceRepo}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -19,16 +19,7 @@ import scala.util.{Failure, Success}
 
 object TestImplicits {
 
-  implicit def idInvoiceCommandRunnerG[F[_], G[_]](implicit transformer: F ~> G, monad: Monad[F]): CommandRunner[F, G, CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], DomainCommandInput[F], Invoice, InvoiceError] =
-    new CommandRunner[F, G, CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], DomainCommandInput[F], Invoice, InvoiceError] {
-      override def run(command: CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] =
-        command match {
-          case c: InvoiceCreateCommandG[F] => EntityRepoManager.manageCreate[G, F, DomainCommandInput[F], InvoiceCreateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(() => c.action())
-          case c: InvoiceUpdateCommandG[F] => EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(c.action, id => StaleInvoiceError(id))
-        }
-    }
-
-  implicit val IoToFuture: IO ~> Future = new ~>[IO, Future] {
+  implicit val ioToFutureTransform: IO ~> Future = new ~>[IO, Future] {
     override def apply[A](fa: IO[A]): Future[A] = fa.unsafeToFuture()
   }
 
@@ -46,7 +37,6 @@ object TestImplicits {
 
   implicit val invoiceToViewDecoder: Decoder[InvoiceView, Invoice, InvoiceError] =
     (b: Invoice) => InvoiceView.create(b)
-
 }
 
 object ApplicationTestsV5 extends App {
@@ -56,10 +46,9 @@ object ApplicationTestsV5 extends App {
   val user1 = UserId("User1")
   val user2 = UserId("User2")
 
-  val prodApp = new ProdApplication(new ProductionInvoiceRepo(), new ProductionCtaRepo())
-  val testApp = new TestApplication(new TestInvoiceRepo(), new TestCtaRepo())
+  val prodApp = new ProdApplication(new ProductionInvoiceRepo())
+  val testApp = new TestApplication(new TestInvoiceRepo())
   val testProcessorApp = new TestApplicationWithProcessor(new TestInvoiceRepo(), new TestCtaRepo())
-  val testRunnerApp = new TestApplicationWithRunner(new TestInvoiceRepo(), new TestCtaRepo())
 
   val res = (for {
     inv <- EitherT(prodApp.createRfiInvoice(CreateRfiInvoiceCmd(user1)))
@@ -117,15 +106,15 @@ object ApplicationTestsV5 extends App {
   println(s"res7: $res7")
 
   val res8 = for {
-    inv1 <- testApp.createRfiInvoice(CreateRfiInvoiceCmd(user1))
-    inv2 <- testApp.processCommand(ApproveCmdG(user2, inv1.id, inv1.version))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
+    inv2 <- testProcessorApp.processCommand(ApproveCmdG(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res8: $res8")
 
   val res9 = for {
-    inv1 <- testRunnerApp.processCommand2(CreateRfiInvoiceCmdG(user1))
-    inv2 <- testRunnerApp.processCommand2(ApproveCmdG(user2, inv1.id, inv1.version))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
+    inv2 <- testProcessorApp.processCommand(ApproveCmdG(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res9: $res9")

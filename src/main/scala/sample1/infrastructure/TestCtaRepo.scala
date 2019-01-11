@@ -3,9 +3,9 @@ package sample1.infrastructure
 import cats.{Id, Monad}
 import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId, CtaRepo}
 import sample1.domain.entity.Versioned
-import sample1.domain.{CtaNotFound, InvoiceError, StaleCtaError}
+import sample1.domain.{Codec, CtaNotFound, InvoiceError, StaleCtaError}
 
-class TestCtaRepo()(implicit versioned: Versioned[ClinicalTrialAgreement]) extends CtaRepo[Id] {
+class TestCtaRepo()(implicit versioned: Versioned[ClinicalTrialAgreement], codec: Codec[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError]) extends CtaRepo[Id] {
   private val inMemoryRepo: InMemoryRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] =
     new InMemoryRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] {
       override def notFoundErrorF: ClinicalTrialAgreementId => InvoiceError = id => CtaNotFound(id)

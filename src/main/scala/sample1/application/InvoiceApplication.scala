@@ -4,7 +4,6 @@ import cats.data.EitherT
 import cats.effect.IO
 import cats.{Id, Monad, ~>}
 import sample1.domain.command._
-import sample1.domain.cta.CtaRepo
 import sample1.domain.invoice._
 import sample1.domain.{InvoiceRepo, _}
 
@@ -14,8 +13,6 @@ import scala.language.{higherKinds, postfixOps}
 trait InvoiceApplication[F[_], G[_]] {
 
   def repo: InvoiceRepo[G]
-
-  def ctaRepo: CtaRepo[G]
 
   type Result = F[Either[InvoiceError, Invoice]]
 
@@ -57,15 +54,8 @@ trait InvoiceApplication[F[_], G[_]] {
 
   def updateRfiAndTrans(cmd: UpdateRfiCmd)(implicit monadF: Monad[F], monadG: Monad[G], trans: G ~> F, decoder: Decoder[InvoiceView, Invoice, InvoiceError]): F[Either[InvoiceError, InvoiceView]] =
     manageUpdate(cmd)(InvoiceAlgebra.updateRfi)
-
-  val input: DomainCommandInput[G] = new DomainCommandInput[G](repo, ctaRepo)
-
-  def processCommand[R](cmd: CommandG[G, DomainCommandInput[G], R, InvoiceError])
-                       (implicit monadF: Monad[F], monadG: Monad[G], trans: G ~> F, decoder: Decoder[InvoiceView, Invoice, InvoiceError]
-                       ): F[Either[InvoiceError, R]] =
-    cmd.run(input)
 }
 
-class ProdApplication(override val repo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplication[Future, IO]
+class ProdApplication(override val repo: InvoiceRepo[IO]) extends InvoiceApplication[Future, IO]
 
-class TestApplication(override val repo: InvoiceRepo[Id], override val ctaRepo: CtaRepo[Id]) extends InvoiceApplication[Id, Id]
+class TestApplication(override val repo: InvoiceRepo[Id]) extends InvoiceApplication[Id, Id]
