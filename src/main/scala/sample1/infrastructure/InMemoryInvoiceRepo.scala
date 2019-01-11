@@ -8,5 +8,5 @@ import scala.language.higherKinds
 class InMemoryInvoiceRepo[F[_]] extends InMemoryRepo[F, InvoiceId, Invoice, InvoiceError] {
   override def notFoundErrorF: InvoiceId => InvoiceError = InvoiceNotFound
 
-  override def staleErrorF: InvoiceId => InvoiceError = StaleError
+  override def staleErrorF: InvoiceId => InvoiceError = StaleInvoiceError
 }

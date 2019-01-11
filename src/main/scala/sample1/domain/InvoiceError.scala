@@ -1,12 +1,17 @@
 package sample1.domain
 
+import sample1.domain.cta.ClinicalTrialAgreementId
 import sample1.domain.invoice.InvoiceId
 
 sealed trait InvoiceError
 
 final case class InvoiceNotFound(id: InvoiceId) extends InvoiceError
 
-final case class StaleError(id: InvoiceId) extends InvoiceError
+final case class CtaNotFound(id: ClinicalTrialAgreementId) extends InvoiceError
+
+final case class StaleInvoiceError(id: InvoiceId) extends InvoiceError
+
+final case class StaleCtaError(id: ClinicalTrialAgreementId) extends InvoiceError
 
 final case class ActionBlocked() extends InvoiceError
 

@@ -34,7 +34,7 @@ object InvoiceRepoManager {
     } yield view).value)
 
   private def checkOptimisticLocking[F[_]](invoice: Invoice, cmd: EntityUpdateCommandG[F, _, _, _, _]): Either[InvoiceError, Unit] =
-    Either.cond(cmd.version == invoice.version, (), StaleError(invoice.id))
+    Either.cond(cmd.version == invoice.version, (), StaleInvoiceError(invoice.id))
 
 }
 

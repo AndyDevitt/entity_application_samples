@@ -1,14 +1,17 @@
 package sample1.domain.command
 
+import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
 import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.invoice.{Invoice, InvoiceAlgebra, InvoiceId}
-import sample1.domain.{InvoiceError, StaleError, UserId}
+import sample1.domain.{InvoiceError, StaleInvoiceError, UserId}
 
 object InvoiceCommandG {
 
 }
 
-class DomainCommandInput[F[_]](val repo: EntityRepo[F, InvoiceId, Invoice, InvoiceError]) extends CommandInput
+class DomainCommandInput[F[_]](val repo: EntityRepo[F, InvoiceId, Invoice, InvoiceError],
+                               val ctaRepo: EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError]
+                              ) extends CommandInput
 
 sealed trait InvoiceCreateCommandG[F[_]] extends EntityCreateCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
   def action(): Either[InvoiceError, Invoice]
@@ -19,7 +22,7 @@ sealed trait InvoiceCreateCommandG[F[_]] extends EntityCreateCommandG[F, DomainC
 sealed trait InvoiceUpdateCommandG[F[_]] extends EntityUpdateCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
   def action(invoice: Invoice): Either[InvoiceError, Invoice]
 
-  override def staleF(id: InvoiceId): InvoiceError = StaleError(id)
+  override def staleF(id: InvoiceId): InvoiceError = StaleInvoiceError(id)
 
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.repo
 }

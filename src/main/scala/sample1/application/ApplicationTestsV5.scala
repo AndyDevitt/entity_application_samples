@@ -6,9 +6,10 @@ import cats.instances.future._
 import cats.{Id, Monad, ~>}
 import sample1.domain._
 import sample1.domain.command._
+import sample1.domain.cta.ClinicalTrialAgreement
 import sample1.domain.entity.{EntityVersion, Versioned}
 import sample1.domain.invoice.{Invoice, InvoiceId, SiteInvoice, SponsorInvoice}
-import sample1.infrastructure.{ProductionRepo, TestRepo}
+import sample1.infrastructure.{ProductionCtaRepo, ProductionRepo, TestCtaRepo, TestRepo}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -58,7 +59,7 @@ object TestImplicits {
       override def run(command: CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] =
         command match {
           case c: InvoiceCreateCommandG[F] => EntityRepoManager.manageCreate[G, F, DomainCommandInput[F], InvoiceCreateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(() => c.action())
-          case c: InvoiceUpdateCommandG[F] => EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(c.action, id => StaleError(id))
+          case c: InvoiceUpdateCommandG[F] => EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(c.action, id => StaleInvoiceError(id))
         }
     }
 
@@ -87,6 +88,9 @@ object TestImplicits {
     case i: SponsorInvoice => i.copy(version = i.version.nextVersion)
   }
 
+  implicit val ctaVersioned: Versioned[ClinicalTrialAgreement] =
+    Versioned.instance(cta => cta.copy(version = cta.version.nextVersion))
+
   implicit val invoiceToViewDecoder: Decoder[InvoiceView, Invoice, InvoiceError] =
     (b: Invoice) => InvoiceView.create(b)
 
@@ -99,10 +103,10 @@ object ApplicationTestsV5 extends App {
   val user1 = UserId("User1")
   val user2 = UserId("User2")
 
-  val prodApp = new ProdApplication(new ProductionRepo())
-  val testApp = new TestApplication(new TestRepo())
-  val testProcessorApp = new TestApplicationWithProcessor(new TestRepo())
-  val testRunnerApp = new TestApplicationWithRunner(new TestRepo())
+  val prodApp = new ProdApplication(new ProductionRepo(), new ProductionCtaRepo())
+  val testApp = new TestApplication(new TestRepo(), new TestCtaRepo())
+  val testProcessorApp = new TestApplicationWithProcessor(new TestRepo(), new TestCtaRepo())
+  val testRunnerApp = new TestApplicationWithRunner(new TestRepo(), new TestCtaRepo())
 
   val res = (for {
     inv <- EitherT(prodApp.createRfiInvoice(CreateRfiInvoiceCmd(user1)))
@@ -186,4 +190,11 @@ object ApplicationTestsV5 extends App {
   } yield invRetrieved
 
   println(s"res11: $res11")
+
+  val res12 = for {
+    cta <- testProcessorApp.processCommand(CreateCtaCmdG(user1))
+    ctaRetrieved <- testProcessorApp.processCommand(CtaRetrieveCommandG(user1, cta.id))
+  } yield ctaRetrieved
+
+  println(s"res12: $res12")
 }

@@ -3,6 +3,7 @@ package sample1.application
 import cats.Id
 import cats.effect.IO
 import sample1.domain.command.{CommandG, CommandRunner, DomainCommandInput}
+import sample1.domain.cta.CtaRepo
 import sample1.domain.{InvoiceError, InvoiceRepo}
 
 import scala.concurrent.Future
@@ -11,7 +12,9 @@ trait InvoiceApplicationWithCommandRunner[F[_], G[_]] {
 
   def repo: InvoiceRepo[G]
 
-  final val input: DomainCommandInput[G] = new DomainCommandInput[G](repo)
+  def ctaRepo: CtaRepo[G]
+
+  final val input: DomainCommandInput[G] = new DomainCommandInput[G](repo, ctaRepo)
 
   def processCommand[C <: CommandG[G, DomainCommandInput[G], R, InvoiceError], R](cmd: C)
                                                                                  (implicit commandRunner: CommandRunner[G, F, C, DomainCommandInput[G], R, InvoiceError]
@@ -25,6 +28,6 @@ trait InvoiceApplicationWithCommandRunner[F[_], G[_]] {
 
 }
 
-class ProdApplicationWithRunner(override val repo: InvoiceRepo[IO]) extends InvoiceApplicationWithCommandRunner[Future, IO]
+class ProdApplicationWithRunner(override val repo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplicationWithCommandRunner[Future, IO]
 
-class TestApplicationWithRunner(override val repo: InvoiceRepo[Id]) extends InvoiceApplicationWithCommandRunner[Id, Id]
+class TestApplicationWithRunner(override val repo: InvoiceRepo[Id], override val ctaRepo: CtaRepo[Id]) extends InvoiceApplicationWithCommandRunner[Id, Id]

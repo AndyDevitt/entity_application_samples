@@ -35,7 +35,7 @@ object InvoiceAlgebra {
       .flatMap(inv => checkOptimisticLocking(inv, cmd))
 
   private def checkOptimisticLocking[A <: Invoice](invoice: A, cmd: Command): Either[InvoiceError, A] = cmd match {
-    case c: EntityUpdateCommand[_] if c.enforceOptimisticLocking && c.version != invoice.version => Left(StaleError(invoice.id))
+    case c: EntityUpdateCommand[_] if c.enforceOptimisticLocking && c.version != invoice.version => Left(StaleInvoiceError(invoice.id))
     case _ => Right(invoice)
   }
 
