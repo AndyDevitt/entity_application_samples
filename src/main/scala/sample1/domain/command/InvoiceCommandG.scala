@@ -1,8 +1,8 @@
 package sample1.domain.command
 
-import sample1.domain.{InvoiceError, StaleError, UserId}
 import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.invoice.{Invoice, InvoiceAlgebra, InvoiceId}
+import sample1.domain.{InvoiceError, StaleError, UserId}
 
 object InvoiceCommandG {
 
@@ -21,6 +21,10 @@ sealed trait InvoiceUpdateCommandG[F[_]] extends EntityUpdateCommandG[F, DomainC
 
   override def staleF(id: InvoiceId): InvoiceError = StaleError(id)
 
+  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.repo
+}
+
+final case class InvoiceRetrieveCommandG[F[_]](userId: UserId, id: InvoiceId) extends EntityRetrieveCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.repo
 }
 

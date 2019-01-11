@@ -179,4 +179,11 @@ object ApplicationTestsV5 extends App {
   } yield inv2
 
   println(s"res10: $res10")
+
+  val res11 = for {
+    inv <- testProcessorApp.processCommand[Invoice, Invoice](CreateRfiInvoiceCmdG(user1))
+    invRetrieved <- testProcessorApp.processCommand[Invoice, Invoice](InvoiceRetrieveCommandG(user1, inv.id))
+  } yield invRetrieved
+
+  println(s"res11: $res11")
 }

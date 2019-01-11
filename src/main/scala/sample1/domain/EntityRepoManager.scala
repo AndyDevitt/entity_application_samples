@@ -10,6 +10,15 @@ import scala.language.higherKinds
 
 object EntityRepoManager {
 
+  def manageRetrieve[F[_], G[_], I <: CommandInput, CmdType <: EntityRetrieveCommandG[G, I, E, IdType, EntType], IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType], R, E](repo: EntityRepo[G, IdType, EntType, E])
+                                                                                                                                                                                       (cmd: CmdType)
+                                                                                                                                                                                       (implicit monadG: Monad[G], transform: G ~> F, decoder: Decoder[R, EntType, E]
+                                                                                                                                                                                       ): F[Either[E, R]] =
+    transform((for {
+      inv <- EitherT(repo.retrieve(cmd.id))
+      view <- EitherT.fromEither[G](decoder.decode(inv))
+    } yield view).value)
+
   def manageCreate[F[_], G[_], I <: CommandInput, CmdType <: EntityCreateCommandG[G, I, E, IdType, EntType], IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType], R, E](repo: EntityRepo[G, IdType, EntType, E])
                                                                                                                                                                                    (cmd: CmdType)
                                                                                                                                                                                    (f: () => Either[E, EntType])

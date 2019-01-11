@@ -36,6 +36,15 @@ trait EntityCreateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntT
     EntityRepoManager.manageCreate[G, F, I, EntityCreateCommandG[F, I, E, IdType, EntType], IdType, EntType, EntType, E](extractRepo(input))(this)(() => this.action())
 }
 
+trait EntityRetrieveCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType]] extends EntityCommandG[F, I, EntType, E] {
+  def id: IdType
+
+  def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
+
+  override def run[G[_], B](input: I)(implicit monadF: Monad[F], transform: F ~> G, decoder: Decoder[B, Invoice, E]): G[Either[E, EntType]] =
+    EntityRepoManager.manageRetrieve[G, F, I, EntityRetrieveCommandG[F, I, E, IdType, EntType], IdType, EntType, EntType, E](extractRepo(input))(this)
+}
+
 trait EntityUpdateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType]] extends EntityCommandG[F, I, EntType, E] with OptimisticLockingG {
   def id: IdType
 
@@ -50,4 +59,3 @@ trait EntityUpdateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntT
   override def run[G[_], B](input: I)(implicit monadF: Monad[F], transform: F ~> G, decoder: Decoder[B, Invoice, E]): G[Either[E, EntType]] =
     EntityRepoManager.manageUpdate[G, F, I, EntityUpdateCommandG[F, I, E, IdType, EntType], IdType, EntType, EntType, E](extractRepo(input))(this)(this.action, staleF)
 }
-
