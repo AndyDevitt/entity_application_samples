@@ -22,5 +22,8 @@ scalacOptions ++= Seq(
   "-Xfatal-warnings",
   "-Ypartial-unification",
   "-feature",
-  "-deprecation"
+  "-deprecation",
+  //"-language:existentials",
+  "-language:higherKinds",
+  //"-language:implicitConversions"
 )
