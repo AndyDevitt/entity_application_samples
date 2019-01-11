@@ -1,7 +1,5 @@
 package sample1.domain.entity
 
-import sample1.domain.invoice.EntityId
-
 trait Entity[EntType <: Entity[EntType, IdType], IdType <: EntityId] {
   def id: IdType
 }

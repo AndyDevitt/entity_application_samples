@@ -3,10 +3,7 @@ package sample1.domain
 import cats.data.EitherT
 import cats.{Monad, ~>}
 import sample1.domain.command._
-import sample1.domain.entity.{EntityRepo, VersionedEntity}
-import sample1.domain.invoice.EntityId
-
-import scala.language.higherKinds
+import sample1.domain.entity._
 
 object EntityRepoManager {
 

@@ -1,9 +1,6 @@
 package sample1.infrastructure
 
-import sample1.domain.entity.{EntityRepoImpl, EntityVersion, PersistenceRepo, VersionedEntity}
-import sample1.domain.invoice.EntityId
-
-import scala.language.higherKinds
+import sample1.domain.entity._
 
 trait InMemoryRepo[F[_], IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType], ErrType]
   extends EntityRepoImpl[F, IdType, EntType, ErrType, EntType, IdType] {

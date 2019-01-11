@@ -1,10 +1,7 @@
 package sample1.domain.entity
 
 import cats.Monad
-import sample1.domain.invoice.EntityId
 import sample1.domain.{Codec, Encoder}
-
-import scala.language.higherKinds
 
 trait EntityRepoImpl[F[_], IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType], ErrType, PersType, PersIdType] {
 

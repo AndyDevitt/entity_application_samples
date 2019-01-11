@@ -1,8 +1,8 @@
 package sample1.domain.command
 
 import sample1.domain.UserId
-import sample1.domain.entity.EntityVersion
-import sample1.domain.invoice.{EntityId, InvoiceId}
+import sample1.domain.entity.{EntityId, EntityVersion}
+import sample1.domain.invoice.InvoiceId
 
 trait Command {
   def userId: UserId

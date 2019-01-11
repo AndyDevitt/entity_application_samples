@@ -1,8 +1,8 @@
 package sample1.domain.invoice
 
-import scala.util.Random
+import sample1.domain.entity.EntityId
 
-trait EntityId
+import scala.util.Random
 
 final case class InvoiceId(value: Int) extends EntityId
 

@@ -5,11 +5,7 @@ import sample1.domain._
 import sample1.domain.entity._
 import sample1.domain.invoice._
 
-import scala.language.higherKinds
-
-trait CommandInput {
-  //def repo: InvoiceRepo[F]
-}
+trait CommandInput
 
 trait CommandG[F[_], -I <: CommandInput, R, E] extends Command {
   def run[G[_], B](input: I)(implicit monadF: Monad[F], transform: F ~> G, decoder: Decoder[B, Invoice, E]): G[Either[E, R]]
