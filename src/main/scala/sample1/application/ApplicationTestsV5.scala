@@ -57,22 +57,22 @@ object TestImplicits {
     new CommandRunner[F, G, CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], DomainCommandInput[F], Invoice, InvoiceError] {
       override def run(command: CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] =
         command match {
-          case c: InvoiceCreateCommandG[F] => EntityRepoManager.manageCreate[G, F, DomainCommandInput[F], InvoiceCreateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](c)(input.repo)(() => c.action())
+          case c: InvoiceCreateCommandG[F] => EntityRepoManager.manageCreate[G, F, DomainCommandInput[F], InvoiceCreateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(() => c.action())
           case c: InvoiceUpdateCommandG[F] => EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(c.action, id => StaleError(id))
         }
     }
 
-//  implicit def idInvoiceUpdateCommandRunnerG[F[_], G[_]](implicit transformer: F ~> G, monad: Monad[F]): CommandRunner[F, G, InvoiceUpdateCommandG[F], DomainCommandInput[F], Invoice, InvoiceError] =
-//    new CommandRunner[F, G, InvoiceUpdateCommandG[F], DomainCommandInput[F], Invoice, InvoiceError] {
-//      //      override def run(command: CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] =
-//      //        command match {
-//      //          case c: InvoiceCreateCommandG[F] => EntityRepoManager.manageCreate[G, F, DomainCommandInput[F], InvoiceCreateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](c)(input.repo)(() => c.action())
-//      //          case c: InvoiceUpdateCommandG[F] => EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(c.action, id => StaleError(id))
-//      //        }
-//      override def run(command: InvoiceUpdateCommandG[F], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] = {
-//        EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(command)(command.action, id => StaleError(id))
-//      }
-//    }
+  //  implicit def idInvoiceUpdateCommandRunnerG[F[_], G[_]](implicit transformer: F ~> G, monad: Monad[F]): CommandRunner[F, G, InvoiceUpdateCommandG[F], DomainCommandInput[F], Invoice, InvoiceError] =
+  //    new CommandRunner[F, G, InvoiceUpdateCommandG[F], DomainCommandInput[F], Invoice, InvoiceError] {
+  //      //      override def run(command: CommandG[F, DomainCommandInput[F], Invoice, InvoiceError], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] =
+  //      //        command match {
+  //      //          case c: InvoiceCreateCommandG[F] => EntityRepoManager.manageCreate[G, F, DomainCommandInput[F], InvoiceCreateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](c)(input.repo)(() => c.action())
+  //      //          case c: InvoiceUpdateCommandG[F] => EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(c)(c.action, id => StaleError(id))
+  //      //        }
+  //      override def run(command: InvoiceUpdateCommandG[F], input: DomainCommandInput[F]): G[Either[InvoiceError, Invoice]] = {
+  //        EntityRepoManager.manageUpdate[G, F, DomainCommandInput[F], InvoiceUpdateCommandG[F], InvoiceId, Invoice, Invoice, InvoiceError](input.repo)(command)(command.action, id => StaleError(id))
+  //      }
+  //    }
 
   implicit val IoToFuture: IO ~> Future = new ~>[IO, Future] {
     override def apply[A](fa: IO[A]): Future[A] = fa.unsafeToFuture()
@@ -174,8 +174,8 @@ object ApplicationTestsV5 extends App {
   println(s"res9: $res9")
 
   val res10 = for {
-    inv1 <- testProcessorApp.processCommand[Invoice,Invoice](CreateRfiInvoiceCmdG(user1))
-    inv2 <- testProcessorApp.processCommand[Invoice,InvoiceView](ApproveCmdG(user2, inv1.id, inv1.version))
+    inv1 <- testProcessorApp.processCommand[Invoice, Invoice](CreateRfiInvoiceCmdG(user1))
+    inv2 <- testProcessorApp.processCommand[Invoice, InvoiceView](ApproveCmdG(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res10: $res10")

@@ -9,7 +9,7 @@ import scala.language.higherKinds
 
 object InvoiceRepoManager {
 
-  def manageCreate[F[_], G[_], I <: CommandInput[G], A <: InvoiceCreateCommandG[G], R](repo: InvoiceRepo[G])
+  def manageCreate[F[_], G[_], I <: CommandInput, A <: InvoiceCreateCommandG[G], R](repo: InvoiceRepo[G])
                                                                                       (cmd: A)
                                                                                       (f: () => Either[InvoiceError, Invoice])
                                                                                       (implicit monadG: Monad[G], transform: G ~> F, decoder: Decoder[R, Invoice, InvoiceError]
@@ -20,7 +20,7 @@ object InvoiceRepoManager {
       view <- EitherT.fromEither[G](decoder.decode(savedInv))
     } yield view).value)
 
-  def manageUpdate[F[_], G[_], I <: CommandInput[G], A <: InvoiceUpdateCommandG[G], R](repo: InvoiceRepo[G])
+  def manageUpdate[F[_], G[_], I <: CommandInput, A <: InvoiceUpdateCommandG[G], R](repo: InvoiceRepo[G])
                                                                                       (cmd: A)
                                                                                       (f: Invoice => Either[InvoiceError, Invoice])
                                                                                       (implicit monadG: Monad[G], transform: G ~> F, decoder: Decoder[R, Invoice, InvoiceError]

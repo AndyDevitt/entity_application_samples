@@ -7,13 +7,13 @@ import sample1.domain.invoice._
 
 import scala.language.higherKinds
 
-trait CommandInput[F[_]] {
+trait CommandInput {
   //def repo: InvoiceRepo[F]
 }
 
-class DomainCommandInput[F[_]](val repo: EntityRepo[F, InvoiceId, Invoice, InvoiceError]) extends CommandInput[F]
+class DomainCommandInput[F[_]](val repo: EntityRepo[F, InvoiceId, Invoice, InvoiceError]) extends CommandInput
 
-trait CommandRunner[F[_], G[_], C <: CommandG[F, I, R, E], -I <: CommandInput[F], R, E] {
+trait CommandRunner[F[_], G[_], C <: CommandG[F, I, R, E], -I <: CommandInput, R, E] {
   def run(command: C, input: I): G[Either[E, R]]
 }
 
@@ -27,11 +27,11 @@ object CommandRunner {
 }
 
 
-trait CommandG[F[_], -I <: CommandInput[F], R, E] extends Command {
+trait CommandG[F[_], -I <: CommandInput, R, E] extends Command {
   def run[G[_], B](input: I)(implicit monadF: Monad[F], transform: F ~> G, decoder: Decoder[B, Invoice, E]): G[Either[E, R]]
 }
 
-sealed trait EntityCommandG[F[_], -I <: CommandInput[F], R, E] extends CommandG[F, I, R, E]
+sealed trait EntityCommandG[F[_], -I <: CommandInput, R, E] extends CommandG[F, I, R, E]
 
 sealed trait OptimisticLockingG {
   def enforceOptimisticLocking: Boolean = true
@@ -41,16 +41,16 @@ trait IgnoreOptimisticLockingG extends OptimisticLockingG {
   override def enforceOptimisticLocking: Boolean = false
 }
 
-sealed trait EntityCreateCommandG[F[_], -I <: CommandInput[F], E, IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType]] extends EntityCommandG[F, I, EntType, E] {
+sealed trait EntityCreateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType]] extends EntityCommandG[F, I, EntType, E] {
   def action(): Either[E, EntType]
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
 
   override def run[G[_], B](input: I)(implicit monadF: Monad[F], transform: F ~> G, decoder: Decoder[B, Invoice, E]): G[Either[E, EntType]] =
-    EntityRepoManager.manageCreate[G, F, I, EntityCreateCommandG[F, I, E, IdType, EntType], IdType, EntType, EntType, E](this)(extractRepo(input))(() => this.action())
+    EntityRepoManager.manageCreate[G, F, I, EntityCreateCommandG[F, I, E, IdType, EntType], IdType, EntType, EntType, E](extractRepo(input))(this)(() => this.action())
 }
 
-sealed trait EntityUpdateCommandG[F[_], -I <: CommandInput[F], E, IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType]] extends EntityCommandG[F, I, EntType, E] with OptimisticLockingG {
+sealed trait EntityUpdateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType]] extends EntityCommandG[F, I, EntType, E] with OptimisticLockingG {
   def id: IdType
 
   def version: EntityVersion
