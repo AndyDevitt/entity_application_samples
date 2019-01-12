@@ -8,7 +8,7 @@ import sample1.domain.invoice._
 import sample1.domain.{InvoiceRepo, _}
 
 import scala.concurrent.Future
-import scala.language.{higherKinds, postfixOps}
+import scala.language.postfixOps
 
 trait InvoiceApplication[F[_], G[_]] {
 

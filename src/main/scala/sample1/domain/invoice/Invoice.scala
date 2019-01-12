@@ -4,8 +4,6 @@ import sample1.domain.command.{CreateRfiInvoiceCmd, CreateRfiInvoiceCmdG}
 import sample1.domain.entity.{EntityVersion, VersionedEntity}
 import sample1.domain.{Cost, RequestForInvoice, UserId}
 
-import scala.language.higherKinds
-
 trait Invoice extends VersionedEntity[InvoiceId] {
   def status: InvoiceStatus
 

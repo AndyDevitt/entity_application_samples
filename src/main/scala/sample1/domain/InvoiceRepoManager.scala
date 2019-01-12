@@ -5,8 +5,6 @@ import cats.{Monad, ~>}
 import sample1.domain.command.{CommandInput, EntityUpdateCommandG, InvoiceCreateCommandG, InvoiceUpdateCommandG}
 import sample1.domain.invoice.Invoice
 
-import scala.language.higherKinds
-
 object InvoiceRepoManager {
 
   def manageCreate[F[_], G[_], I <: CommandInput, A <: InvoiceCreateCommandG[G], R](repo: InvoiceRepo[G])

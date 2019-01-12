@@ -4,7 +4,6 @@ import cats.Monad
 import sample1.domain.entity.{EntityVersion, PersistenceRepo}
 
 import scala.collection.mutable
-import scala.language.higherKinds
 
 trait InMemoryPersistenceRepo[F[_], ErrType, PersEntType, PersIdType] extends PersistenceRepo[F, ErrType, PersEntType, PersIdType] {
 
