@@ -1,5 +1,5 @@
 package sample1.domain.entity
 
-trait VersionedEntity[EntType <: VersionedEntity[EntType, IdType], IdType <: EntityId] extends Entity[EntType, IdType] {
+trait VersionedEntity[IdType <: EntityId] extends Entity[IdType] {
   def version: EntityVersion
 }

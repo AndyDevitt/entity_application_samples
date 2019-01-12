@@ -5,7 +5,7 @@ import sample1.domain.entity.{EntityVersion, VersionedEntity}
 
 import scala.util.Random
 
-case class ClinicalTrialAgreement(id: ClinicalTrialAgreementId, version: EntityVersion, note: String) extends VersionedEntity[ClinicalTrialAgreement, ClinicalTrialAgreementId] {
+case class ClinicalTrialAgreement(id: ClinicalTrialAgreementId, version: EntityVersion, note: String) extends VersionedEntity[ClinicalTrialAgreementId] {
 
 }
 

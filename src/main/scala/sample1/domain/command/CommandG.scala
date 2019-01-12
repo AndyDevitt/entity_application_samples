@@ -42,7 +42,7 @@ trait IgnoreOptimisticLockingG extends OptimisticLockingG {
   override def enforceOptimisticLocking: Boolean = false
 }
 
-trait EntityCreateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType]] extends EntityCommandG[F, I, EntType, E] {
+trait EntityCreateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommandG[F, I, EntType, E] {
   def action(): Either[E, EntType]
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
@@ -51,7 +51,7 @@ trait EntityCreateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntT
     EntityRepoManager.manageCreate[G, F, I, EntityCreateCommandG[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)(() => this.action())
 }
 
-trait EntityRetrieveCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType]] extends EntityCommandG[F, I, EntType, E] {
+trait EntityRetrieveCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommandG[F, I, EntType, E] {
   def id: IdType
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
@@ -60,7 +60,7 @@ trait EntityRetrieveCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, En
     EntityRepoManager.manageRetrieve[G, F, I, EntityRetrieveCommandG[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)
 }
 
-trait EntityUpdateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType]] extends EntityCommandG[F, I, EntType, E] with OptimisticLockingG {
+trait EntityUpdateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommandG[F, I, EntType, E] with OptimisticLockingG {
   def id: IdType
 
   def version: EntityVersion

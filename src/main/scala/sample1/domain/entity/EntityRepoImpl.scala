@@ -16,7 +16,7 @@ import sample1.domain.Encoder
   * @tparam PersType   the type of the persistence object for the entity
   * @tparam PersIdType the type of the persistence object identifier
   */
-trait EntityRepoImpl[F[_], IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType], ErrType, PersType, PersIdType] {
+trait EntityRepoImpl[F[_], IdType <: EntityId, EntType <: VersionedEntity[IdType], ErrType, PersType, PersIdType] {
 
   def cleanEntityForResultAfterSaveF: EntType => EntType = (x: EntType) => x
 

@@ -6,7 +6,7 @@ import sample1.domain.{Cost, RequestForInvoice, UserId}
 
 import scala.language.higherKinds
 
-trait Invoice extends VersionedEntity[Invoice, InvoiceId] {
+trait Invoice extends VersionedEntity[InvoiceId] {
   def status: InvoiceStatus
 
   def costs: List[Cost]

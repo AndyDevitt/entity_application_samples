@@ -2,7 +2,7 @@ package sample1.infrastructure
 
 import sample1.domain.entity._
 
-trait InMemoryRepo[F[_], IdType <: EntityId, EntType <: VersionedEntity[EntType, IdType], ErrType]
+trait InMemoryRepo[F[_], IdType <: EntityId, EntType <: VersionedEntity[IdType], ErrType]
   extends EntityRepoImpl[F, IdType, EntType, ErrType, EntType, IdType] {
   self =>
 
