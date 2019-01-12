@@ -181,6 +181,7 @@ object ApplicationTestsV5 extends App {
   println(s"res13: $res13")
 
   val res14 = for {
+    // Command runner is also currently annoying as we have to specify the types for processCommand to help the compiler...
     inv <- testRunnerApp.processCommand[Invoice, Invoice, CreateRfiInvoiceCmdG[Id]](CreateRfiInvoiceCmdG(user1))
     invRetrieved <- testRunnerApp.processCommand[Invoice, InvoiceView, InvoiceRetrieveCommandG[Id]](InvoiceRetrieveCommandG(user1, inv.id))
   } yield invRetrieved
