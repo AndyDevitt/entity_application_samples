@@ -35,6 +35,15 @@ trait InvoiceApplicationWithProcessor[F[_], G[_]] {
                            transformer: ApplicationTransformer[T, R, InvoiceError]
                           ): F[Either[InvoiceError, T]] =
     monadF.map(cmd.run(input))(_.flatMap(transformer.decode))
+
+  def processCommandX[R, T, C <: CommandG[G, DomainCommandInput[G], R, InvoiceError]](cmd: C)
+                                                                                     (implicit monadF: Monad[F],
+                                                                                      monadG: Monad[G],
+                                                                                      naturalTransformation: G ~> F,
+                                                                                      transformer: ApplicationTransformer[T, R, InvoiceError],
+                                                                                      runner: CommandRunner[G, F, C, DomainCommandInput[G], R, InvoiceError]
+                                                                                     ): F[Either[InvoiceError, R]] =
+    runner.run(cmd, input)
 }
 
 class ProdApplicationWithProcessor(override val repo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplicationWithProcessor[Future, IO]

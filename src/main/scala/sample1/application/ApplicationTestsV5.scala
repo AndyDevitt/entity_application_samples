@@ -3,7 +3,7 @@ package sample1.application
 import cats.data.EitherT
 import cats.effect.IO
 import cats.instances.future._
-import cats.~>
+import cats.{Id, ~>}
 import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
@@ -67,6 +67,11 @@ object TestImplicits {
 object ApplicationTestsV5 extends App {
 
   import TestImplicits._
+
+  implicit val idUpdateRunner = CommandRunner.invoiceUpdateCommandRunner[Id, Id]
+  //implicit val idCreateRunner = CommandRunner.invoiceCreateCommandRunner[Id, Id]
+  implicit val idRetrieveRunner = CommandRunner.invoiceRetrieveCommandRunner[Id, Id]
+  //implicit val idCreateRfiRunner = CommandRunner.invoiceCreateRfiCommandRunner[Id, Id]
 
   val user1 = UserId("User1")
   val user2 = UserId("User2")
@@ -173,4 +178,11 @@ object ApplicationTestsV5 extends App {
   } yield ctaRetrieved
 
   println(s"res13: $res13")
+
+  val res14 = for {
+    inv <- testProcessorApp.processCommandX[Invoice, Invoice, CreateRfiInvoiceCmdG[Id]](CreateRfiInvoiceCmdG(user1))
+    invRetrieved <- testProcessorApp.processCommandX[Invoice, InvoiceView, InvoiceRetrieveCommandG[Id]](InvoiceRetrieveCommandG(user1, inv.id))
+  } yield invRetrieved
+
+  println(s"res14: $res14")
 }

@@ -30,6 +30,37 @@ trait CommandG[F[_], -I <: CommandInput, R, E] extends Command {
   def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, R]]
 }
 
+sealed trait CommandCategory
+
+case object Update extends CommandCategory
+
+case object Create extends CommandCategory
+
+trait CommandX[C <: CommandCategory] extends Command {
+  type F[_]
+  type Res
+  type Inp <: CommandInput
+  type Err
+
+  /**
+    *
+    * @param input     the command input that will contain any runtime references supplied by the application layer
+    * @param monadF    monad instance for the context in which command is run (usually that of the repo)
+    * @param transform natural transform instance to convert from the repo context to the application context
+    * @tparam G the application context
+    * @return returns the result of executing the command
+    */
+  def run[G[_]](input: Inp)(implicit monadF: Monad[F], transform: F ~> G): G[Either[Err, Res]]
+}
+
+object CommandG {
+  type Aux[C <: CommandCategory, F0, Inp0, Res0, Err0] = CommandX[C] {
+    type Res = Res0
+    type Inp = Inp0
+    type Err = Err0
+  }
+}
+
 sealed trait EntityCommandG[F[_], -I <: CommandInput, R, E] extends CommandG[F, I, R, E] {
 
 }
