@@ -9,14 +9,14 @@ object InvoiceCommandG {
 
 }
 
-class DomainCommandInput[F[_]](val repo: EntityRepo[F, InvoiceId, Invoice, InvoiceError],
+class DomainCommandInput[F[_]](val invoiceRepo: EntityRepo[F, InvoiceId, Invoice, InvoiceError],
                                val ctaRepo: EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError]
                               ) extends CommandInput
 
 sealed trait InvoiceCreateCommandG[F[_]] extends EntityCreateCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
   def action(): Either[InvoiceError, Invoice]
 
-  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.repo
+  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.invoiceRepo
 }
 
 sealed trait InvoiceUpdateCommandG[F[_]] extends EntityUpdateCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
@@ -24,11 +24,11 @@ sealed trait InvoiceUpdateCommandG[F[_]] extends EntityUpdateCommandG[F, DomainC
 
   override def staleF(id: InvoiceId): InvoiceError = StaleInvoiceError(id)
 
-  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.repo
+  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.invoiceRepo
 }
 
 final case class InvoiceRetrieveCommandG[F[_]](userId: UserId, id: InvoiceId) extends EntityRetrieveCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
-  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.repo
+  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.invoiceRepo
 }
 
 final case class ApproveCmdG[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommandG[F] {

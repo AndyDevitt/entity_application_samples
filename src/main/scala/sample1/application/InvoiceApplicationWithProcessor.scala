@@ -41,7 +41,7 @@ trait InvoiceApplicationWithProcessor[F[_], G[_]] {
                                                                                       monadG: Monad[G],
                                                                                       naturalTransformation: G ~> F,
                                                                                       transformer: ApplicationTransformer[T, R, InvoiceError],
-                                                                                      runner: CommandRunner[G, F, C, DomainCommandInput[G], R, InvoiceError]
+                                                                                      runner: CommandRunner[F, G, C, DomainCommandInput[G], R, InvoiceError]
                                                                                      ): F[Either[InvoiceError, T]] =
     monadF.map(runner.run(cmd, input))(_.flatMap(transformer.decode))
 }

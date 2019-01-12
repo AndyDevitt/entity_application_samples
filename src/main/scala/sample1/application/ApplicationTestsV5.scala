@@ -68,9 +68,9 @@ object ApplicationTestsV5 extends App {
 
   import TestImplicits._
 
-  implicit val idUpdateRunner = CommandRunner.invoiceUpdateCommandRunner[Id, Id]
+  //implicit val idUpdateRunner = CommandRunner.invoiceUpdateCommandRunner[Id, Id]
   //implicit val idCreateRunner = CommandRunner.invoiceCreateCommandRunner[Id, Id]
-  implicit val idRetrieveRunner = CommandRunner.invoiceRetrieveCommandRunner[Id, Id]
+  //implicit val idRetrieveRunner = CommandRunner.invoiceRetrieveCommandRunner[Id, Id]
   //implicit val idCreateRfiRunner = CommandRunner.invoiceCreateRfiCommandRunner[Id, Id]
 
   val user1 = UserId("User1")
