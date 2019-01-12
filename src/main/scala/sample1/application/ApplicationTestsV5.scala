@@ -82,6 +82,7 @@ object ApplicationTestsV5 extends App {
   // TODO [AD]: consider naming of the application transformer and the repo codec and also their current inheritance
   //  structure (i.e. deriving from the Codec family of traits). Also, should these simply be explicit parameters?
   val testProcessorApp = new TestApplicationWithProcessor(new TestInvoiceRepo(), new TestCtaRepo())
+  val testRunnerApp = new TestApplicationWithRunner(new TestInvoiceRepo(), new TestCtaRepo())
 
   val res = (for {
     inv <- EitherT(prodApp.createRfiInvoice(CreateRfiInvoiceCmd(user1)))
@@ -180,8 +181,8 @@ object ApplicationTestsV5 extends App {
   println(s"res13: $res13")
 
   val res14 = for {
-    inv <- testProcessorApp.processCommandX[Invoice, Invoice, CreateRfiInvoiceCmdG[Id]](CreateRfiInvoiceCmdG(user1))
-    invRetrieved <- testProcessorApp.processCommandX[Invoice, InvoiceView, InvoiceRetrieveCommandG[Id]](InvoiceRetrieveCommandG(user1, inv.id))
+    inv <- testRunnerApp.processCommand[Invoice, Invoice, CreateRfiInvoiceCmdG[Id]](CreateRfiInvoiceCmdG(user1))
+    invRetrieved <- testRunnerApp.processCommand[Invoice, InvoiceView, InvoiceRetrieveCommandG[Id]](InvoiceRetrieveCommandG(user1, inv.id))
   } yield invRetrieved
 
   println(s"res14: $res14")
