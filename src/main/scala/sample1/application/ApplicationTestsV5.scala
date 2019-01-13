@@ -187,4 +187,12 @@ object ApplicationTestsV5 extends App {
   } yield invRetrieved
 
   println(s"res14: $res14")
+
+  val res15 = for {
+    inv1 <- testProcessorApp.processCommand[Invoice, Invoice](CreateRfiInvoiceCmdG(user1))
+    inv2 <- testProcessorApp.processCommand[Invoice, InvoiceView](ApproveCmd3G(user2, inv1.id, inv1.version))
+  } yield inv2
+
+  println(s"res15: $res15")
+
 }

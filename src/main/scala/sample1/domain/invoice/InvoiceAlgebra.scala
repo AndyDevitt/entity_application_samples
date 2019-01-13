@@ -5,6 +5,8 @@ import sample1.domain.command._
 
 object InvoiceAlgebra {
 
+  import InvoiceStateBuilder.Instances._
+  import InvoiceStateBuilder._
   import cats.data.State
   import sample1.domain.invoice.InvoiceUtils._
 
@@ -78,6 +80,14 @@ object InvoiceAlgebra {
         _ <- InvoiceStateUtils.setStatus(inv, cmd, Approved)
       } yield ()
       pgm.runS(inv).value
+    }
+
+  def approve3G[F[_]](invoice: Invoice, cmd: ApproveCmd3G[F]): Either[InvoiceError, Invoice] =
+    canDoAction(canApprove)(invoice, cmd) map {
+      _
+        .clearCosts()
+        .setStatus(Approved)
+        .build(cmd)
     }
 
   def canUpdateRfi(invoice: Invoice): Either[NotAllowed, SponsorInvoice] = invoice match {

@@ -35,6 +35,10 @@ final case class ApproveCmdG[F[_]](userId: UserId, id: InvoiceId, version: Entit
   override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.approveG[F](invoice, this)
 }
 
+final case class ApproveCmd3G[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommandG[F] {
+  override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.approve3G[F](invoice, this)
+}
+
 final case class CreateRfiInvoiceCmdG[F[_]](userId: UserId) extends InvoiceCreateCommandG[F] {
   override def action(): Either[InvoiceError, Invoice] = Right(Invoice.createRfiInvoice(this))
 }
