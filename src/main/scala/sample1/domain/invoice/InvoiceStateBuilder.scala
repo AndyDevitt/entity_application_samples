@@ -1,8 +1,7 @@
 package sample1.domain.invoice
 
 import cats.Id
-import sample1.domain.command.{Command, CreateRfiInvoiceCmd, CreateRfiInvoiceCmdG}
-import sample1.domain.entity.EntityVersion
+import sample1.domain.command.{Command, CreateRfiInvoiceCmd, CreateRfiInvoiceCmdG, CreateSiteInvoiceCmdG}
 import sample1.domain.{RequestForInvoice, UserId}
 
 object InvoiceStateBuilder {
@@ -101,7 +100,7 @@ object InvoiceStateBuilderTest {
   import InvoiceStateBuilder.Instances._
   import InvoiceStateBuilder._
 
-  val siteInv: SiteInvoice = SiteInvoice.apply(InvoiceId(), EntityVersion(), UserId(), NotApproved, Nil)
+  val siteInv: SiteInvoice = Invoice.createSiteInvoice(CreateSiteInvoiceCmdG(UserId()))
   val sponsorInv: SponsorInvoice = Invoice.createRfiInvoice(CreateRfiInvoiceCmd(UserId()))
   val inv: Invoice = sponsorInv
   val cmd: CreateRfiInvoiceCmdG[Id] = CreateRfiInvoiceCmdG[Id](UserId())
