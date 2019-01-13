@@ -195,4 +195,11 @@ object ApplicationTestsV5 extends App {
 
   println(s"res15: $res15")
 
+  val res16 = for {
+    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmdG(user1))
+    inv2 <- testProcessorApp.processCommand[Invoice, InvoiceView](ApproveCmd3G(user2, inv1.id, inv1.version))
+  } yield inv2
+
+  println(s"res16: $res16")
+
 }

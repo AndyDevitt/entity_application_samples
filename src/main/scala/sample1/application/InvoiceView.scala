@@ -1,5 +1,6 @@
 package sample1.application
 
+import cats.syntax.either._
 import sample1.domain._
 import sample1.domain.entity.EntityVersion
 import sample1.domain.invoice._
@@ -10,13 +11,15 @@ final case class InvoiceView private(id: InvoiceId,
                                      costs: List[Cost],
                                      lastEditedBy: UserId,
                                      requestForInvoice: Option[RequestForInvoice],
-                                     total: Option[MonetaryAmount]
+                                     total: Option[MonetaryAmount],
+                                     actions: Set[(InvoiceAction, ActionStatus)]
                                     ) extends Invoice
 
 object InvoiceView {
   def create(invoice: Invoice): Either[InvoiceError, InvoiceView] =
     for {
       total <- InvoiceAlgebra.calculateTotal(invoice)
+      actions <- InvoiceAlgebra.actionStatuses(invoice).asRight[InvoiceError]
     } yield new InvoiceView(
       id = invoice.id,
       version = invoice.version,
@@ -24,7 +27,9 @@ object InvoiceView {
       costs = invoice.costs,
       lastEditedBy = invoice.lastEditedBy,
       requestForInvoice = rfi(invoice),
-      total = total)
+      total = total,
+      actions = actions
+    )
 
   private def rfi(invoice: Invoice): Option[RequestForInvoice] = invoice match {
     case i: SponsorInvoice => Some(i.rfi)

@@ -16,8 +16,8 @@ object InvoiceAlgebra {
     case _: UpdateRfiCmd => InvoiceAction.UpdateRfi
   }
 
-  def actionStatuses(invoice: Invoice): Set[ActionStatus] =
-    EnumerableAdt[InvoiceAction].map(actionStatus(invoice, _))
+  def actionStatuses(invoice: Invoice): Set[(InvoiceAction, ActionStatus)] =
+    EnumerableAdt[InvoiceAction].map(action => (action, actionStatus(invoice, action)))
 
   def actionStatus(invoice: Invoice, cmd: Command): ActionStatus =
     actionStatus(invoice, actionFromCommand(cmd))
@@ -53,7 +53,8 @@ object InvoiceAlgebra {
       pgm.runS(si).value
     }
 
-  def canApprove(invoice: Invoice): Either[NotAllowed, Invoice] = Right(invoice)
+  def canApprove(invoice: Invoice): Either[NotAllowed, Invoice] =
+    Either.cond(invoice.status == NotApproved, invoice, NotAllowedInCurrentStatus())
 
   def approve(invoice: Invoice, cmd: ApproveCmd): Either[InvoiceError, Invoice] =
     canDoAction(canApprove)(invoice, cmd) map { inv =>
