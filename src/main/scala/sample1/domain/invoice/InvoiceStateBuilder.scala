@@ -13,8 +13,8 @@ object InvoiceStateBuilder {
     * behaviour. This enables behaviour to be defined only for the types in the ADT hierarchy where the behaviour is
     * valid, and invalid calls to update state will be detected at compile time.
     *
-    * @param invoice
-    * @tparam A
+    * @param invoice the invoice state that is being manipulated
+    * @tparam A the specific type of the invoice
     */
   implicit class Builder[A <: Invoice](invoice: A) {
 
@@ -61,7 +61,8 @@ object InvoiceStateBuilder {
   }
 
   /**
-    * Implicit instances to implement each behaviour trait for valid ADT types
+    * Implicit instances to implement each behaviour trait for valid ADT types. Super-type instances delegate to
+    * sub-type instances to guarantee consistent implementation.
     */
   object Instances {
 
@@ -112,13 +113,13 @@ object InvoiceStateBuilderTest {
 
   val updatedSite: SiteInvoice = siteInv
     .clearCosts()
-    // The following line would not compile since there is no implementation for UpdateRfi[SiteInvoice]
+    // The following line will not compile since there is no implementation for UpdateRfi[SiteInvoice]
     // .updateRfi(RequestForInvoice())
     .build(cmd)
 
   val updatedInv: Invoice = inv
     .clearCosts()
-    // The following line would not compile since there is no implementation for UpdateRfi[Invoice]
+    // The following line will not compile since there is no implementation for UpdateRfi[Invoice]
     // .updateRfi(RequestForInvoice())
     .build(cmd)
 
