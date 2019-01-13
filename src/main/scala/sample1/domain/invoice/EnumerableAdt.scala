@@ -1,6 +1,6 @@
 package sample1.domain.invoice
 
-import shapeless.{:+:, CNil, Coproduct, Generic, Lazy, Witness}
+import shapeless.{:+:, CNil, Coproduct, Generic, Witness}
 
 trait EnumerableAdt[A] {
   def values: Set[A]
@@ -9,8 +9,8 @@ trait EnumerableAdt[A] {
 object EnumerableAdt {
   def apply[A](implicit enumerableAdt: EnumerableAdt[A]): Set[A] = enumerableAdt.values
 
-  implicit def enumerable[A, C <: Coproduct](implicit gen: Generic.Aux[A, C], allSingletons: Lazy[AllSingletons[A, C]]): EnumerableAdt[A] = new EnumerableAdt[A] {
-    override def values: Set[A] = allSingletons.value.values.toSet
+  implicit def enumerable[A, C <: Coproduct](implicit gen: Generic.Aux[A, C], allSingletons: AllSingletons[A, C]): EnumerableAdt[A] = new EnumerableAdt[A] {
+    override def values: Set[A] = allSingletons.values.toSet
   }
 }
 
@@ -19,9 +19,9 @@ trait AllSingletons[A, C <: Coproduct] {
 }
 
 object AllSingletons {
-  implicit def allSingletonsCons[A, H <: A, T <: Coproduct](implicit witness: Witness.Aux[H], allTs: Lazy[AllSingletons[A, T]]): AllSingletons[A, H :+: T] =
+  implicit def allSingletonsCons[A, H <: A, T <: Coproduct](implicit witness: Witness.Aux[H], allTs: AllSingletons[A, T]): AllSingletons[A, H :+: T] =
     new AllSingletons[A, H :+: T] {
-      override def values: List[A] = witness.value :: allTs.value.values
+      override def values: List[A] = witness.value :: allTs.values
     }
 
   implicit def allSingletonsCNil[A]: AllSingletons[A, CNil] = new AllSingletons[A, CNil] {
