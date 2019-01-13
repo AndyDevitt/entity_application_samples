@@ -2,6 +2,11 @@ package sample1.domain.invoice
 
 import shapeless.{:+:, CNil, Coproduct, Generic, Witness}
 
+/**
+  * Type class to enumerate all types in an ADT for any ADT that contains only singletons (i.e. all case objects).
+  *
+  * @tparam A The sealed trait parent for which the sub-class hierarchy instances should be deduced.
+  */
 trait EnumerableAdt[A] {
   def values: Set[A]
 }
