@@ -66,6 +66,7 @@ object TestImplicits {
 
 object ApplicationTestsV5 extends App {
 
+  import ApplicationTransformer._
   import TestImplicits._
 
   //implicit val idUpdateRunner = CommandRunner.invoiceUpdateCommandRunner[Id, Id]
@@ -140,15 +141,15 @@ object ApplicationTestsV5 extends App {
   println(s"res7: $res7")
 
   val res8 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmdG(user2, inv1.id, inv1.version))
+    inv1 <- testProcessorApp.processCommand[Invoice, InvoiceView](CreateRfiInvoiceCmdG(user1))
+    inv2 <- testProcessorApp.processCommand[Invoice, InvoiceView](ApproveCmdG(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res8: $res8")
 
   val res9 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmdG(user2, inv1.id, inv1.version))
+    inv1 <- testProcessorApp.processCommand[Invoice, Invoice](CreateRfiInvoiceCmdG(user1))
+    inv2 <- testProcessorApp.processCommand[Invoice, Invoice](ApproveCmdG(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res9: $res9")
@@ -196,14 +197,14 @@ object ApplicationTestsV5 extends App {
   println(s"res15: $res15")
 
   val res16 = for {
-    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmdG(user1))
+    inv1 <- testProcessorApp.processCommand[Invoice, InvoiceView](CreateSiteInvoiceCmdG(user1))
     inv2 <- testProcessorApp.processCommand[Invoice, InvoiceView](ApproveCmd3G(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res16: $res16")
 
   val res17 = for {
-    res <- testProcessorApp.processCommand(FindAllG(user1))
+    res <- testProcessorApp.processCommand[Seq[Invoice], Seq[InvoiceView]](FindAllG(user1))
   } yield res
 
   println(s"res17: $res17")
