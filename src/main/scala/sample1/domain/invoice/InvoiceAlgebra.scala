@@ -88,7 +88,8 @@ object InvoiceAlgebra {
       _
         .clearCosts()
         .setStatus(Approved)
-        .build(cmd)
+        .updateLastEdited(cmd)
+        .build()
     }
 
   def canUpdateRfi(invoice: Invoice): Either[NotAllowed, SponsorInvoice] = invoice match {
