@@ -16,14 +16,13 @@ trait InvoiceApplicationWithCommandRunner[F[_], G[_]] {
 
   final val input: DomainCommandInput[G] = new DomainCommandInput[G](repo, ctaRepo)
 
-  def processCommand[R, T, C <: CommandG[G, DomainCommandInput[G], R, InvoiceError]](cmd: C)
-                                                                                    (implicit monadF: Monad[F],
-                                                                                     monadG: Monad[G],
-                                                                                     naturalTransformation: G ~> F,
-                                                                                     transformer: ApplicationTransformer[T, R, InvoiceError],
-                                                                                     runner: CommandRunner[F, G, C, DomainCommandInput[G], R, InvoiceError]
-                                                                                    ): F[Either[InvoiceError, T]] =
-    monadF.map(runner.run(cmd, input))(_.flatMap(transformer.decode))
+  def processCommand[R, C <: CommandG[G, DomainCommandInput[G], R, InvoiceError]](cmd: C)
+                                                                                 (implicit monadF: Monad[F],
+                                                                                  monadG: Monad[G],
+                                                                                  naturalTransformation: G ~> F,
+                                                                                  runner: CommandRunner[F, G, C, DomainCommandInput[G], R, InvoiceError]
+                                                                                 ): F[Either[InvoiceError, R]] =
+    runner.run(cmd, input)
 }
 
 class ProdApplicationWithRunner(override val repo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplicationWithCommandRunner[Future, IO]

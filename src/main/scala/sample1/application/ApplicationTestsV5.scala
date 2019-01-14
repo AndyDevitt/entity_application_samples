@@ -69,10 +69,9 @@ object TestImplicits {
 
 object ApplicationTestsV5 extends App {
 
-  import ApplicationTransformer._
   import TestImplicits._
-  import Transform._
   import Transform.Instances._
+  import Transform._
 
   //implicit val idUpdateRunner = CommandRunner.invoiceUpdateCommandRunner[Id, Id]
   //implicit val idCreateRunner = CommandRunner.invoiceCreateCommandRunner[Id, Id]
@@ -188,8 +187,8 @@ object ApplicationTestsV5 extends App {
 
   val res14 = for {
     // Command runner is also currently annoying as we have to specify the types for processCommand to help the compiler...
-    inv <- testRunnerApp.processCommand[Invoice, Invoice, CreateRfiInvoiceCmdG[Id]](CreateRfiInvoiceCmdG(user1))
-    invRetrieved <- testRunnerApp.processCommand[Invoice, InvoiceView, InvoiceRetrieveCommandG[Id]](InvoiceRetrieveCommandG(user1, inv.id))
+    inv <- testRunnerApp.processCommand[Invoice, CreateRfiInvoiceCmdG[Id]](CreateRfiInvoiceCmdG(user1))
+    invRetrieved <- testRunnerApp.processCommand[Invoice, InvoiceRetrieveCommandG[Id]](InvoiceRetrieveCommandG(user1, inv.id))
   } yield invRetrieved
 
   println(s"res14: $res14")
