@@ -1,6 +1,5 @@
 package sample1.domain.command
 
-import cats.{Monad, ~>}
 import sample1.domain.cta.CtaRepo
 import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.invoice.{Invoice, InvoiceAlgebra, InvoiceId}
@@ -22,10 +21,6 @@ sealed trait InvoiceCreateCommandG[F[_]] extends EntityCreateCommandG[F, DomainC
 
 sealed trait InvoiceQueryCommandG[F[_], R] extends EntityQueryCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, R, InvoiceRepo[F]] {
   override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
-
-//  override def run[G[_]](input: DomainCommandInput[F])(implicit monadF: Monad[F], transform: F ~> G): G[Either[InvoiceError, R]] = super.run(input)
-
-  //override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
 }
 
 sealed trait InvoiceUpdateCommandG[F[_]] extends EntityUpdateCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {

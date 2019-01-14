@@ -44,13 +44,7 @@ object TestImplicits {
   implicit val ctaVersioned: Versioned[ClinicalTrialAgreement] =
     Versioned.instance(cta => cta.copy(version = cta.version.nextVersion))
 
-  /**
-    * Application layer transformer that enables the client of the application to inject transformers from the domain
-    * types into an appropriate type to be consumed by the client. This instance enables conversion between an Invoice
-    * and an InvoiceView. The client can then simply specify the generic types on the call to process command to enable
-    * a conversion different from the default.
-    */
-  implicit val invoiceToViewTransformer: ApplicationTransformer[InvoiceView, Invoice, InvoiceError] =
+  implicit val invoiceToViewDecoder: Decoder[InvoiceView, Invoice, InvoiceError] =
     (b: Invoice) => InvoiceView.create(b)
 
   /**
