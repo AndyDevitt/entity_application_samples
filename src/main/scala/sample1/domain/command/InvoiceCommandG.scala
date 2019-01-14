@@ -1,22 +1,31 @@
 package sample1.domain.command
 
-import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
+import cats.{Monad, ~>}
+import sample1.domain.cta.CtaRepo
 import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.invoice.{Invoice, InvoiceAlgebra, InvoiceId}
-import sample1.domain.{InvoiceError, StaleInvoiceError, UserId}
+import sample1.domain.{InvoiceError, InvoiceRepo, StaleInvoiceError, UserId}
 
 object InvoiceCommandG {
 
 }
 
-class DomainCommandInput[F[_]](val invoiceRepo: EntityRepo[F, InvoiceId, Invoice, InvoiceError],
-                               val ctaRepo: EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError]
+class DomainCommandInput[F[_]](val invoiceRepo: InvoiceRepo[F],
+                               val ctaRepo: CtaRepo[F]
                               ) extends CommandInput
 
 sealed trait InvoiceCreateCommandG[F[_]] extends EntityCreateCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
   def action(): Either[InvoiceError, Invoice]
 
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.invoiceRepo
+}
+
+sealed trait InvoiceQueryCommandG[F[_], R] extends EntityQueryCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, R, InvoiceRepo[F]] {
+  override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
+
+//  override def run[G[_]](input: DomainCommandInput[F])(implicit monadF: Monad[F], transform: F ~> G): G[Either[InvoiceError, R]] = super.run(input)
+
+  //override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
 }
 
 sealed trait InvoiceUpdateCommandG[F[_]] extends EntityUpdateCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
@@ -40,7 +49,7 @@ final case class ApproveCmd3G[F[_]](userId: UserId, id: InvoiceId, version: Enti
 }
 
 final case class CreateRfiInvoiceCmdG[F[_]](userId: UserId) extends InvoiceCreateCommandG[F] {
-  override def action(): Either[InvoiceError, Invoice] = Right(Invoice.createRfiInvoice(this))
+  override def action(): Either[InvoiceError, Invoice] = Right(Invoice.createRfiInvoiceG(this))
 }
 
 final case class UpdateRfiCmdG[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommandG[F] {
@@ -49,4 +58,8 @@ final case class UpdateRfiCmdG[F[_]](userId: UserId, id: InvoiceId, version: Ent
 
 final case class CreateSiteInvoiceCmdG[F[_]](userId: UserId) extends InvoiceCreateCommandG[F] {
   override def action(): Either[InvoiceError, Invoice] = Right(Invoice.createSiteInvoice(this))
+}
+
+final case class FindAllG[F[_]](userId: UserId) extends InvoiceQueryCommandG[F, Seq[Invoice]] {
+  override def query(repo: InvoiceRepo[F]): F[Either[InvoiceError, Seq[Invoice]]] = repo.find()
 }

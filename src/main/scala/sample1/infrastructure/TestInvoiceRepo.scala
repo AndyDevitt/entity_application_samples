@@ -1,9 +1,11 @@
 package sample1.infrastructure
 
+import cats.syntax.either._
 import cats.{Id, Monad}
+import sample1.domain.command.{CreateRfiInvoiceCmdG, CreateSiteInvoiceCmdG}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice.{Invoice, InvoiceId}
-import sample1.domain.{InvoiceError, InvoiceRepo}
+import sample1.domain.{InvoiceError, InvoiceRepo, UserId}
 
 class TestInvoiceRepo()(implicit versioned: Versioned[Invoice], codec: EntityRepoCodec[Invoice, Invoice, InvoiceError]) extends InvoiceRepo[Id] {
   val entityRepo: InMemoryInvoiceRepo[Id] = new InMemoryInvoiceRepo[Id] {}
@@ -13,4 +15,11 @@ class TestInvoiceRepo()(implicit versioned: Versioned[Invoice], codec: EntityRep
 
   override def retrieve(id: InvoiceId)(implicit monad: Monad[Id]): Id[Either[InvoiceError, Invoice]] =
     entityRepo.retrieveEntity(id)
+
+  override def find(): Id[Either[InvoiceError, Seq[Invoice]]] =
+    Seq(
+      Invoice.createSiteInvoice(CreateSiteInvoiceCmdG(UserId())),
+      Invoice.createSiteInvoice(CreateSiteInvoiceCmdG(UserId())),
+      Invoice.createRfiInvoiceG(CreateRfiInvoiceCmdG(UserId()))
+    ).asRight[InvoiceError]
 }

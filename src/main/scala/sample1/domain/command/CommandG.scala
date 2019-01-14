@@ -105,3 +105,12 @@ trait EntityUpdateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntT
   override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, EntType]] =
     EntityRepoManager.manageUpdate[G, F, I, EntityUpdateCommandG[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)(this.action, staleF)
 }
+
+trait EntityQueryCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType], R, RepoType <: EntityRepo[F, IdType, EntType, E]] extends EntityCommandG[F, I, R, E] {
+  def extractRepo(input: I): RepoType
+
+  def query(repo: RepoType): F[Either[E, R]]
+
+  override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, R]] =
+    EntityRepoManager.manageQuery[G, F, I, EntityQueryCommandG[F, I, E, IdType, EntType, R, RepoType], IdType, EntType, R, E, RepoType](extractRepo(input))(this)(query)
+}

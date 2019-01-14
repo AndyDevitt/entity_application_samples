@@ -2,7 +2,7 @@ package sample1.domain.entity
 
 import cats.data.EitherT
 import cats.{Monad, ~>}
-import sample1.domain.command.{CommandInput, EntityCreateCommandG, EntityRetrieveCommandG, EntityUpdateCommandG}
+import sample1.domain.command._
 
 object EntityRepoManager {
 
@@ -38,5 +38,14 @@ object EntityRepoManager {
 
   private def checkOptimisticLocking[F[_], EntType <: VersionedEntity[IdType], IdType <: EntityId, E](entity: EntType, cmd: EntityUpdateCommandG[F, _, _, _, _], staleF: IdType => E): Either[E, Unit] =
     Either.cond(cmd.version == entity.version, (), staleF(entity.id))
+
+  def manageQuery[F[_], G[_], I <: CommandInput, CmdType <: EntityQueryCommandG[G, I, E, IdType, EntType, R, RepoType], IdType <: EntityId, EntType <: VersionedEntity[IdType], R, E, RepoType <: EntityRepo[G, IdType, EntType, E]](repo: RepoType)
+                                                                                                                                                                                                                                    (cmd: CmdType)
+                                                                                                                                                                                                                                    (f: RepoType => G[Either[E, R]])
+                                                                                                                                                                                                                                    (implicit monadG: Monad[G], transform: G ~> F
+                                                                                                                                                                                                                                    ): F[Either[E, R]] =
+    transform((for {
+      results <- EitherT(f(repo))
+    } yield results).value)
 
 }

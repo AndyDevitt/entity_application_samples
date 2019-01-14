@@ -202,4 +202,10 @@ object ApplicationTestsV5 extends App {
 
   println(s"res16: $res16")
 
+  val res17 = for {
+    res <- testProcessorApp.processCommand(FindAllG(user1))
+  } yield res
+
+  println(s"res17: $res17")
+
 }

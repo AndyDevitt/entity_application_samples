@@ -29,7 +29,7 @@ object Invoice {
   def createRfiInvoice(cmd: CreateRfiInvoiceCmd): SponsorInvoice =
     SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil, RequestForInvoice())
 
-  def createRfiInvoice[F[_]](cmd: CreateRfiInvoiceCmdG[F]): SponsorInvoice =
+  def createRfiInvoiceG[F[_]](cmd: CreateRfiInvoiceCmdG[F]): SponsorInvoice =
     SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil, RequestForInvoice())
 
   def createSiteInvoice[F[_]](cmd: CreateSiteInvoiceCmdG[F]): SiteInvoice =
