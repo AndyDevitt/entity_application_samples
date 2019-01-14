@@ -28,13 +28,12 @@ trait InvoiceApplicationWithProcessor[F[_], G[_]] {
     * @tparam T the required sucess result type for the caller
     * @return returns the result of running the command, transformed into the callers desired type
     */
-  def processCommand[R, T](cmd: CommandG[G, DomainCommandInput[G], R, InvoiceError])
-                          (implicit monadF: Monad[F],
-                           monadG: Monad[G],
-                           naturalTransformation: G ~> F,
-                           transformer: ApplicationTransformer[T, R, InvoiceError]
-                          ): F[Either[InvoiceError, T]] =
-    monadF.map(cmd.run(input))(_.flatMap(transformer.decode))
+  def processCommand[R](cmd: CommandG[G, DomainCommandInput[G], R, InvoiceError])
+                       (implicit monadF: Monad[F],
+                        monadG: Monad[G],
+                        naturalTransformation: G ~> F
+                       ): F[Either[InvoiceError, R]] =
+    cmd.run(input)
 }
 
 class ProdApplicationWithProcessor(override val repo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplicationWithProcessor[Future, IO]
