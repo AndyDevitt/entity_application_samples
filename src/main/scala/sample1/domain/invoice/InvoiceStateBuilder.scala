@@ -13,27 +13,36 @@ object InvoiceStateBuilder {
   final case object CannotBuild extends Buildable
 
   /**
-    * Builder class to update Invoice state. Provides an interface describing all the available state manipulation
-    * functions, but delegates implementation to implicitly defined instances of the type class specific to each
-    * behaviour. This enables behaviour to be defined only for the types in the ADT hierarchy where the behaviour is
-    * valid, and invalid calls to update state will be detected at compile time.
+    * BuilderOps class to provide an implicit conversion on any Invoice instance for ease of use.
     *
     * @param invoice the invoice state that is being manipulated
     * @tparam A the specific type of the invoice
     */
   implicit class BuilderOps[A <: Invoice](override protected val invoice: A) extends Builder[A, CannotBuild.type]
 
+  /**
+    * Builder trait to update Invoice state. Provides an interface describing all the available state manipulation
+    * functions, but delegates implementation to implicitly defined instances of the type class specific to each
+    * behaviour. This enables behaviour to be defined only for the types in the ADT hierarchy where the behaviour is
+    * valid, and invalid calls to update state will be detected at compile time.
+    *
+    * Follows the builder pattern using Phantom types to ensure that the updateLastEdited() method is called before the
+    * underlying invoice state can be obtained, thus guaranteeing that certain required updates are performed for every
+    * state update. If other methods are required to be called, additional flags may be added to enforce the same rules.
+    *
+    * @tparam A
+    * @tparam B
+    */
   trait Builder[A <: Invoice, B <: Buildable] {
     protected def invoice: A
 
     /**
-      * build returns the underlying type A, whereas every other method returns a Builder[A]. This ensures that build is
-      * called to complete the build and guarantees that lastEditedBy and lastEditedAt (and any other mandatory field to
-      * update) is handled by updating them in this method.
+      * build method returns the underlying state after any mutations have taken place. It requires that the generic
+      * type B is of type CanBuild in order to compile when called, ensuring that the underlying state cannot be
+      * retrieved until this type has been encoded on the Builder instance.
       *
-      * @param cmd  the command that is being executed to update the state
-      * @param impl implementation for the build behaviour provided via implicit resolution
-      * @return returns the underlying type from the builder object
+      * @param ev implicit evidence that the type B is indeed CanBuild.type
+      * @return the underlying invoice
       */
     def build()(implicit ev: B =:= CanBuild.type): A =
       invoice
