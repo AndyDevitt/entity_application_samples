@@ -57,7 +57,7 @@ object TestImplicits {
       (cta: ClinicalTrialAgreement) => cta,
       (cta: ClinicalTrialAgreement) => Right(cta.copy(note = "I've been flipped!")))
 
-  implicit val invoiceToView: Transform[Invoice, InvoiceView, InvoiceError] =
+  implicit val invoiceToInvoiceView: Transform[Invoice, InvoiceView, InvoiceError] =
     (from: Invoice) => InvoiceView.create(from)
 }
 

@@ -1,6 +1,5 @@
 package sample1.application
 
-import cats.syntax.either._
 import sample1.domain._
 import sample1.domain.entity.EntityVersion
 import sample1.domain.invoice._
@@ -19,7 +18,6 @@ object InvoiceView {
   def create(invoice: Invoice): Either[InvoiceError, InvoiceView] =
     for {
       total <- InvoiceAlgebra.calculateTotal(invoice)
-      actions <- InvoiceAlgebra.actionStatuses(invoice).asRight[InvoiceError]
     } yield new InvoiceView(
       id = invoice.id,
       version = invoice.version,
@@ -28,7 +26,7 @@ object InvoiceView {
       lastEditedBy = invoice.lastEditedBy,
       requestForInvoice = rfi(invoice),
       total = total,
-      actions = actions
+      actions = InvoiceAlgebra.actionStatuses(invoice)
     )
 
   private def rfi(invoice: Invoice): Option[RequestForInvoice] = invoice match {
