@@ -62,12 +62,17 @@ object TestImplicits {
     EntityRepoCodec.instance[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError](
       (cta: ClinicalTrialAgreement) => cta,
       (cta: ClinicalTrialAgreement) => Right(cta.copy(note = "I've been flipped!")))
+
+  implicit val invoiceToView: Transform[Invoice, InvoiceView, InvoiceError] =
+    (from: Invoice) => InvoiceView.create(from)
 }
 
 object ApplicationTestsV5 extends App {
 
   import ApplicationTransformer._
   import TestImplicits._
+  import Transform._
+  import Transform.Instances._
 
   //implicit val idUpdateRunner = CommandRunner.invoiceUpdateCommandRunner[Id, Id]
   //implicit val idCreateRunner = CommandRunner.invoiceCreateCommandRunner[Id, Id]
@@ -163,7 +168,7 @@ object ApplicationTestsV5 extends App {
 
   val res11 = for {
     inv <- testProcessorApp.processCommand[Invoice, Invoice](CreateRfiInvoiceCmdG(user1))
-    invRetrieved <- testProcessorApp.processCommand[Invoice, Invoice](InvoiceRetrieveCommandG(user1, inv.id))
+    invRetrieved <- testProcessorApp.processCommand[Invoice, Invoice](InvoiceRetrieveCommandG(user1, inv.id)).to[InvoiceView]
   } yield invRetrieved
 
   println(s"res11: $res11")
@@ -204,7 +209,7 @@ object ApplicationTestsV5 extends App {
   println(s"res16: $res16")
 
   val res17 = for {
-    res <- testProcessorApp.processCommand[Seq[Invoice], Seq[InvoiceView]](FindAllG(user1))
+    res <- testProcessorApp.processCommand[Seq[Invoice], Seq[Invoice]](FindAllG(user1)).to[Seq[InvoiceView]]
   } yield res
 
   println(s"res17: $res17")
