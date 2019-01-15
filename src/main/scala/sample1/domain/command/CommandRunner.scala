@@ -15,21 +15,21 @@ object CommandRunner {
                                                      ): CommandRunner[F, G, InvoiceUpdateCommandG[G], DomainCommandInput[G], Invoice, InvoiceError] =
     (command: InvoiceUpdateCommandG[G], input: DomainCommandInput[G]) => {
       println("invoiceUpdate")
-      EntityRepoManager.manageUpdate[F, G, DomainCommandInput[G], InvoiceUpdateCommandG[G], InvoiceId, Invoice, InvoiceError](input.invoiceRepo)(command)(command.action, id => StaleInvoiceError(id))
+      EntityRepoManager.manageUpdate[F, G, DomainCommandInput[G], InvoiceUpdateCommandG[G], InvoiceId, Invoice, InvoiceError](input.invoiceRepo)(command)(id => StaleInvoiceError(id))
     }
 
   implicit def invoiceCreateRfiCommandRunner[F[_], G[_]](implicit transformer: G ~> F, monadF: Monad[G]
                                                         ): CommandRunner[F, G, CreateRfiInvoiceCmdG[G], DomainCommandInput[G], Invoice, InvoiceError] =
     (command: CreateRfiInvoiceCmdG[G], input: DomainCommandInput[G]) => {
       println("createRfi")
-      EntityRepoManager.manageCreate[F, G, DomainCommandInput[G], CreateRfiInvoiceCmdG[G], InvoiceId, Invoice, InvoiceError](input.invoiceRepo)(command)(() => command.action())
+      EntityRepoManager.manageCreate[F, G, DomainCommandInput[G], CreateRfiInvoiceCmdG[G], InvoiceId, Invoice, InvoiceError](input.invoiceRepo)(command)
     }
 
   implicit def invoiceCreateCommandRunner[F[_], G[_]](implicit transformer: G ~> F, monadF: Monad[G]
                                                      ): CommandRunner[F, G, InvoiceCreateCommandG[G], DomainCommandInput[G], Invoice, InvoiceError] =
     (command: InvoiceCreateCommandG[G], input: DomainCommandInput[G]) => {
       println("invoiceCreate")
-      EntityRepoManager.manageCreate[F, G, DomainCommandInput[G], InvoiceCreateCommandG[G], InvoiceId, Invoice, InvoiceError](input.invoiceRepo)(command)(() => command.action())
+      EntityRepoManager.manageCreate[F, G, DomainCommandInput[G], InvoiceCreateCommandG[G], InvoiceId, Invoice, InvoiceError](input.invoiceRepo)(command)
     }
 
   implicit def invoiceRetrieveCommandRunner[F[_], G[_]](implicit transformer: G ~> F, monadF: Monad[G]

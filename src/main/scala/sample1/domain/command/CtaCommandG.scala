@@ -9,7 +9,7 @@ object CtaCommandG {
 }
 
 sealed trait CtaCreateCommandG[F[_]] extends EntityCreateCommandG[F, DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement] {
-  def action(): Either[InvoiceError, ClinicalTrialAgreement]
+  def create(): Either[InvoiceError, ClinicalTrialAgreement]
 
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] = input.ctaRepo
 }
@@ -27,5 +27,5 @@ final case class CtaRetrieveCommandG[F[_]](userId: UserId, id: ClinicalTrialAgre
 }
 
 final case class CreateCtaCmdG[F[_]](userId: UserId) extends CtaCreateCommandG[F] {
-  override def action(): Either[InvoiceError, ClinicalTrialAgreement] = Right(ClinicalTrialAgreement.create(this))
+  override def create(): Either[InvoiceError, ClinicalTrialAgreement] = Right(ClinicalTrialAgreement.create(this))
 }

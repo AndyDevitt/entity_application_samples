@@ -30,12 +30,6 @@ trait CommandG[F[_], -I <: CommandInput, R, E] extends Command {
   def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, R]]
 }
 
-sealed trait CommandCategory
-
-case object Update extends CommandCategory
-
-case object Create extends CommandCategory
-
 sealed trait EntityCommandG[F[_], -I <: CommandInput, R, E] extends CommandG[F, I, R, E]
 
 sealed trait OptimisticLockingG {
@@ -47,12 +41,12 @@ trait IgnoreOptimisticLockingG extends OptimisticLockingG {
 }
 
 trait EntityCreateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommandG[F, I, EntType, E] {
-  def action(): Either[E, EntType]
+  def create(): Either[E, EntType]
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
 
   override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, EntType]] =
-    EntityRepoManager.manageCreate[G, F, I, EntityCreateCommandG[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)(() => this.action())
+    EntityRepoManager.manageCreate[G, F, I, EntityCreateCommandG[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)
 }
 
 trait EntityRetrieveCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommandG[F, I, EntType, E] {
@@ -76,7 +70,7 @@ trait EntityUpdateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntT
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
 
   override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, EntType]] =
-    EntityRepoManager.manageUpdate[G, F, I, EntityUpdateCommandG[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)(this.action, staleF)
+    EntityRepoManager.manageUpdate[G, F, I, EntityUpdateCommandG[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)(staleF)
 }
 
 trait EntityQueryCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType], R, RepoType <: EntityRepo[F, IdType, EntType, E]] extends EntityCommandG[F, I, R, E] {
@@ -85,5 +79,5 @@ trait EntityQueryCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntTy
   def query(repo: RepoType): F[Either[E, R]]
 
   override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, R]] =
-    EntityRepoManager.manageQuery[G, F, I, EntityQueryCommandG[F, I, E, IdType, EntType, R, RepoType], IdType, EntType, R, E, RepoType](extractRepo(input))(this)(query)
+    EntityRepoManager.manageQuery[G, F, I, EntityQueryCommandG[F, I, E, IdType, EntType, R, RepoType], IdType, EntType, R, E, RepoType](extractRepo(input))(this)
 }
