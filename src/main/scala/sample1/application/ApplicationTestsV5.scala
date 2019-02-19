@@ -207,4 +207,13 @@ object ApplicationTestsV5 extends App {
 
   println(s"res17: $res17")
 
+  val transformer = (inv: Invoice) => InvoiceView.create(inv)
+
+  val res18 = for {
+    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmdG(user1), transformer)
+    inv2 <- testProcessorApp.processCommand(ApproveCmd3G(user2, inv1.id, inv1.version), transformer)
+  } yield inv2
+
+  println(s"res18: $res18")
+
 }

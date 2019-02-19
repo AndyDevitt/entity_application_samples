@@ -23,4 +23,12 @@ trait EntityApplication[F[_], G[_], I <: CommandInput, Error] {
                         naturalTransformation: G ~> F
                        ): F[Either[Error, R]] =
     cmd.run(input)
+
+
+  def processCommand[R, T](cmd: CommandG[G, I, R, Error], transformer: R => Either[Error, T])
+                          (implicit monadF: Monad[F],
+                           monadG: Monad[G],
+                           naturalTransformation: G ~> F
+                          ): F[Either[Error, T]] =
+    monadF.map(cmd.run(input))(_.flatMap(transformer))
 }
