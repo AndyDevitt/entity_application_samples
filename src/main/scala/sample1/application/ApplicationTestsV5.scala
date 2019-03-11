@@ -1,21 +1,16 @@
 package sample1.application
 
-import cats.data.EitherT
 import cats.effect.IO
-import cats.instances.future._
-import cats.{Id, ~>}
+import cats.~>
 import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
-import sample1.domain.entity.{EntityRepoCodec, EntityVersion, Versioned}
+import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice.{Invoice, SiteInvoice, SponsorInvoice}
-import sample1.infrastructure.{ProductionInvoiceRepo, TestCtaRepo, TestInvoiceRepo}
+import sample1.infrastructure.{TestCtaRepo, TestInvoiceRepo}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
 
 object TestImplicits {
 
@@ -67,76 +62,13 @@ object ApplicationTestsV5 extends App {
   import Transform.Instances._
   import Transform._
 
-  //implicit val idUpdateRunner = CommandRunner.invoiceUpdateCommandRunner[Id, Id]
-  //implicit val idCreateRunner = CommandRunner.invoiceCreateCommandRunner[Id, Id]
-  //implicit val idRetrieveRunner = CommandRunner.invoiceRetrieveCommandRunner[Id, Id]
-  //implicit val idCreateRfiRunner = CommandRunner.invoiceCreateRfiCommandRunner[Id, Id]
-
   val user1 = UserId("User1")
   val user2 = UserId("User2")
-
-  val prodApp = new ProdApplication(new ProductionInvoiceRepo())
-  val testApp = new TestApplication(new TestInvoiceRepo())
 
   // TODO [AD]: consider naming of the application transformer and the repo codec and also their current inheritance
   //  structure (i.e. deriving from the Codec family of traits). Also, should these simply be explicit parameters?
   val testProcessorApp = new TestApplicationWithProcessor(new TestInvoiceRepo(), new TestCtaRepo())
-  val testRunnerApp = new TestApplicationWithRunner(new TestInvoiceRepo(), new TestCtaRepo())
 
-  val res = (for {
-    inv <- EitherT(prodApp.createRfiInvoice(CreateRfiInvoiceCmd(user1)))
-    updated <- EitherT(prodApp.approveInvoice(ApproveCmd(user2, inv.id, inv.version)))
-  } yield updated).value
-
-  res.onComplete {
-    case Success(value) => println(s"Result: ${value.toString}")
-    case Failure(exception) => println(s"Failure: ${exception.toString}")
-  }
-
-  Await.result(res, 10 seconds)
-
-  val res2 = for {
-    inv1 <- testApp.createRfiInvoice(CreateRfiInvoiceCmd(user1))
-    inv2 <- testApp.approveInvoice(ApproveCmd(user2, inv1.id, inv1.version))
-  } yield inv2
-
-  println(s"res2: $res2")
-
-  val res3 = for {
-    inv1 <- testApp.createRfiInvoice(CreateRfiInvoiceCmd(user1))
-    inv2 <- testApp.approveInvoiceAndTrans(ApproveCmd(user2, inv1.id, EntityVersion()))
-  } yield inv2
-
-  println(s"res3: $res3")
-
-  val res4 = for {
-    inv1 <- testApp.createRfiInvoice(CreateRfiInvoiceCmd(user1))
-    inv2 <- testApp.approveInvoice2(ApproveCmd(user2, inv1.id, inv1.version))
-  } yield inv2
-
-  println(s"res4: $res4")
-
-  val res5 = for {
-    inv1 <- testApp.createRfiInvoice(CreateRfiInvoiceCmd(user1))
-    inv2 <- testApp.updateRfi(UpdateRfiCmd(user2, inv1.id, inv1.version))
-  } yield inv2
-
-  println(s"res5: $res5")
-
-  val res6 = for {
-    inv1 <- testApp.createRfiInvoice(CreateRfiInvoiceCmd(user1))
-    inv2 <- testApp.approveInvoice2(ApproveCmd(user2, inv1.id, inv1.version))
-    inv3 <- testApp.updateRfi(UpdateRfiCmd(user1, inv2.id, inv2.version))
-  } yield inv3
-
-  println(s"res6: $res6")
-
-  val res7 = for {
-    inv1 <- testApp.createRfiInvoice(CreateRfiInvoiceCmd(user1))
-    inv2 <- testApp.approveInvoiceAndTrans(ApproveCmd(user2, inv1.id, inv1.version))
-  } yield inv2
-
-  println(s"res7: $res7")
 
   val res8 = for {
     inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
@@ -179,13 +111,6 @@ object ApplicationTestsV5 extends App {
 
   println(s"res13: $res13")
 
-  val res14 = for {
-    // Command runner is also currently annoying as we have to specify the types for processCommand to help the compiler...
-    inv <- testRunnerApp.processCommand[Invoice, CreateRfiInvoiceCmdG[Id]](CreateRfiInvoiceCmdG(user1))
-    invRetrieved <- testRunnerApp.processCommand[Invoice, InvoiceRetrieveCommandG[Id]](InvoiceRetrieveCommandG(user1, inv.id))
-  } yield invRetrieved
-
-  println(s"res14: $res14")
 
   val res15 = for {
     inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
