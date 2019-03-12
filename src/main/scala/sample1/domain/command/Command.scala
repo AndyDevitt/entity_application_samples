@@ -40,11 +40,11 @@ trait RunnableCommand[F[_], -I <: CommandInput, R, E] extends Command {
 
 sealed trait EntityCommand[F[_], -I <: CommandInput, R, E] extends RunnableCommand[F, I, R, E]
 
-sealed trait OptimisticLockingG {
+sealed trait OptimisticLocking {
   def enforceOptimisticLocking: Boolean = true
 }
 
-trait IgnoreOptimisticLockingG extends OptimisticLockingG {
+trait IgnoreOptimisticLocking extends OptimisticLocking {
   override def enforceOptimisticLocking: Boolean = false
 }
 
@@ -66,7 +66,7 @@ trait EntityRetrieveCommand[F[_], -I <: CommandInput, E, IdType <: EntityId, Ent
     EntityRepoManager.manageRetrieve[G, F, I, EntityRetrieveCommand[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)
 }
 
-trait EntityUpdateCommand[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommand[F, I, EntType, E] with OptimisticLockingG {
+trait EntityUpdateCommand[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommand[F, I, EntType, E] with OptimisticLocking {
   def id: IdType
 
   def version: EntityVersion
