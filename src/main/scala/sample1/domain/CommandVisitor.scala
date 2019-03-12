@@ -1,15 +1,15 @@
 package sample1.domain
 
-import sample1.domain.command.{ApproveCmd, Command, CreateRfiInvoiceCmd, UpdateRfiCmd}
+import sample1.domain.command._
 import sample1.domain.invoice.InvoiceAction
 
 trait CommandVisitor[A] {
 
-  def visit(cmd: ApproveCmd): A
+  def visit[F[_]](cmd: ApproveCmdG[F]): A
 
-  def visit(cmd: CreateRfiInvoiceCmd): A
+  def visit[F[_]](cmd: CreateRfiInvoiceCmdG[F]): A
 
-  def visit(cmd: UpdateRfiCmd): A
+  def visit[F[_]](cmd: UpdateRfiCmdG[F]): A
 
 }
 
@@ -22,11 +22,11 @@ trait ActionVisitor[A] {
 }
 
 class CommandToActionVisitor extends CommandVisitor[InvoiceAction] {
-  override def visit(cmd: ApproveCmd): InvoiceAction.Approve.type = InvoiceAction.Approve
+  override def visit[F[_]](cmd: ApproveCmdG[F]): InvoiceAction.Approve.type = InvoiceAction.Approve
 
-  override def visit(cmd: CreateRfiInvoiceCmd): InvoiceAction.CreateRfi.type = InvoiceAction.CreateRfi
+  override def visit[F[_]](cmd: CreateRfiInvoiceCmdG[F]): InvoiceAction.CreateRfi.type = InvoiceAction.CreateRfi
 
-  override def visit(cmd: UpdateRfiCmd): InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
+  override def visit[F[_]](cmd: UpdateRfiCmdG[F]): InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
 }
 
 class PrettifyActionVisitor extends ActionVisitor[String] {
@@ -39,9 +39,9 @@ class PrettifyActionVisitor extends ActionVisitor[String] {
 
 object CommandVisitor {
   def processCommand[A](cmd: Command, visitor: CommandVisitor[A]): A = cmd match {
-    case c: ApproveCmd => visitor.visit(c)
-    case c: CreateRfiInvoiceCmd => visitor.visit(c)
-    case c: UpdateRfiCmd => visitor.visit(c)
+    case c: ApproveCmdG[_] => visitor.visit(c)
+    case c: CreateRfiInvoiceCmdG[_] => visitor.visit(c)
+    case c: UpdateRfiCmdG[_] => visitor.visit(c)
   }
 }
 
@@ -54,7 +54,7 @@ object ActionVisitor {
 }
 
 object Test extends App {
-  val res = CommandVisitor.processCommand(CreateRfiInvoiceCmd(UserId()), new CommandToActionVisitor)
+  val res = CommandVisitor.processCommand(CreateRfiInvoiceCmdG(UserId()), new CommandToActionVisitor)
   val res2 = ActionVisitor.processAction(res, new PrettifyActionVisitor)
   println(res)
   println(res2)

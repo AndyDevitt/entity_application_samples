@@ -1,6 +1,6 @@
 package sample1.domain.invoice
 
-import sample1.domain.command.{CreateRfiInvoiceCmd, CreateRfiInvoiceCmdG, CreateSiteInvoiceCmdG}
+import sample1.domain.command.{CreateRfiInvoiceCmdG, CreateSiteInvoiceCmdG}
 import sample1.domain.entity.{EntityVersion, VersionedEntity}
 import sample1.domain.{Cost, RequestForInvoice, UserId}
 
@@ -26,9 +26,6 @@ final case class SponsorInvoice private(id: InvoiceId,
                                         rfi: RequestForInvoice) extends Invoice
 
 object Invoice {
-  def createRfiInvoice(cmd: CreateRfiInvoiceCmd): SponsorInvoice =
-    SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil, RequestForInvoice())
-
   def createRfiInvoiceG[F[_]](cmd: CreateRfiInvoiceCmdG[F]): SponsorInvoice =
     SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil, RequestForInvoice())
 

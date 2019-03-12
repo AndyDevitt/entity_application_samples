@@ -1,7 +1,15 @@
 package sample1.domain.command
 
 import cats.{Monad, ~>}
+import sample1.domain.UserId
 import sample1.domain.entity._
+
+/**
+  * Base trait for all commands. Requires that a UserId be defined for all commands.
+  */
+trait Command {
+  def userId: UserId
+}
 
 /**
   * Base trait for the input to command when run. This will be extended to provide the runtime references to resources
