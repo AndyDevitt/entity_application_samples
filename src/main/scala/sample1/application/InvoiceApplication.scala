@@ -14,7 +14,7 @@ import scala.concurrent.Future
   * @tparam F the context for the application
   * @tparam G the context for the underlying repo
   */
-trait InvoiceApplicationWithProcessor[F[_], G[_]] extends EntityApplication[F, G, DomainCommandInput[G], InvoiceError] {
+trait InvoiceApplication[F[_], G[_]] extends EntityApplication[F, G, DomainCommandInput[G], InvoiceError] {
   def invoiceRepo: InvoiceRepo[G]
 
   def ctaRepo: CtaRepo[G]
@@ -28,7 +28,7 @@ trait InvoiceApplicationWithProcessor[F[_], G[_]] extends EntityApplication[F, G
   * @param invoiceRepo
   * @param ctaRepo
   */
-class ProdApplicationWithProcessor(override val invoiceRepo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplicationWithProcessor[Future, IO]
+class ProdApplication(override val invoiceRepo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplication[Future, IO]
 
 /**
   * An example test repo that simply uses the Id context
@@ -36,4 +36,4 @@ class ProdApplicationWithProcessor(override val invoiceRepo: InvoiceRepo[IO], ov
   * @param invoiceRepo
   * @param ctaRepo
   */
-class TestApplicationWithProcessor(override val invoiceRepo: InvoiceRepo[Id], override val ctaRepo: CtaRepo[Id]) extends InvoiceApplicationWithProcessor[Id, Id]
+class TestApplication(override val invoiceRepo: InvoiceRepo[Id], override val ctaRepo: CtaRepo[Id]) extends InvoiceApplication[Id, Id]

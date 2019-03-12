@@ -67,7 +67,7 @@ object ApplicationTestsV5 extends App {
 
   // TODO [AD]: consider naming of the application transformer and the repo codec and also their current inheritance
   //  structure (i.e. deriving from the Codec family of traits). Also, should these simply be explicit parameters?
-  val testProcessorApp = new TestApplicationWithProcessor(new TestInvoiceRepo(), new TestCtaRepo())
+  val testProcessorApp = new TestApplication(new TestInvoiceRepo(), new TestCtaRepo())
 
 
   val res8 = for {
