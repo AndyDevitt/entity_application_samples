@@ -4,10 +4,6 @@ import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
 import sample1.domain.entity.EntityRepo
 import sample1.domain.{InvoiceError, StaleCtaError, UserId}
 
-object CtaCommandG {
-
-}
-
 sealed trait CtaCreateCommand[F[_]] extends EntityCreateCommand[F, DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement] {
   def create(): Either[InvoiceError, ClinicalTrialAgreement]
 

@@ -5,10 +5,6 @@ import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.invoice.{Invoice, InvoiceAlgebra, InvoiceId}
 import sample1.domain.{InvoiceError, InvoiceRepo, StaleInvoiceError, UserId}
 
-object InvoiceCommandG {
-
-}
-
 class DomainCommandInput[F[_]](val invoiceRepo: InvoiceRepo[F],
                                val ctaRepo: CtaRepo[F]
                               ) extends CommandInput
