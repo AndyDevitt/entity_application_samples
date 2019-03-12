@@ -46,7 +46,9 @@ object InvoiceAlgebra {
   }
 
   def createRfi[F[_]](invoice: Invoice, cmd: CreateRfiInvoiceCmd[F]): Either[InvoiceError, Invoice] =
-    canDoAction(canCreateRfi)(invoice, cmd) map { InvoiceUtils.createRfi(_, cmd) }
+    canDoAction(canCreateRfi)(invoice, cmd) map {
+      InvoiceUtils.createRfi(_, cmd)
+    }
 
   def canApprove(invoice: Invoice): Either[NotAllowed, Invoice] =
     Either.cond(invoice.status == NotApproved, invoice, NotAllowedInCurrentStatus())
