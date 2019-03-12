@@ -5,11 +5,11 @@ import sample1.domain.invoice.InvoiceAction
 
 trait CommandVisitor[A] {
 
-  def visit[F[_]](cmd: ApproveCmdG[F]): A
+  def visit[F[_]](cmd: ApproveCmd[F]): A
 
-  def visit[F[_]](cmd: CreateRfiInvoiceCmdG[F]): A
+  def visit[F[_]](cmd: CreateRfiInvoiceCmd[F]): A
 
-  def visit[F[_]](cmd: UpdateRfiCmdG[F]): A
+  def visit[F[_]](cmd: UpdateRfiCmd[F]): A
 
 }
 
@@ -22,11 +22,11 @@ trait ActionVisitor[A] {
 }
 
 class CommandToActionVisitor extends CommandVisitor[InvoiceAction] {
-  override def visit[F[_]](cmd: ApproveCmdG[F]): InvoiceAction.Approve.type = InvoiceAction.Approve
+  override def visit[F[_]](cmd: ApproveCmd[F]): InvoiceAction.Approve.type = InvoiceAction.Approve
 
-  override def visit[F[_]](cmd: CreateRfiInvoiceCmdG[F]): InvoiceAction.CreateRfi.type = InvoiceAction.CreateRfi
+  override def visit[F[_]](cmd: CreateRfiInvoiceCmd[F]): InvoiceAction.CreateRfi.type = InvoiceAction.CreateRfi
 
-  override def visit[F[_]](cmd: UpdateRfiCmdG[F]): InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
+  override def visit[F[_]](cmd: UpdateRfiCmd[F]): InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
 }
 
 class PrettifyActionVisitor extends ActionVisitor[String] {
@@ -39,9 +39,9 @@ class PrettifyActionVisitor extends ActionVisitor[String] {
 
 object CommandVisitor {
   def processCommand[A](cmd: Command, visitor: CommandVisitor[A]): A = cmd match {
-    case c: ApproveCmdG[_] => visitor.visit(c)
-    case c: CreateRfiInvoiceCmdG[_] => visitor.visit(c)
-    case c: UpdateRfiCmdG[_] => visitor.visit(c)
+    case c: ApproveCmd[_] => visitor.visit(c)
+    case c: CreateRfiInvoiceCmd[_] => visitor.visit(c)
+    case c: UpdateRfiCmd[_] => visitor.visit(c)
   }
 }
 
@@ -54,7 +54,7 @@ object ActionVisitor {
 }
 
 object Test extends App {
-  val res = CommandVisitor.processCommand(CreateRfiInvoiceCmdG(UserId()), new CommandToActionVisitor)
+  val res = CommandVisitor.processCommand(CreateRfiInvoiceCmd(UserId()), new CommandToActionVisitor)
   val res2 = ActionVisitor.processAction(res, new PrettifyActionVisitor)
   println(res)
   println(res2)

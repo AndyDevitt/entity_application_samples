@@ -26,7 +26,7 @@ trait CommandInput
   * @tparam R the success result type
   * @tparam E error type
   */
-trait CommandG[F[_], -I <: CommandInput, R, E] extends Command {
+trait RunnableCommand[F[_], -I <: CommandInput, R, E] extends Command {
   /**
     *
     * @param input     the command input that will contain any runtime references supplied by the application layer
@@ -38,7 +38,7 @@ trait CommandG[F[_], -I <: CommandInput, R, E] extends Command {
   def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, R]]
 }
 
-sealed trait EntityCommandG[F[_], -I <: CommandInput, R, E] extends CommandG[F, I, R, E]
+sealed trait EntityCommand[F[_], -I <: CommandInput, R, E] extends RunnableCommand[F, I, R, E]
 
 sealed trait OptimisticLockingG {
   def enforceOptimisticLocking: Boolean = true
@@ -48,25 +48,25 @@ trait IgnoreOptimisticLockingG extends OptimisticLockingG {
   override def enforceOptimisticLocking: Boolean = false
 }
 
-trait EntityCreateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommandG[F, I, EntType, E] {
+trait EntityCreateCommand[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommand[F, I, EntType, E] {
   def create(): Either[E, EntType]
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
 
   override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, EntType]] =
-    EntityRepoManager.manageCreate[G, F, I, EntityCreateCommandG[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)
+    EntityRepoManager.manageCreate[G, F, I, EntityCreateCommand[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)
 }
 
-trait EntityRetrieveCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommandG[F, I, EntType, E] {
+trait EntityRetrieveCommand[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommand[F, I, EntType, E] {
   def id: IdType
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
 
   override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, EntType]] =
-    EntityRepoManager.manageRetrieve[G, F, I, EntityRetrieveCommandG[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)
+    EntityRepoManager.manageRetrieve[G, F, I, EntityRetrieveCommand[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)
 }
 
-trait EntityUpdateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommandG[F, I, EntType, E] with OptimisticLockingG {
+trait EntityUpdateCommand[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType]] extends EntityCommand[F, I, EntType, E] with OptimisticLockingG {
   def id: IdType
 
   def version: EntityVersion
@@ -78,14 +78,14 @@ trait EntityUpdateCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntT
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
 
   override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, EntType]] =
-    EntityRepoManager.manageUpdate[G, F, I, EntityUpdateCommandG[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)(staleF)
+    EntityRepoManager.manageUpdate[G, F, I, EntityUpdateCommand[F, I, E, IdType, EntType], IdType, EntType, E](extractRepo(input))(this)(staleF)
 }
 
-trait EntityQueryCommandG[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType], R, RepoType <: EntityRepo[F, IdType, EntType, E]] extends EntityCommandG[F, I, R, E] {
+trait EntityQueryCommand[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType], R, RepoType <: EntityRepo[F, IdType, EntType, E]] extends EntityCommand[F, I, R, E] {
   def extractRepo(input: I): RepoType
 
   def query(repo: RepoType): F[Either[E, R]]
 
   override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, R]] =
-    EntityRepoManager.manageQuery[G, F, I, EntityQueryCommandG[F, I, E, IdType, EntType, R, RepoType], IdType, EntType, R, E, RepoType](extractRepo(input))(this)
+    EntityRepoManager.manageQuery[G, F, I, EntityQueryCommand[F, I, E, IdType, EntType, R, RepoType], IdType, EntType, R, E, RepoType](extractRepo(input))(this)
 }

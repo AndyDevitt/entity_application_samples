@@ -11,9 +11,9 @@ object InvoiceAlgebra {
   import sample1.domain.invoice.InvoiceUtils._
 
   def actionFromCommand(cmd: Command): InvoiceAction = cmd match {
-    case _: ApproveCmdG[_] => InvoiceAction.Approve
-    case _: CreateRfiInvoiceCmdG[_] => InvoiceAction.CreateRfi
-    case _: UpdateRfiCmdG[_] => InvoiceAction.UpdateRfi
+    case _: ApproveCmd[_] => InvoiceAction.Approve
+    case _: CreateRfiInvoiceCmd[_] => InvoiceAction.CreateRfi
+    case _: UpdateRfiCmd[_] => InvoiceAction.UpdateRfi
   }
 
   def actionStatuses(invoice: Invoice): Set[(InvoiceAction, ActionStatus)] =
@@ -36,7 +36,7 @@ object InvoiceAlgebra {
       .flatMap(inv => checkOptimisticLocking(inv, cmd))
 
   private def checkOptimisticLocking[A <: Invoice](invoice: A, cmd: Command): Either[InvoiceError, A] = cmd match {
-    case c: EntityUpdateCommandG[_, _, _, _, _] if c.enforceOptimisticLocking && c.version != invoice.version => Left(StaleInvoiceError(invoice.id))
+    case c: EntityUpdateCommand[_, _, _, _, _] if c.enforceOptimisticLocking && c.version != invoice.version => Left(StaleInvoiceError(invoice.id))
     case _ => Right(invoice)
   }
 
@@ -45,13 +45,13 @@ object InvoiceAlgebra {
     case _: SiteInvoice => Left(NotAllowedForProcessType())
   }
 
-  def createRfi[F[_]](invoice: Invoice, cmd: CreateRfiInvoiceCmdG[F]): Either[InvoiceError, Invoice] =
+  def createRfi[F[_]](invoice: Invoice, cmd: CreateRfiInvoiceCmd[F]): Either[InvoiceError, Invoice] =
     canDoAction(canCreateRfi)(invoice, cmd) map { InvoiceUtils.createRfi(_, cmd) }
 
   def canApprove(invoice: Invoice): Either[NotAllowed, Invoice] =
     Either.cond(invoice.status == NotApproved, invoice, NotAllowedInCurrentStatus())
 
-  def approveG[F[_]](invoice: Invoice, cmd: ApproveCmdG[F]): Either[InvoiceError, Invoice] =
+  def approveG[F[_]](invoice: Invoice, cmd: ApproveCmd[F]): Either[InvoiceError, Invoice] =
     canDoAction(canApprove)(invoice, cmd) map { inv =>
       val pgm = for {
         _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
@@ -60,7 +60,7 @@ object InvoiceAlgebra {
       pgm.runS(inv).value
     }
 
-  def approve3G[F[_]](invoice: Invoice, cmd: ApproveCmd3G[F]): Either[InvoiceError, Invoice] =
+  def approve3G[F[_]](invoice: Invoice, cmd: ApproveCmd3[F]): Either[InvoiceError, Invoice] =
     canDoAction(canApprove)(invoice, cmd) map {
       _
         .clearCosts()
@@ -75,7 +75,7 @@ object InvoiceAlgebra {
     case _: SiteInvoice => Left(NotAllowedForProcessType())
   }
 
-  def updateRfiG[F[_]](invoice: Invoice, cmd: UpdateRfiCmdG[F]): Either[InvoiceError, Invoice] =
+  def updateRfiG[F[_]](invoice: Invoice, cmd: UpdateRfiCmd[F]): Either[InvoiceError, Invoice] =
     canDoAction(canUpdateRfi)(invoice, cmd) map { inv =>
       val pgm = for {
         _ <- InvoiceStateUtils.clearCosts(inv, cmd)

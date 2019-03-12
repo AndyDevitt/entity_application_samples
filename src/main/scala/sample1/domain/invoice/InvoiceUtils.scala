@@ -32,7 +32,7 @@ object InvoiceUtils {
   def updateRfi(invoice: SponsorInvoice, cmd: Command, rfi: RequestForInvoice): SponsorInvoice =
     updateLastEdited(invoice.copy(rfi = rfi), cmd)
 
-  def createRfi[F[_]](invoice: SponsorInvoice, cmd: CreateRfiInvoiceCmdG[F]): SponsorInvoice =
+  def createRfi[F[_]](invoice: SponsorInvoice, cmd: CreateRfiInvoiceCmd[F]): SponsorInvoice =
     updateLastEdited(invoice.copy(rfi = RequestForInvoice()), cmd)
 
   private def updateLastEdited(invoice: SponsorInvoice, cmd: Command): SponsorInvoice =

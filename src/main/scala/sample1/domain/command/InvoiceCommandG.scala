@@ -13,17 +13,17 @@ class DomainCommandInput[F[_]](val invoiceRepo: InvoiceRepo[F],
                                val ctaRepo: CtaRepo[F]
                               ) extends CommandInput
 
-sealed trait InvoiceCreateCommandG[F[_]] extends EntityCreateCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
+sealed trait InvoiceCreateCommand[F[_]] extends EntityCreateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
   def create(): Either[InvoiceError, Invoice]
 
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.invoiceRepo
 }
 
-sealed trait InvoiceQueryCommandG[F[_], R] extends EntityQueryCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, R, InvoiceRepo[F]] {
+sealed trait InvoiceQueryCommand[F[_], R] extends EntityQueryCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, R, InvoiceRepo[F]] {
   override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
 }
 
-sealed trait InvoiceUpdateCommandG[F[_]] extends EntityUpdateCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
+sealed trait InvoiceUpdateCommand[F[_]] extends EntityUpdateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
   def action(invoice: Invoice): Either[InvoiceError, Invoice]
 
   override def staleF(id: InvoiceId): InvoiceError = StaleInvoiceError(id)
@@ -31,30 +31,30 @@ sealed trait InvoiceUpdateCommandG[F[_]] extends EntityUpdateCommandG[F, DomainC
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.invoiceRepo
 }
 
-final case class InvoiceRetrieveCommandG[F[_]](userId: UserId, id: InvoiceId) extends EntityRetrieveCommandG[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
+final case class InvoiceRetrieveCommand[F[_]](userId: UserId, id: InvoiceId) extends EntityRetrieveCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice] {
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] = input.invoiceRepo
 }
 
-final case class ApproveCmdG[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommandG[F] {
+final case class ApproveCmd[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommand[F] {
   override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.approveG[F](invoice, this)
 }
 
-final case class ApproveCmd3G[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommandG[F] {
+final case class ApproveCmd3[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommand[F] {
   override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.approve3G[F](invoice, this)
 }
 
-final case class CreateRfiInvoiceCmdG[F[_]](userId: UserId) extends InvoiceCreateCommandG[F] {
+final case class CreateRfiInvoiceCmd[F[_]](userId: UserId) extends InvoiceCreateCommand[F] {
   override def create(): Either[InvoiceError, Invoice] = Right(Invoice.createRfiInvoiceG(this))
 }
 
-final case class UpdateRfiCmdG[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommandG[F] {
+final case class UpdateRfiCmd[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommand[F] {
   override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.updateRfiG(invoice, this)
 }
 
-final case class CreateSiteInvoiceCmdG[F[_]](userId: UserId) extends InvoiceCreateCommandG[F] {
+final case class CreateSiteInvoiceCmd[F[_]](userId: UserId) extends InvoiceCreateCommand[F] {
   override def create(): Either[InvoiceError, Invoice] = Right(Invoice.createSiteInvoice(this))
 }
 
-final case class FindAllG[F[_]](userId: UserId) extends InvoiceQueryCommandG[F, Seq[Invoice]] {
+final case class FindAll[F[_]](userId: UserId) extends InvoiceQueryCommand[F, Seq[Invoice]] {
   override def query(repo: InvoiceRepo[F]): F[Either[InvoiceError, Seq[Invoice]]] = repo.find()
 }

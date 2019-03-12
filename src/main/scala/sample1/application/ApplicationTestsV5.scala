@@ -71,63 +71,63 @@ object ApplicationTestsV5 extends App {
 
 
   val res8 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmdG(user2, inv1.id, inv1.version))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res8: $res8")
 
   val res9 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmdG(user2, inv1.id, inv1.version))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res9: $res9")
 
   val res10 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmdG(user2, inv1.id, inv1.version))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res10: $res10")
 
   val res11 = for {
-    inv <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
-    invRetrieved <- testProcessorApp.processCommand(InvoiceRetrieveCommandG(user1, inv.id)).to[InvoiceView]
+    inv <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
+    invRetrieved <- testProcessorApp.processCommand(InvoiceRetrieveCommand(user1, inv.id)).to[InvoiceView]
   } yield invRetrieved
 
   println(s"res11: $res11")
 
   val res12 = for {
-    cta <- testProcessorApp.processCommand(CreateCtaCmdG(user1))
+    cta <- testProcessorApp.processCommand(CreateCtaCmd(user1))
   } yield cta
 
   println(s"res12: $res12")
 
   val res13 = for {
-    cta <- testProcessorApp.processCommand(CreateCtaCmdG(user1))
-    ctaRetrieved <- testProcessorApp.processCommand(CtaRetrieveCommandG(user1, cta.id))
+    cta <- testProcessorApp.processCommand(CreateCtaCmd(user1))
+    ctaRetrieved <- testProcessorApp.processCommand(CtaRetrieveCommand(user1, cta.id))
   } yield ctaRetrieved
 
   println(s"res13: $res13")
 
 
   val res15 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmdG(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd3G(user2, inv1.id, inv1.version))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd3(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res15: $res15")
 
   val res16 = for {
-    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmdG(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd3G(user2, inv1.id, inv1.version))
+    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(user1))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd3(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res16: $res16")
 
   val res17 = for {
-    res <- testProcessorApp.processCommand(FindAllG(user1)).to[Seq[InvoiceView]]
+    res <- testProcessorApp.processCommand(FindAll(user1)).to[Seq[InvoiceView]]
   } yield res
 
   println(s"res17: $res17")
@@ -135,8 +135,8 @@ object ApplicationTestsV5 extends App {
   val transformer = (inv: Invoice) => InvoiceView.create(inv)
 
   val res18 = for {
-    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmdG(user1), transformer)
-    inv2 <- testProcessorApp.processCommand(ApproveCmd3G(user2, inv1.id, inv1.version), transformer)
+    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(user1), transformer)
+    inv2 <- testProcessorApp.processCommand(ApproveCmd3(user2, inv1.id, inv1.version), transformer)
   } yield inv2
 
   println(s"res18: $res18")

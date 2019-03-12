@@ -2,7 +2,7 @@ package sample1.infrastructure
 
 import cats.syntax.either._
 import cats.{Id, Monad}
-import sample1.domain.command.{CreateRfiInvoiceCmdG, CreateSiteInvoiceCmdG}
+import sample1.domain.command.{CreateRfiInvoiceCmd, CreateSiteInvoiceCmd}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice.{Invoice, InvoiceId}
 import sample1.domain.{InvoiceError, InvoiceRepo, UserId}
@@ -18,8 +18,8 @@ class TestInvoiceRepo()(implicit versioned: Versioned[Invoice], codec: EntityRep
 
   override def find(): Id[Either[InvoiceError, Seq[Invoice]]] =
     Seq(
-      Invoice.createSiteInvoice(CreateSiteInvoiceCmdG(UserId())),
-      Invoice.createSiteInvoice(CreateSiteInvoiceCmdG(UserId())),
-      Invoice.createRfiInvoiceG(CreateRfiInvoiceCmdG(UserId()))
+      Invoice.createSiteInvoice(CreateSiteInvoiceCmd(UserId())),
+      Invoice.createSiteInvoice(CreateSiteInvoiceCmd(UserId())),
+      Invoice.createRfiInvoiceG(CreateRfiInvoiceCmd(UserId()))
     ).asRight[InvoiceError]
 }

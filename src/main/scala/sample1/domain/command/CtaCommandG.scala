@@ -8,13 +8,13 @@ object CtaCommandG {
 
 }
 
-sealed trait CtaCreateCommandG[F[_]] extends EntityCreateCommandG[F, DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement] {
+sealed trait CtaCreateCommand[F[_]] extends EntityCreateCommand[F, DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement] {
   def create(): Either[InvoiceError, ClinicalTrialAgreement]
 
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] = input.ctaRepo
 }
 
-sealed trait CtaUpdateCommandG[F[_]] extends EntityUpdateCommandG[F, DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement] {
+sealed trait CtaUpdateCommand[F[_]] extends EntityUpdateCommand[F, DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement] {
   def action(cta: ClinicalTrialAgreement): Either[InvoiceError, ClinicalTrialAgreement]
 
   override def staleF(id: ClinicalTrialAgreementId): InvoiceError = StaleCtaError(id)
@@ -22,10 +22,10 @@ sealed trait CtaUpdateCommandG[F[_]] extends EntityUpdateCommandG[F, DomainComma
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] = input.ctaRepo
 }
 
-final case class CtaRetrieveCommandG[F[_]](userId: UserId, id: ClinicalTrialAgreementId) extends EntityRetrieveCommandG[F, DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement] {
+final case class CtaRetrieveCommand[F[_]](userId: UserId, id: ClinicalTrialAgreementId) extends EntityRetrieveCommand[F, DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement] {
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] = input.ctaRepo
 }
 
-final case class CreateCtaCmdG[F[_]](userId: UserId) extends CtaCreateCommandG[F] {
+final case class CreateCtaCmd[F[_]](userId: UserId) extends CtaCreateCommand[F] {
   override def create(): Either[InvoiceError, ClinicalTrialAgreement] = Right(ClinicalTrialAgreement.create(this))
 }

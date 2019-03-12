@@ -4,7 +4,7 @@ import cats.Monad
 import cats.effect.IO
 import cats.syntax.either._
 import sample1.domain._
-import sample1.domain.command.{CreateRfiInvoiceCmdG, CreateSiteInvoiceCmdG}
+import sample1.domain.command.{CreateRfiInvoiceCmd, CreateSiteInvoiceCmd}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice._
 
@@ -19,8 +19,8 @@ class ProductionInvoiceRepo()(implicit versioned: Versioned[Invoice], codec: Ent
 
   override def find(): IO[Either[InvoiceError, Seq[Invoice]]] =
     IO.pure(Seq(
-      Invoice.createSiteInvoice(CreateSiteInvoiceCmdG(UserId())),
-      Invoice.createSiteInvoice(CreateSiteInvoiceCmdG(UserId())),
-      Invoice.createRfiInvoiceG(CreateRfiInvoiceCmdG(UserId()))
+      Invoice.createSiteInvoice(CreateSiteInvoiceCmd(UserId())),
+      Invoice.createSiteInvoice(CreateSiteInvoiceCmd(UserId())),
+      Invoice.createRfiInvoiceG(CreateRfiInvoiceCmd(UserId()))
     ).asRight[InvoiceError])
 }

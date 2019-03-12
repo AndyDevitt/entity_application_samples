@@ -1,7 +1,7 @@
 package sample1.application
 
 import cats.{Monad, ~>}
-import sample1.domain.command.{CommandG, CommandInput}
+import sample1.domain.command.{RunnableCommand, CommandInput}
 
 trait EntityApplication[F[_], G[_], I <: CommandInput, Error] {
 
@@ -17,7 +17,7 @@ trait EntityApplication[F[_], G[_], I <: CommandInput, Error] {
     * @tparam R the successful result type of the command
     * @return returns the result of running the command
     */
-  def processCommand[R](cmd: CommandG[G, I, R, Error])
+  def processCommand[R](cmd: RunnableCommand[G, I, R, Error])
                        (implicit monadF: Monad[F],
                         monadG: Monad[G],
                         naturalTransformation: G ~> F
@@ -25,7 +25,7 @@ trait EntityApplication[F[_], G[_], I <: CommandInput, Error] {
     cmd.run(input)
 
 
-  def processCommand[R, T](cmd: CommandG[G, I, R, Error], transformer: R => Either[Error, T])
+  def processCommand[R, T](cmd: RunnableCommand[G, I, R, Error], transformer: R => Either[Error, T])
                           (implicit monadF: Monad[F],
                            monadG: Monad[G],
                            naturalTransformation: G ~> F
