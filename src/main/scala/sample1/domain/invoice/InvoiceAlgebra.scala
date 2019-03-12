@@ -75,7 +75,7 @@ object InvoiceAlgebra {
     case _: SiteInvoice => Left(NotAllowedForProcessType())
   }
 
-  def updateRfiG[F[_]](invoice: Invoice, cmd: UpdateRfiCmd[F]): Either[InvoiceError, Invoice] =
+  def updateRfi[F[_]](invoice: Invoice, cmd: UpdateRfiCmd[F]): Either[InvoiceError, Invoice] =
     canDoAction(canUpdateRfi)(invoice, cmd) map { inv =>
       val pgm = for {
         _ <- InvoiceStateUtils.clearCosts(inv, cmd)

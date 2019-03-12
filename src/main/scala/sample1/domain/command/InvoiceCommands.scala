@@ -44,7 +44,7 @@ final case class CreateRfiInvoiceCmd[F[_]](userId: UserId) extends InvoiceCreate
 }
 
 final case class UpdateRfiCmd[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommand[F] {
-  override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.updateRfiG(invoice, this)
+  override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.updateRfi(invoice, this)
 }
 
 final case class CreateSiteInvoiceCmd[F[_]](userId: UserId) extends InvoiceCreateCommand[F] {
