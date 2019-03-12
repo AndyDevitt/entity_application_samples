@@ -32,11 +32,11 @@ final case class InvoiceRetrieveCommand[F[_]](userId: UserId, id: InvoiceId) ext
 }
 
 final case class ApproveCmd[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommand[F] {
-  override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.approveG[F](invoice, this)
+  override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.approve[F](invoice, this)
 }
 
-final case class ApproveCmd3[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommand[F] {
-  override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.approve3G[F](invoice, this)
+final case class ApproveCmdV2[F[_]](userId: UserId, id: InvoiceId, version: EntityVersion) extends InvoiceUpdateCommand[F] {
+  override def action(invoice: Invoice): Either[InvoiceError, Invoice] = InvoiceAlgebra.approveV2[F](invoice, this)
 }
 
 final case class CreateRfiInvoiceCmd[F[_]](userId: UserId) extends InvoiceCreateCommand[F] {

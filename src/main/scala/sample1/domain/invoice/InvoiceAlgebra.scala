@@ -51,7 +51,7 @@ object InvoiceAlgebra {
   def canApprove(invoice: Invoice): Either[NotAllowed, Invoice] =
     Either.cond(invoice.status == NotApproved, invoice, NotAllowedInCurrentStatus())
 
-  def approveG[F[_]](invoice: Invoice, cmd: ApproveCmd[F]): Either[InvoiceError, Invoice] =
+  def approve[F[_]](invoice: Invoice, cmd: ApproveCmd[F]): Either[InvoiceError, Invoice] =
     canDoAction(canApprove)(invoice, cmd) map { inv =>
       val pgm = for {
         _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
@@ -60,7 +60,7 @@ object InvoiceAlgebra {
       pgm.runS(inv).value
     }
 
-  def approve3G[F[_]](invoice: Invoice, cmd: ApproveCmd3[F]): Either[InvoiceError, Invoice] =
+  def approveV2[F[_]](invoice: Invoice, cmd: ApproveCmdV2[F]): Either[InvoiceError, Invoice] =
     canDoAction(canApprove)(invoice, cmd) map {
       _
         .clearCosts()

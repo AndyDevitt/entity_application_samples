@@ -114,14 +114,14 @@ object ApplicationTestsV5 extends App {
 
   val res15 = for {
     inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd3(user2, inv1.id, inv1.version))
+    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res15: $res15")
 
   val res16 = for {
     inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd3(user2, inv1.id, inv1.version))
+    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version))
   } yield inv2
 
   println(s"res16: $res16")
@@ -136,7 +136,7 @@ object ApplicationTestsV5 extends App {
 
   val res18 = for {
     inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(user1), transformer)
-    inv2 <- testProcessorApp.processCommand(ApproveCmd3(user2, inv1.id, inv1.version), transformer)
+    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version), transformer)
   } yield inv2
 
   println(s"res18: $res18")
