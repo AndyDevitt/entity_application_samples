@@ -5,8 +5,6 @@ import sample1.domain.command._
 
 object InvoiceUtils {
 
-  def asRight[A, E](obj: A): Either[E, A] = Right(obj)
-
   def clearCosts(invoice: Invoice, cmd: Command): Invoice = invoice match {
     case i: SiteInvoice => clearCosts(i, cmd: Command)
     case i: SponsorInvoice => clearCosts(i, cmd: Command)

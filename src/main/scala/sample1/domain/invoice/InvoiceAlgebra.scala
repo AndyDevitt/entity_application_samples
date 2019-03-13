@@ -3,6 +3,7 @@ package sample1.domain.invoice
 import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.entity.{EntityId, VersionedEntity}
+import sample1.utils.ReduceOptionWithFailure._
 
 trait EntityInterface[IdType <: EntityId, EntityType <: VersionedEntity[IdType], ErrType, ActionType, ActionStatusType, NotAllowedActionStatusType <: ActionStatusType] {
   def staleF: EntityType => ErrType
@@ -114,12 +115,8 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
     }
 
   def calculateTotal(invoice: Invoice): Either[ValidationError, Option[MonetaryAmount]] =
-    reduceOptionWithFailure(invoice.costs.map(_.amount), MonetaryAmountAlg.sum)
-
-  def reduceOptionWithFailure[A, E, B >: A](list: List[A], f: (B, A) => Either[E, B]): Either[E, Option[B]] =
-    list.foldLeft(asRight[Option[B], E](Option.empty[B]))((b: Either[E, Option[B]], current) => b.flatMap {
-      case Some(acc) => f(acc, current).map(Some(_))
-      case None => Right(Some(current))
-    })
+    invoice.costs
+      .map(_.amount)
+      .reduceOptionWithFailure(MonetaryAmountAlg.sum)
 
 }
