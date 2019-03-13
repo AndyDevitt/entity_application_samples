@@ -2,7 +2,8 @@ package sample1.domain.invoice
 
 import sample1.domain.command.{CreateRfiInvoiceCmd, CreateSiteInvoiceCmd}
 import sample1.domain.entity.{EntityVersion, VersionedEntity}
-import sample1.domain.{Cost, RequestForInvoice, UserId}
+import sample1.domain.user.UserId
+import sample1.domain.{Cost, RequestForInvoice}
 
 trait Invoice extends VersionedEntity[InvoiceId] {
   def status: InvoiceStatus

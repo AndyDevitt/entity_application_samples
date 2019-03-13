@@ -1,4 +1,4 @@
-package sample1.domain
+package sample1.domain.user
 
 final case class UserId(id: String)
 

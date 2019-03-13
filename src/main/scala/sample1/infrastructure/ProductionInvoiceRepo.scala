@@ -7,6 +7,7 @@ import sample1.domain._
 import sample1.domain.command.{CreateRfiInvoiceCmd, CreateSiteInvoiceCmd}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice._
+import sample1.domain.user.UserId
 
 class ProductionInvoiceRepo()(implicit versioned: Versioned[Invoice], codec: EntityRepoCodec[Invoice, Invoice, InvoiceError]) extends InvoiceRepo[IO] {
   val entityRepo: InMemoryInvoiceRepo[IO] = new InMemoryInvoiceRepo[IO] {}

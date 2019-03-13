@@ -2,6 +2,7 @@ package sample1.domain
 
 import sample1.domain.command._
 import sample1.domain.invoice.InvoiceAction
+import sample1.domain.user.UserId
 
 trait CommandVisitor[A] {
 

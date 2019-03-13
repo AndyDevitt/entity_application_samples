@@ -7,6 +7,7 @@ import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice.{Invoice, SiteInvoice, SponsorInvoice}
+import sample1.domain.user.UserId
 import sample1.infrastructure.{TestCtaRepo, TestInvoiceRepo}
 
 import scala.concurrent.Future
