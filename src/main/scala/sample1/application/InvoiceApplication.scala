@@ -2,10 +2,9 @@ package sample1.application
 
 import cats.Id
 import cats.effect.IO
+import sample1.domain.InvoiceRepo
 import sample1.domain.command._
 import sample1.domain.cta.CtaRepo
-import sample1.domain.permissions.InvoiceUserPermissions
-import sample1.domain.{InvoiceError, InvoiceRepo}
 
 import scala.concurrent.Future
 
@@ -15,7 +14,7 @@ import scala.concurrent.Future
   * @tparam F the context for the application
   * @tparam G the context for the underlying repo
   */
-trait InvoiceApplication[F[_], G[_], H[_]] extends EntityApplication[F, G, H, DomainCommandInput[G], InvoiceError, InvoiceUserPermissions] {
+trait InvoiceApplication[F[_], G[_], H[_]] extends EntityApplication[F, G, H, DomainCommandInput[G]] {
   def invoiceRepo: InvoiceRepo[G]
 
   def ctaRepo: CtaRepo[G]
