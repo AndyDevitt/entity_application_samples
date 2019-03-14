@@ -3,6 +3,7 @@ package sample1.domain.invoice
 import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.entity.{EntityId, VersionedEntity}
+import sample1.domain.errors.{InvoiceError, ValidationError}
 import sample1.domain.permissions.InvoiceUserPermissions
 import sample1.utils.ReduceOptionWithFailure._
 

@@ -1,5 +1,6 @@
-package sample1.domain
+package sample1.domain.errors
 
+import sample1.domain._
 import sample1.domain.invoice.InvoiceId
 
 sealed trait InvoiceError

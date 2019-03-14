@@ -4,7 +4,7 @@ import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
 import sample1.domain.entity.EntityRepo
 import sample1.domain.permissions.{CtaBasicPermissionRetriever, CtaEntityPermissionRetriever, CtaUserPermissions}
 import sample1.domain.user.UserId
-import sample1.domain.{CtaError, InvoiceError}
+import sample1.domain.errors.{CtaError, InvoiceError}
 
 sealed trait CtaPermissions
 

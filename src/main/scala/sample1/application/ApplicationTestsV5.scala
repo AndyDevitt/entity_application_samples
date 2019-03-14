@@ -6,6 +6,7 @@ import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
+import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.{Invoice, SiteInvoice, SponsorInvoice}
 import sample1.domain.permissions.{InvoiceBasicPermissionRetriever, InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId

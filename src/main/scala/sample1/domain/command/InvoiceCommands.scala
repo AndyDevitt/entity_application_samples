@@ -5,7 +5,8 @@ import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.invoice.{Invoice, InvoiceAlgebra, InvoiceId}
 import sample1.domain.permissions._
 import sample1.domain.user.UserId
-import sample1.domain.{InvoiceError, InvoiceRepo}
+import sample1.domain.InvoiceRepo
+import sample1.domain.errors.InvoiceError
 
 class DomainCommandInput[F[_]](val invoiceRepo: InvoiceRepo[F],
                                val ctaRepo: CtaRepo[F]

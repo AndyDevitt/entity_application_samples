@@ -1,6 +1,7 @@
 package sample1.domain
 
 import cats.data.Validated
+import sample1.domain.errors.{InvoiceError, ValidationError}
 
 final case class Currency private(code: String) extends AnyVal
 

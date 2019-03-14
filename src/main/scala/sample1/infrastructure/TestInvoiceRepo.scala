@@ -4,7 +4,8 @@ import cats.syntax.either._
 import cats.{Id, Monad}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice.{Invoice, InvoiceId}
-import sample1.domain.{InvoiceError, InvoiceRepo}
+import sample1.domain.InvoiceRepo
+import sample1.domain.errors.InvoiceError
 
 class TestInvoiceRepo()(implicit versioned: Versioned[Invoice], codec: EntityRepoCodec[Invoice, Invoice, InvoiceError]) extends InvoiceRepo[Id] {
   val entityRepo: InMemoryInvoiceRepo[Id] = new InMemoryInvoiceRepo[Id] {}

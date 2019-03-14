@@ -5,6 +5,7 @@ import cats.effect.IO
 import cats.syntax.either._
 import sample1.domain._
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
+import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
 
 class ProductionInvoiceRepo()(implicit versioned: Versioned[Invoice], codec: EntityRepoCodec[Invoice, Invoice, InvoiceError]) extends InvoiceRepo[IO] {

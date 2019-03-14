@@ -1,9 +1,9 @@
 package sample1.infrastructure
 
 import cats.{Id, Monad}
-import sample1.domain.CtaError
 import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId, CtaRepo}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
+import sample1.domain.errors.CtaError
 
 class TestCtaRepo()(implicit versioned: Versioned[ClinicalTrialAgreement], codec: EntityRepoCodec[ClinicalTrialAgreement, ClinicalTrialAgreement, CtaError]) extends CtaRepo[Id] {
   private val inMemoryRepo: InMemoryRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] =

@@ -1,4 +1,4 @@
-package sample1.domain
+package sample1.domain.errors
 
 import sample1.domain.cta.ClinicalTrialAgreementId
 

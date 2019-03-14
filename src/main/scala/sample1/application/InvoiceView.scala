@@ -2,6 +2,7 @@ package sample1.application
 
 import sample1.domain._
 import sample1.domain.entity.EntityVersion
+import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
 import sample1.domain.permissions.InvoiceUserPermissions
 import sample1.domain.user.UserId
