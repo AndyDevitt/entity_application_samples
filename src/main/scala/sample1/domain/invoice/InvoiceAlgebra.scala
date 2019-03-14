@@ -3,7 +3,7 @@ package sample1.domain.invoice
 import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.entity.{EntityId, VersionedEntity}
-import sample1.domain.permissions.InvoicePermissions
+import sample1.domain.permissions.InvoiceUserPermissions
 import sample1.utils.ReduceOptionWithFailure._
 
 trait EntityInterface[IdType <: EntityId, EntityType <: VersionedEntity[IdType], ErrType, ActionType, ActionStatusType, NotAllowedActionStatusType <: ActionStatusType, PermissionsType] {
@@ -16,7 +16,7 @@ trait EntityInterface[IdType <: EntityId, EntityType <: VersionedEntity[IdType],
   //def actionStatus(entity: EntityType, action: ActionType): ActionStatusType
 
   def checkOptimisticLocking[A <: EntityType](entity: A, cmd: Command): Either[ErrType, A] = cmd match {
-    case c: EntityUpdateCommand[_, _, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
+    case c: EntityUpdateCommand[_, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
     case _ => Right(entity)
   }
 
@@ -27,7 +27,7 @@ trait EntityInterface[IdType <: EntityId, EntityType <: VersionedEntity[IdType],
 
 }
 
-object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, InvoiceAction, ActionStatus, NotAllowed, Set[InvoicePermissions]] {
+object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, InvoiceAction, ActionStatus, NotAllowed, InvoiceUserPermissions] {
 
   import InvoiceStateBuilder.Instances._
   import InvoiceStateBuilder._
@@ -44,13 +44,13 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
     case _: UpdateRfiCmd[_, _] => InvoiceAction.UpdateRfi
   }
 
-  def actionStatuses(invoice: Invoice, permissions: Set[InvoicePermissions]): Set[(InvoiceAction, ActionStatus)] =
+  def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     EnumerableAdt[InvoiceAction].map(action => (action, actionStatus(invoice, action, permissions)))
 
   //  def actionStatus(invoice: Invoice, cmd: Command): ActionStatus =
   //    actionStatus(invoice, actionFromCommand(cmd))
 
-  def actionStatus(invoice: Invoice, action: InvoiceAction, permissions: Set[InvoicePermissions]): ActionStatus = {
+  def actionStatus(invoice: Invoice, action: InvoiceAction, permissions: InvoiceUserPermissions): ActionStatus = {
     action match {
       case InvoiceAction.Approve => canApprove(invoice, permissions)
       case InvoiceAction.CreateRfi => canCreateRfi(invoice, permissions)
@@ -68,20 +68,20 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
   //    case _ => Right(invoice)
   //  }
 
-  def canCreateRfi(invoice: Invoice, permissions: Set[InvoicePermissions]): Either[NotAllowed, SponsorInvoice] = invoice match {
+  def canCreateRfi(invoice: Invoice, permissions: InvoiceUserPermissions): Either[NotAllowed, SponsorInvoice] = invoice match {
     case si: SponsorInvoice => Right(si)
     case _: SiteInvoice => Left(NotAllowedForProcessType())
   }
 
-  def createRfi[F[_], H[_]](invoice: Invoice, cmd: CreateRfiInvoiceCmd[F, H], permissions: Set[InvoicePermissions]): Either[InvoiceError, Invoice] =
+  def createRfi[F[_], H[_]](invoice: Invoice, cmd: CreateRfiInvoiceCmd[F, H], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     canDoAction(canCreateRfi)(invoice, cmd, permissions) map {
       InvoiceUtils.createRfi(_, cmd)
     }
 
-  def canApprove(invoice: Invoice, permissions: Set[InvoicePermissions]): Either[NotAllowed, Invoice] =
+  def canApprove(invoice: Invoice, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] =
     Either.cond(invoice.status == NotApproved, invoice, NotAllowedInCurrentStatus())
 
-  def approve[F[_], H[_]](invoice: Invoice, cmd: ApproveCmd[F, H], permissions: Set[InvoicePermissions]): Either[InvoiceError, Invoice] =
+  def approve[F[_], H[_]](invoice: Invoice, cmd: ApproveCmd[F, H], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     canDoAction(canApprove)(invoice, cmd, permissions) map { inv =>
       val pgm = for {
         _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
@@ -90,7 +90,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
       pgm.runS(inv).value
     }
 
-  def approveV2[F[_], H[_]](invoice: Invoice, cmd: ApproveCmdV2[F, H], permissions: Set[InvoicePermissions]): Either[InvoiceError, Invoice] =
+  def approveV2[F[_], H[_]](invoice: Invoice, cmd: ApproveCmdV2[F, H], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     canDoAction(canApprove)(invoice, cmd, permissions) map {
       _
         .clearCosts()
@@ -99,13 +99,13 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
         .build()
     }
 
-  def canUpdateRfi(invoice: Invoice, permissions: Set[InvoicePermissions]): Either[NotAllowed, SponsorInvoice] = invoice match {
+  def canUpdateRfi(invoice: Invoice, permissions: InvoiceUserPermissions): Either[NotAllowed, SponsorInvoice] = invoice match {
     case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
     case si: SponsorInvoice => Left(NotAllowedInCurrentStatus())
     case _: SiteInvoice => Left(NotAllowedForProcessType())
   }
 
-  def updateRfi[F[_], H[_]](invoice: Invoice, cmd: UpdateRfiCmd[F, H], permissions: Set[InvoicePermissions]): Either[InvoiceError, Invoice] =
+  def updateRfi[F[_], H[_]](invoice: Invoice, cmd: UpdateRfiCmd[F, H], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     canDoAction(canUpdateRfi)(invoice, cmd, permissions) map { inv =>
       val pgm = for {
         _ <- InvoiceStateUtils.clearCosts(inv, cmd)

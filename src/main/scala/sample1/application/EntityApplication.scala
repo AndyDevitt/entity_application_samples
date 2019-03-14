@@ -27,12 +27,12 @@ trait EntityApplication[F[_], G[_], H[_], I <: CommandInput, Error, PermissionsT
     cmd.run(input)
 
 
-  //  def processCommand[R, T](cmd: RunnableCommand[G, H, I, R, Error, PermissionsType], transformer: R => Either[Error, T])
-  //                          (implicit monadF: Monad[F],
-  //                           monadG: Monad[G],
-  //                           monadH: Monad[H],
-  //                           naturalTransformation: G ~> F,
-  //                           naturalTransformationHG: H ~> G
-  //                          ): F[Either[Error, T]] =
-  //    monadF.map(cmd.run(input))(_.flatMap(transformer))
+  def processCommand[R, T](cmd: RunnableCommand[G, H, I, R, Error, PermissionsType], transformer: R => Either[Error, T])
+                          (implicit monadF: Monad[F],
+                           monadG: Monad[G],
+                           monadH: Monad[H],
+                           naturalTransformation: G ~> F,
+                           naturalTransformationHG: H ~> G
+                          ): F[Either[Error, T]] =
+    monadF.map(cmd.run(input))(_.flatMap(transformer))
 }

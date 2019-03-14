@@ -50,7 +50,7 @@ object EntityRepoManager {
   EntType <: VersionedEntity[IdType],
   E,
   PermissionsType,
-  CmdType <: EntityUpdateCommand[G, H, I, E, IdType, EntType, PermissionsType, CmdType]
+  CmdType <: EntityUpdateCommand[G, H, I, E, IdType, EntType, PermissionsType]
   ](repo: EntityRepo[G, IdType, EntType, E])
    (cmd: CmdType)
    (staleF: IdType => E)
@@ -59,7 +59,7 @@ object EntityRepoManager {
     transform((for {
       inv <- EitherT(repo.retrieve(cmd.id))
       _ <- EitherT.fromEither(checkOptimisticLocking(inv, cmd, staleF))
-      permissions <- EitherT.right(transformHG(cmd.permissionsRetriever.retrieve(cmd.userId, inv, cmd)))
+      permissions <- EitherT.right(transformHG(cmd.permissionsRetriever.retrieve(cmd.userId, inv)))
       updatedInv <- EitherT.fromEither[G](cmd.action(inv, permissions))
       savedInv <- EitherT(repo.save(updatedInv))
     } yield savedInv).value)
@@ -68,7 +68,7 @@ object EntityRepoManager {
   F[_],
   H[_],
   EntType <: VersionedEntity[IdType],
-  IdType <: EntityId, E](entity: EntType, cmd: EntityUpdateCommand[F, H, _, _, _, _, _, _], staleF: IdType => E
+  IdType <: EntityId, E](entity: EntType, cmd: EntityUpdateCommand[F, H, _, _, _, _, _], staleF: IdType => E
                         ): Either[E, Unit] =
     Either.cond(cmd.version == entity.version, (), staleF(entity.id))
 

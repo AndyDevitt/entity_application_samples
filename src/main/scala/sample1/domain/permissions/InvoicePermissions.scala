@@ -17,3 +17,5 @@ object InvoicePermissions {
   final case class ApproveWithLimit(limit: Int)
 
 }
+
+final case class InvoiceUserPermissions(permissions: Set[InvoicePermissions])

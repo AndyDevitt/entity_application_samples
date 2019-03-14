@@ -7,6 +7,7 @@ import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice.{Invoice, SiteInvoice, SponsorInvoice}
+import sample1.domain.permissions.{InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
 import sample1.infrastructure.{TestCtaRepo, TestInvoiceRepo}
 
@@ -70,7 +71,7 @@ object ApplicationTestsV5 extends App {
 
 
   val res8 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd[Id, Id](user1))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
     inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version))
   } yield inv2
 

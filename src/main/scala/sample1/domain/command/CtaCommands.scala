@@ -13,7 +13,7 @@ sealed trait CtaCreateCommand[F[_], H[_]] extends EntityCreateCommand[F, H, Doma
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] = input.ctaRepo
 }
 
-sealed trait CtaUpdateCommand[F[_], H[_], CmdType] extends EntityUpdateCommand[F, H, DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement, CmdType, CtaPermissions] {
+sealed trait CtaUpdateCommand[F[_], H[_], CmdType] extends EntityUpdateCommand[F, H, DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaPermissions] {
   def action(cta: ClinicalTrialAgreement): Either[InvoiceError, ClinicalTrialAgreement]
 
   override def staleF(id: ClinicalTrialAgreementId): InvoiceError = StaleCtaError(id)

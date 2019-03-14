@@ -76,8 +76,7 @@ H[_],
 E,
 IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
-PermissionsType,
-CmdType <: EntityUpdateCommand[F, H, I, E, IdType, EntType, PermissionsType, CmdType]]
+PermissionsType]
   extends EntityCommand[F, H, I, EntType, E, PermissionsType] with OptimisticLocking {
   def id: IdType
 
@@ -89,10 +88,10 @@ CmdType <: EntityUpdateCommand[F, H, I, E, IdType, EntType, PermissionsType, Cmd
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
 
-  def permissionsRetriever: EntityPermissionsRetriever[H, IdType, EntType, PermissionsType, CmdType]
+  def permissionsRetriever: EntityPermissionsRetriever[H, IdType, EntType, PermissionsType]
 
   override def run[G[_]](input: I)(implicit monadF: Monad[F], monadH: Monad[H], transform: F ~> G, transformHF: H ~> F): G[Either[E, EntType]] =
-    EntityRepoManager.manageUpdate[G, F, H, I, IdType, EntType, E, PermissionsType, EntityUpdateCommand[F, H, I, E, IdType, EntType, PermissionsType, CmdType]](extractRepo(input))(this)(staleF _)
+    EntityRepoManager.manageUpdate[G, F, H, I, IdType, EntType, E, PermissionsType, EntityUpdateCommand[F, H, I, E, IdType, EntType, PermissionsType]](extractRepo(input))(this)(staleF _)
 }
 
 trait EntityQueryCommand[
