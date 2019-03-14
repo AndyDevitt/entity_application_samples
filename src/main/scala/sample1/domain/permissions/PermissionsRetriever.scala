@@ -1,5 +1,6 @@
 package sample1.domain.permissions
 
+import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
 import sample1.domain.entity.{Entity, EntityId}
 import sample1.domain.invoice.{Invoice, InvoiceId}
 import sample1.domain.user.UserId
@@ -26,4 +27,4 @@ trait InvoiceEntityPermissionRetriever[F[_]] extends EntityPermissionsRetriever[
 
 trait CtaBasicPermissionRetriever[F[_]] extends BasicPermissionRetriever[F, CtaUserPermissions]
 
-trait CtaEntityPermissionRetriever[F[_]] extends EntityPermissionsRetriever[F, InvoiceId, Invoice, CtaUserPermissions]
+trait CtaEntityPermissionRetriever[F[_]] extends EntityPermissionsRetriever[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaUserPermissions]

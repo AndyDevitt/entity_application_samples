@@ -2,31 +2,34 @@ package sample1.domain.command
 
 import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
 import sample1.domain.entity.EntityRepo
-import sample1.domain.permissions.{CtaBasicPermissionRetriever, CtaUserPermissions}
+import sample1.domain.permissions.{CtaBasicPermissionRetriever, CtaEntityPermissionRetriever, CtaUserPermissions}
 import sample1.domain.user.UserId
-import sample1.domain.{InvoiceError, StaleCtaError}
+import sample1.domain.{CtaError, InvoiceError}
 
 sealed trait CtaPermissions
 
-sealed trait CtaCreateCommand[F[_]] extends EntityCreateCommand[F,  DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaUserPermissions] {
-  override def create(permissions: CtaUserPermissions): Either[InvoiceError, ClinicalTrialAgreement]
+sealed trait CtaCreateCommand[F[_]] extends EntityCreateCommand[F, DomainCommandInput[F], CtaError, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaUserPermissions] {
+  override def create(permissions: CtaUserPermissions): Either[CtaError, ClinicalTrialAgreement]
 
-  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] = input.ctaRepo
+  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] = input.ctaRepo
 }
 
-sealed trait CtaUpdateCommand[F[_], H[_], CmdType] extends EntityUpdateCommand[F,  DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaUserPermissions] {
+sealed trait CtaUpdateCommand[F[_], H[_], CmdType] extends EntityUpdateCommand[F, DomainCommandInput[F], CtaError, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaUserPermissions] {
   def action(cta: ClinicalTrialAgreement): Either[InvoiceError, ClinicalTrialAgreement]
 
-  override def staleF(id: ClinicalTrialAgreementId): InvoiceError = StaleCtaError(id)
+  override def staleF(id: ClinicalTrialAgreementId): CtaError = CtaError.StaleCtaError(id)
 
-  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] = input.ctaRepo
+  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] = input.ctaRepo
 }
 
-final case class CtaRetrieveCommand[F[_]](userId: UserId, id: ClinicalTrialAgreementId) extends EntityRetrieveCommand[F,  DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaUserPermissions] {
-  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] = input.ctaRepo
-}
 
+final case class CtaRetrieveCommand[F[_]](userId: UserId,
+                                          id: ClinicalTrialAgreementId,
+                                          permissionsRetriever: CtaEntityPermissionRetriever[F])
+  extends EntityRetrieveCommand[F, DomainCommandInput[F], CtaError, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaUserPermissions] {
+  override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] = input.ctaRepo
+}
 
 final case class CreateCtaCmd[F[_]](userId: UserId, permissionsRetriever: CtaBasicPermissionRetriever[F]) extends CtaCreateCommand[F] {
-  override def create(permissions: CtaUserPermissions): Either[InvoiceError, ClinicalTrialAgreement] = Right(ClinicalTrialAgreement.create(this))
+  override def create(permissions: CtaUserPermissions): Either[CtaError, ClinicalTrialAgreement] = Right(ClinicalTrialAgreement.create(this))
 }

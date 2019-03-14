@@ -4,18 +4,20 @@ sealed trait CtaPermissions
 
 object CtaPermissions {
 
-  final case class Create()
+  final case class Create() extends CtaPermissions
 
-  final case class Read()
+  final case class Read() extends CtaPermissions
 
-  final case class Approve()
+  final case class Approve() extends CtaPermissions
 
-  final case class Reject()
+  final case class Reject() extends CtaPermissions
 
-  final case class AddCost()
+  final case class AddCost() extends CtaPermissions
 
-  final case class ApproveWithLimit(limit: Int)
+  final case class ApproveWithLimit(limit: Int) extends CtaPermissions
 
 }
 
-final case class CtaUserPermissions(permissions: Set[CtaPermissions])
+final case class CtaUserPermissions(permissions: Set[CtaPermissions]) {
+  def hasReadPermission: Boolean = permissions.contains(CtaPermissions.Read())
+}

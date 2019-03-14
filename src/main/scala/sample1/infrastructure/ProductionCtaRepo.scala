@@ -2,21 +2,21 @@ package sample1.infrastructure
 
 import cats.Monad
 import cats.effect.IO
+import sample1.domain.CtaError
 import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId, CtaRepo}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
-import sample1.domain.{CtaNotFound, InvoiceError, StaleCtaError}
 
-class ProductionCtaRepo(implicit versioned: Versioned[ClinicalTrialAgreement], codec: EntityRepoCodec[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError]) extends CtaRepo[IO] {
-  private val inMemoryRepo: InMemoryRepo[IO, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] =
-    new InMemoryRepo[IO, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] {
-      override def notFoundErrorF: ClinicalTrialAgreementId => InvoiceError = id => CtaNotFound(id)
+class ProductionCtaRepo(implicit versioned: Versioned[ClinicalTrialAgreement], codec: EntityRepoCodec[ClinicalTrialAgreement, ClinicalTrialAgreement, CtaError]) extends CtaRepo[IO] {
+  private val inMemoryRepo: InMemoryRepo[IO, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] =
+    new InMemoryRepo[IO, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] {
+      override def notFoundErrorF: ClinicalTrialAgreementId => CtaError = id => CtaError.CtaNotFound(id)
 
-      override def staleErrorF: ClinicalTrialAgreementId => InvoiceError = id => StaleCtaError(id)
+      override def staleErrorF: ClinicalTrialAgreementId => CtaError = id => CtaError.StaleCtaError(id)
     }
 
-  override def save(entity: ClinicalTrialAgreement)(implicit monad: Monad[IO]): IO[Either[InvoiceError, ClinicalTrialAgreement]] =
+  override def save(entity: ClinicalTrialAgreement)(implicit monad: Monad[IO]): IO[Either[CtaError, ClinicalTrialAgreement]] =
     inMemoryRepo.saveEntity(entity)
 
-  override def retrieve(id: ClinicalTrialAgreementId)(implicit monad: Monad[IO]): IO[Either[InvoiceError, ClinicalTrialAgreement]] =
+  override def retrieve(id: ClinicalTrialAgreementId)(implicit monad: Monad[IO]): IO[Either[CtaError, ClinicalTrialAgreement]] =
     inMemoryRepo.retrieveEntity(id)
 }

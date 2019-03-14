@@ -34,7 +34,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
   import cats.data.State
   import sample1.domain.invoice.InvoiceUtils._
 
-  override def staleF: Invoice => InvoiceError = i => StaleInvoiceError(i.id)
+  override def staleF: Invoice => InvoiceError = i => InvoiceError.StaleInvoiceError(i.id)
 
   override def statusToErrF: NotAllowed => InvoiceError = i => InvoiceError.fromActionStatus(i)
 

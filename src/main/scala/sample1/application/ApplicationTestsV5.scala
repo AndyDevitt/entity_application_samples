@@ -54,8 +54,8 @@ object TestImplicits {
       (cta: ClinicalTrialAgreement) => cta,
       (cta: ClinicalTrialAgreement) => Right(cta.copy(note = "I've been flipped!")))
 
-//    implicit val invoiceToInvoiceView: Transform[Invoice, InvoiceView, InvoiceError] =
-//      (from: Invoice) => InvoiceView.create(from)
+  //    implicit val invoiceToInvoiceView: Transform[Invoice, InvoiceView, InvoiceError] =
+  //      (from: Invoice) => InvoiceView.create(from)
 }
 
 object ApplicationTestsV5 extends App {
@@ -82,21 +82,21 @@ object ApplicationTestsV5 extends App {
 
   val res8 = for {
     inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version, testEntityPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res8: $res8")
 
   val res9 = for {
     inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version, testEntityPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res9: $res9")
 
   val res10 = for {
     inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version, testEntityPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res10: $res10")
@@ -124,14 +124,14 @@ object ApplicationTestsV5 extends App {
 
   val res15 = for {
     inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
-    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version, testEntityPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res15: $res15")
 
   val res16 = for {
     inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(user1, testBasicPermissionsRetriever))
-    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version, testEntityPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res16: $res16")
