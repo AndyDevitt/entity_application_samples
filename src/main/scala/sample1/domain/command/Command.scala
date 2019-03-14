@@ -99,7 +99,7 @@ PermissionsType]
   def permissionsRetriever: EntityPermissionsRetriever[F, IdType, EntType, PermissionsType]
 
   override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[ErrType, EntityResultWithPermissions[EntType, PermissionsType]]] =
-    EntityRepoManager.manageUpdate[G, F, I, IdType, EntType, ErrType, PermissionsType, EntityUpdateCommand[F, I, ErrType, IdType, EntType, PermissionsType]](extractRepo(input))(this)(staleF _)
+    EntityRepoManager.manageUpdate[G, F, I, IdType, EntType, ErrType, PermissionsType, EntityUpdateCommand[F, I, ErrType, IdType, EntType, PermissionsType]](extractRepo(input))(this)(staleF)
 }
 
 trait EntityQueryCommand[
