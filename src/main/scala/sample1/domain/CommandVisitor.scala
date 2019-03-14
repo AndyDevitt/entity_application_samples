@@ -1,5 +1,6 @@
 package sample1.domain
 
+import sample1.application.ApplicationTestsV5.testBasicPermissionsRetriever
 import sample1.domain.command._
 import sample1.domain.invoice.InvoiceAction
 import sample1.domain.user.UserId
@@ -55,7 +56,7 @@ object ActionVisitor {
 }
 
 object Test extends App {
-  val res = CommandVisitor.processCommand(CreateRfiInvoiceCmd(UserId()), new CommandToActionVisitor)
+  val res = CommandVisitor.processCommand(CreateRfiInvoiceCmd(UserId(), testBasicPermissionsRetriever), new CommandToActionVisitor)
   val res2 = ActionVisitor.processAction(res, new PrettifyActionVisitor)
   println(res)
   println(res2)

@@ -1,6 +1,7 @@
 package sample1.domain.invoice
 
 import cats.Id
+import sample1.application.ApplicationTestsV5.{TestInvoiceBasicPermissionRetriever, TestInvoiceEntityPermissionRetriever}
 import sample1.domain.RequestForInvoice
 import sample1.domain.command.{Command, CreateRfiInvoiceCmd, CreateSiteInvoiceCmd}
 import sample1.domain.user.UserId
@@ -128,10 +129,13 @@ object InvoiceStateBuilderTest {
   import InvoiceStateBuilder.Instances._
   import InvoiceStateBuilder._
 
-  val siteInv: SiteInvoice = Invoice.createSiteInvoice(CreateSiteInvoiceCmd(UserId()))
-  val sponsorInv: SponsorInvoice = Invoice.createRfiInvoiceG(CreateRfiInvoiceCmd(UserId()))
+  val testEntityPermissionsRetriever = TestInvoiceEntityPermissionRetriever()
+  val testBasicPermissionsRetriever = TestInvoiceBasicPermissionRetriever()
+
+  val siteInv: SiteInvoice = Invoice.createSiteInvoice[Id, Id](CreateSiteInvoiceCmd(UserId(), testBasicPermissionsRetriever))
+  val sponsorInv: SponsorInvoice = Invoice.createRfiInvoiceG[Id, Id](CreateRfiInvoiceCmd(UserId(), testBasicPermissionsRetriever))
   val inv: Invoice = sponsorInv
-  val cmd: CreateRfiInvoiceCmd[Id, Id] = CreateRfiInvoiceCmd[Id, Id](UserId())
+  val cmd: CreateRfiInvoiceCmd[Id, Id] = CreateRfiInvoiceCmd[Id, Id](UserId(), testBasicPermissionsRetriever)
 
   val updated: SponsorInvoice = sponsorInv
     .clearCosts()

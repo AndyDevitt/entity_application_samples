@@ -7,7 +7,7 @@ import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice.{Invoice, SiteInvoice, SponsorInvoice}
-import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoiceUserPermissions}
+import sample1.domain.permissions.{InvoiceBasicPermissionRetriever, InvoiceEntityPermissionRetriever, InvoiceUserPermissions}
 import sample1.domain.user.UserId
 import sample1.infrastructure.{TestCtaRepo, TestInvoiceRepo}
 
@@ -69,30 +69,34 @@ object ApplicationTestsV5 extends App {
   //  structure (i.e. deriving from the Codec family of traits). Also, should these simply be explicit parameters?
   val testProcessorApp = new TestApplication(new TestInvoiceRepo(), new TestCtaRepo())
 
+  case class TestInvoiceBasicPermissionRetriever() extends InvoiceBasicPermissionRetriever[Id] {
+    override def retrieve(userId: UserId): Id[InvoiceUserPermissions] = InvoiceUserPermissions(Set())
+  }
+
   case class TestInvoiceEntityPermissionRetriever() extends InvoiceEntityPermissionRetriever[Id] {
     override def retrieve(userId: UserId, entity: Invoice): Id[InvoiceUserPermissions] = InvoiceUserPermissions(Set())
   }
 
-  val testPermissionsRetriever = TestInvoiceEntityPermissionRetriever()
-
+  val testEntityPermissionsRetriever = TestInvoiceEntityPermissionRetriever()
+  val testBasicPermissionsRetriever = TestInvoiceBasicPermissionRetriever()
 
   val res8 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version, testPermissionsRetriever))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res8: $res8")
 
   val res9 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version, testPermissionsRetriever))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res9: $res9")
 
   val res10 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version, testPermissionsRetriever))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res10: $res10")
@@ -119,15 +123,15 @@ object ApplicationTestsV5 extends App {
 
 
   val res15 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version, testPermissionsRetriever))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res15: $res15")
 
   val res16 = for {
-    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(user1))
-    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version, testPermissionsRetriever))
+    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(user1, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res16: $res16")

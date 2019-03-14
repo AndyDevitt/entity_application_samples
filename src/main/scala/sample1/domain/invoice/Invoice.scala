@@ -30,8 +30,14 @@ object Invoice {
   def createRfiInvoiceG[F[_], H[_]](cmd: CreateRfiInvoiceCmd[F, H]): SponsorInvoice =
     SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil, RequestForInvoice())
 
+  def createRfiInvoiceEmpty[F[_], H[_]](): SponsorInvoice =
+    SponsorInvoice(InvoiceId(), EntityVersion(), UserId(), NotApproved, Nil, RequestForInvoice())
+
   def createSiteInvoice[F[_], H[_]](cmd: CreateSiteInvoiceCmd[F, H]): SiteInvoice =
     SiteInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil)
+
+  def createSiteInvoiceEmpty[F[_], H[_]](): SiteInvoice =
+    SiteInvoice(InvoiceId(), EntityVersion(), UserId(), NotApproved, Nil)
 }
 
 object SiteInvoice {

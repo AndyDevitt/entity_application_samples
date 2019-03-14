@@ -2,7 +2,7 @@ package sample1.domain.command
 
 import cats.{Monad, ~>}
 import sample1.domain.entity._
-import sample1.domain.permissions.EntityPermissionsRetriever
+import sample1.domain.permissions.{BasicPermissionRetriever, EntityPermissionsRetriever}
 import sample1.domain.user.UserId
 
 /**
@@ -55,6 +55,8 @@ trait EntityCreateCommand[F[_], H[_], -I <: CommandInput, E, IdType <: EntityId,
   def create(): Either[E, EntType]
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
+
+  def permissionsRetriever: BasicPermissionRetriever[H, PermissionsType]
 
   override def run[G[_]](input: I)(implicit monadF: Monad[F], monadH: Monad[H], transform: F ~> G, transformHF: H ~> F): G[Either[E, EntType]] =
     EntityRepoManager.manageCreate[G, F, H, I, EntityCreateCommand[F, H, I, E, IdType, EntType, PermissionsType], IdType, EntType, E, PermissionsType](extractRepo(input))(this)

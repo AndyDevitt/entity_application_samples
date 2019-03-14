@@ -3,7 +3,7 @@ package sample1.domain.command
 import sample1.domain.cta.CtaRepo
 import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.invoice.{Invoice, InvoiceAlgebra, InvoiceId}
-import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoiceUserPermissions}
+import sample1.domain.permissions._
 import sample1.domain.user.UserId
 import sample1.domain.{InvoiceError, InvoiceRepo, StaleInvoiceError}
 
@@ -59,7 +59,9 @@ final case class ApproveCmdV2[F[_], H[_]](userId: UserId,
     InvoiceAlgebra.approveV2[F, H](invoice, this, permissions)
 }
 
-final case class CreateRfiInvoiceCmd[F[_], H[_]](userId: UserId) extends InvoiceCreateCommand[F, H] {
+final case class CreateRfiInvoiceCmd[F[_], H[_]](userId: UserId,
+                                                 permissionsRetriever: InvoiceBasicPermissionRetriever[H]
+                                                ) extends InvoiceCreateCommand[F, H] {
   override def create(): Either[InvoiceError, Invoice] = Right(Invoice.createRfiInvoiceG(this))
 }
 
@@ -72,7 +74,9 @@ final case class UpdateRfiCmd[F[_], H[_]](userId: UserId,
     InvoiceAlgebra.updateRfi(invoice, this, permissions)
 }
 
-final case class CreateSiteInvoiceCmd[F[_], H[_]](userId: UserId) extends InvoiceCreateCommand[F, H] {
+final case class CreateSiteInvoiceCmd[F[_], H[_]](userId: UserId,
+                                                  permissionsRetriever: InvoiceBasicPermissionRetriever[H]
+                                                 ) extends InvoiceCreateCommand[F, H] {
   override def create(): Either[InvoiceError, Invoice] = Right(Invoice.createSiteInvoice(this))
 }
 
