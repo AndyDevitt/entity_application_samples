@@ -2,7 +2,7 @@ package sample1.domain.invoice
 
 import cats.Id
 import sample1.application.ApplicationTestsV5.{TestInvoiceBasicPermissionRetriever, TestInvoiceEntityPermissionRetriever}
-import sample1.domain.RequestForInvoice
+import RequestForInvoice
 import sample1.domain.command.{Command, CreateRfiInvoiceCmd, CreateSiteInvoiceCmd}
 import sample1.domain.user.UserId
 
