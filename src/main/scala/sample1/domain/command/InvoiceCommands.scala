@@ -73,7 +73,7 @@ final case class ApproveCmd[F[_]](userId: UserId,
 
   override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
     Either.cond(
-      permissions.hasReadPermission && permissions.hasPermission(InvoicePermissions.Approve()),
+      permissions.hasReadPermission && permissions.has(InvoicePermissions.Approve()),
       (),
       InvoiceError.InsufficientPermissions())
 }
