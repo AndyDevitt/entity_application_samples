@@ -1,4 +1,4 @@
-package sample1.domain
+package sample1.domain.invoice
 
 case class RequestForInvoice() {
 
