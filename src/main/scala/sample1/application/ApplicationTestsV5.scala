@@ -7,7 +7,7 @@ import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.invoice.{Invoice, SiteInvoice, SponsorInvoice}
-import sample1.domain.permissions.{InvoiceBasicPermissionRetriever, InvoiceEntityPermissionRetriever, InvoiceUserPermissions}
+import sample1.domain.permissions.{InvoiceBasicPermissionRetriever, InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
 import sample1.infrastructure.{TestCtaRepo, TestInvoiceRepo}
 
@@ -70,11 +70,13 @@ object ApplicationTestsV5 extends App {
   val testProcessorApp = new TestApplication(new TestInvoiceRepo(), new TestCtaRepo())
 
   case class TestInvoiceBasicPermissionRetriever() extends InvoiceBasicPermissionRetriever[Id] {
-    override def retrieve(userId: UserId): Id[InvoiceUserPermissions] = InvoiceUserPermissions(Set())
+    override def retrieve(userId: UserId): Id[InvoiceUserPermissions] =
+      InvoiceUserPermissions(Set(InvoicePermissions.Create()))
   }
 
   case class TestInvoiceEntityPermissionRetriever() extends InvoiceEntityPermissionRetriever[Id] {
-    override def retrieve(userId: UserId, entity: Invoice): Id[InvoiceUserPermissions] = InvoiceUserPermissions(Set())
+    override def retrieve(userId: UserId, entity: Invoice): Id[InvoiceUserPermissions] =
+      InvoiceUserPermissions(Set(InvoicePermissions.Read()))
   }
 
   val testEntityPermissionsRetriever = TestInvoiceEntityPermissionRetriever()

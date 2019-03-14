@@ -18,7 +18,8 @@ object InvoicePermissions {
 
 }
 
-final case class InvoiceUserPermissions(permissions: Set[InvoicePermissions]) {
+final case class InvoiceUserPermissions(permissions: Set[InvoicePermissions]) extends EntityPermissions[InvoicePermissions] {
   def hasReadPermission: Boolean = permissions.contains(InvoicePermissions.Read())
+
   def hasCreatePermission: Boolean = permissions.contains(InvoicePermissions.Create())
 }

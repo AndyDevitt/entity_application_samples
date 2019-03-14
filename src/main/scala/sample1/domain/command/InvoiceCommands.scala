@@ -70,6 +70,12 @@ final case class ApproveCmd[F[_]](userId: UserId,
                                  ) extends InvoiceUpdateCommand[F, ApproveCmd[F]] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     InvoiceAlgebra.approve(invoice, this, permissions)
+
+  override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
+    Either.cond(
+      permissions.hasReadPermission && permissions.hasPermission(InvoicePermissions.Approve()),
+      (),
+      InvoiceError.InsufficientPermissions())
 }
 
 final case class ApproveCmdV2[F[_]](userId: UserId,
@@ -84,7 +90,8 @@ final case class ApproveCmdV2[F[_]](userId: UserId,
 final case class CreateRfiInvoiceCmd[F[_]](userId: UserId,
                                            permissionsRetriever: InvoiceBasicPermissionRetriever[F]
                                           ) extends InvoiceCreateCommand[F] {
-  override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right(Invoice.createRfiInvoice(this))
+  override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+    Right(Invoice.createRfiInvoice(this))
 }
 
 final case class UpdateRfiCmd[F[_]](userId: UserId,
@@ -99,7 +106,8 @@ final case class UpdateRfiCmd[F[_]](userId: UserId,
 final case class CreateSiteInvoiceCmd[F[_]](userId: UserId,
                                             permissionsRetriever: InvoiceBasicPermissionRetriever[F]
                                            ) extends InvoiceCreateCommand[F] {
-  override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right(Invoice.createSiteInvoice(this))
+  override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+    Right(Invoice.createSiteInvoice(this))
 }
 
 final case class FindAll[F[_]](userId: UserId,
