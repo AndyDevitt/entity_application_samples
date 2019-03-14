@@ -2,6 +2,7 @@ package sample1.domain.permissions
 
 import sample1.domain.command.Command
 import sample1.domain.entity.{Entity, EntityId}
+import sample1.domain.invoice.{Invoice, InvoiceId}
 import sample1.domain.user.UserId
 
 trait Operable
@@ -19,3 +20,5 @@ trait CommandPermissionRetriever[F[_], PermissionsType, CmdType <: Command] {
 trait EntityPermissionsRetriever[F[_], IdType <: EntityId, EntityType <: Entity[IdType], PermissionsType] extends PermissionsRetriever[F, PermissionsType] {
   def retrieve(userId: UserId, entity: EntityType): F[PermissionsType]
 }
+
+trait InvoiceEntityPermissionRetriever[F[_]] extends EntityPermissionsRetriever[F, InvoiceId, Invoice, InvoiceUserPermissions]
