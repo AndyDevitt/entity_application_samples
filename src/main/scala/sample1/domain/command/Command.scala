@@ -52,7 +52,7 @@ trait IgnoreOptimisticLocking extends OptimisticLocking {
 
 trait EntityCreateCommand[F[_], -I <: CommandInput, ErrType, IdType <: EntityId, EntType <: VersionedEntity[IdType], PermissionsType]
   extends EntityCommand[F, I, EntType, ErrType, PermissionsType] {
-  def create(): Either[ErrType, EntType]
+  def create(permissions: PermissionsType): Either[ErrType, EntType]
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, ErrType]
 

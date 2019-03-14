@@ -13,7 +13,7 @@ class DomainCommandInput[F[_]](val invoiceRepo: InvoiceRepo[F],
 
 sealed trait InvoiceCreateCommand[F[_]]
   extends EntityCreateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions] {
-  def create(): Either[InvoiceError, Invoice]
+  def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice]
 
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] =
     input.invoiceRepo
@@ -62,7 +62,7 @@ final case class ApproveCmdV2[F[_]](userId: UserId,
 final case class CreateRfiInvoiceCmd[F[_]](userId: UserId,
                                            permissionsRetriever: InvoiceBasicPermissionRetriever[F]
                                           ) extends InvoiceCreateCommand[F] {
-  override def create(): Either[InvoiceError, Invoice] = Right(Invoice.createRfiInvoice(this))
+  override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right(Invoice.createRfiInvoice(this))
 }
 
 final case class UpdateRfiCmd[F[_]](userId: UserId,
@@ -77,7 +77,7 @@ final case class UpdateRfiCmd[F[_]](userId: UserId,
 final case class CreateSiteInvoiceCmd[F[_]](userId: UserId,
                                             permissionsRetriever: InvoiceBasicPermissionRetriever[F]
                                            ) extends InvoiceCreateCommand[F] {
-  override def create(): Either[InvoiceError, Invoice] = Right(Invoice.createSiteInvoice(this))
+  override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right(Invoice.createSiteInvoice(this))
 }
 
 final case class FindAll[F[_]](userId: UserId) extends InvoiceQueryCommand[F, Seq[Invoice]] {

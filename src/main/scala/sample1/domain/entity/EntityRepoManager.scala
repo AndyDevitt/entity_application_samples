@@ -35,8 +35,9 @@ object EntityRepoManager {
                   (implicit monadG: Monad[G], transform: G ~> F
                   ): F[Either[ErrType, EntType]] =
     transform((for {
-      updatedInv <- EitherT.fromEither[G](cmd.create())
-      savedInv <- EitherT(repo.save(updatedInv))
+      permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId))
+      createdInv <- EitherT.fromEither[G](cmd.create(permissions))
+      savedInv <- EitherT(repo.save(createdInv))
     } yield savedInv).value)
 
   def manageUpdate[

@@ -9,7 +9,7 @@ import sample1.domain.{InvoiceError, StaleCtaError}
 sealed trait CtaPermissions
 
 sealed trait CtaCreateCommand[F[_]] extends EntityCreateCommand[F,  DomainCommandInput[F], InvoiceError, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaUserPermissions] {
-  def create(): Either[InvoiceError, ClinicalTrialAgreement]
+  override def create(permissions: CtaUserPermissions): Either[InvoiceError, ClinicalTrialAgreement]
 
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, InvoiceError] = input.ctaRepo
 }
@@ -28,5 +28,5 @@ final case class CtaRetrieveCommand[F[_]](userId: UserId, id: ClinicalTrialAgree
 
 
 final case class CreateCtaCmd[F[_]](userId: UserId, permissionsRetriever: CtaBasicPermissionRetriever[F]) extends CtaCreateCommand[F] {
-  override def create(): Either[InvoiceError, ClinicalTrialAgreement] = Right(ClinicalTrialAgreement.create(this))
+  override def create(permissions: CtaUserPermissions): Either[InvoiceError, ClinicalTrialAgreement] = Right(ClinicalTrialAgreement.create(this))
 }
