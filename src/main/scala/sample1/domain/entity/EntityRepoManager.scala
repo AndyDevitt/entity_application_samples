@@ -59,9 +59,9 @@ object EntityRepoManager {
    ): F[Either[ErrType, EntityResultWithPermissions[EntType, PermissionsType]]] =
     transform((for {
       inv <- EitherT(repo.retrieve(cmd.id))
-      _ <- EitherT.fromEither(checkOptimisticLocking(inv, cmd, staleF))
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId, inv))
       _ <- EitherT.fromEither(cmd.checkMinimumPermissions(permissions))
+      _ <- EitherT.fromEither(checkOptimisticLocking(inv, cmd, staleF))
       updatedInv <- EitherT.fromEither[G](cmd.action(inv, permissions))
       savedInv <- EitherT(repo.save(updatedInv))
     } yield EntityResultWithPermissions(savedInv, permissions)).value)
