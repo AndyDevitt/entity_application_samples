@@ -18,6 +18,6 @@ object CtaPermissions {
 
 }
 
-final case class CtaUserPermissions(permissions: Set[CtaPermissions]) {
+final case class CtaUserPermissions(permissions: Set[CtaPermissions]) extends EntityPermissions[CtaPermissions] {
   def hasReadPermission: Boolean = permissions.contains(CtaPermissions.Read())
 }
