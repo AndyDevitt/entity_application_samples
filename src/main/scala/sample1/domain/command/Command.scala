@@ -27,7 +27,7 @@ trait CommandInput
   * @tparam R the success result type
   * @tparam E error type
   */
-trait RunnableCommand[F[_], H[_], -I <: CommandInput, R, E, PermissionsType] extends Command {
+trait RunnableCommand[F[_], -I <: CommandInput, R, E, PermissionsType] extends Command {
   /**
     *
     * @param input     the command input that will contain any runtime references supplied by the application layer
@@ -36,11 +36,11 @@ trait RunnableCommand[F[_], H[_], -I <: CommandInput, R, E, PermissionsType] ext
     * @tparam G the application context
     * @return returns the result of executing the command
     */
-  def run[G[_]](input: I)(implicit monadF: Monad[F], monadH: Monad[H], transform: F ~> G, transformHF: H ~> F): G[Either[E, R]]
+  def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, R]]
 }
 
-sealed trait EntityCommand[F[_], H[_], -I <: CommandInput, R, E, PermissionsType]
-  extends RunnableCommand[F, H, I, R, E, PermissionsType]
+sealed trait EntityCommand[F[_], -I <: CommandInput, R, E, PermissionsType]
+  extends RunnableCommand[F, I, R, E, PermissionsType]
 
 sealed trait OptimisticLocking {
   def enforceOptimisticLocking: Boolean = true
@@ -50,36 +50,35 @@ trait IgnoreOptimisticLocking extends OptimisticLocking {
   override def enforceOptimisticLocking: Boolean = false
 }
 
-trait EntityCreateCommand[F[_], H[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType], PermissionsType]
-  extends EntityCommand[F, H, I, EntType, E, PermissionsType] {
+trait EntityCreateCommand[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType], PermissionsType]
+  extends EntityCommand[F, I, EntType, E, PermissionsType] {
   def create(): Either[E, EntType]
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
 
-  def permissionsRetriever: BasicPermissionRetriever[H, PermissionsType]
+  def permissionsRetriever: BasicPermissionRetriever[F, PermissionsType]
 
-  override def run[G[_]](input: I)(implicit monadF: Monad[F], monadH: Monad[H], transform: F ~> G, transformHF: H ~> F): G[Either[E, EntType]] =
-    EntityRepoManager.manageCreate[G, F, H, I, EntityCreateCommand[F, H, I, E, IdType, EntType, PermissionsType], IdType, EntType, E, PermissionsType](extractRepo(input))(this)
+  override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, EntType]] =
+    EntityRepoManager.manageCreate[G, F, I, EntityCreateCommand[F, I, E, IdType, EntType, PermissionsType], IdType, EntType, E, PermissionsType](extractRepo(input))(this)
 }
 
-trait EntityRetrieveCommand[F[_], H[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType], PermissionsType] extends EntityCommand[F, H, I, EntType, E, PermissionsType] {
+trait EntityRetrieveCommand[F[_], -I <: CommandInput, E, IdType <: EntityId, EntType <: VersionedEntity[IdType], PermissionsType] extends EntityCommand[F, I, EntType, E, PermissionsType] {
   def id: IdType
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
 
-  override def run[G[_]](input: I)(implicit monadF: Monad[F], monadH: Monad[H], transform: F ~> G, transformHF: H ~> F): G[Either[E, EntType]] =
-    EntityRepoManager.manageRetrieve[G, F, H, I, EntityRetrieveCommand[F, H, I, E, IdType, EntType, PermissionsType], IdType, EntType, E, PermissionsType](extractRepo(input))(this)
+  override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, EntType]] =
+    EntityRepoManager.manageRetrieve[G, F, I, EntityRetrieveCommand[F, I, E, IdType, EntType, PermissionsType], IdType, EntType, E, PermissionsType](extractRepo(input))(this)
 }
 
 trait EntityUpdateCommand[
 F[_],
-H[_],
 -I <: CommandInput,
 E,
 IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
 PermissionsType]
-  extends EntityCommand[F, H, I, EntType, E, PermissionsType] with OptimisticLocking {
+  extends EntityCommand[F, I, EntType, E, PermissionsType] with OptimisticLocking {
   def id: IdType
 
   def version: EntityVersion
@@ -90,15 +89,14 @@ PermissionsType]
 
   def extractRepo(input: I): EntityRepo[F, IdType, EntType, E]
 
-  def permissionsRetriever: EntityPermissionsRetriever[H, IdType, EntType, PermissionsType]
+  def permissionsRetriever: EntityPermissionsRetriever[F, IdType, EntType, PermissionsType]
 
-  override def run[G[_]](input: I)(implicit monadF: Monad[F], monadH: Monad[H], transform: F ~> G, transformHF: H ~> F): G[Either[E, EntType]] =
-    EntityRepoManager.manageUpdate[G, F, H, I, IdType, EntType, E, PermissionsType, EntityUpdateCommand[F, H, I, E, IdType, EntType, PermissionsType]](extractRepo(input))(this)(staleF _)
+  override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, EntType]] =
+    EntityRepoManager.manageUpdate[G, F, I, IdType, EntType, E, PermissionsType, EntityUpdateCommand[F, I, E, IdType, EntType, PermissionsType]](extractRepo(input))(this)(staleF _)
 }
 
 trait EntityQueryCommand[
 F[_],
-H[_],
 -I <: CommandInput,
 E,
 IdType <: EntityId,
@@ -106,11 +104,11 @@ EntType <: VersionedEntity[IdType],
 R,
 RepoType <: EntityRepo[F, IdType, EntType, E],
 PermissionsType]
-  extends EntityCommand[F, H, I, R, E, PermissionsType] {
+  extends EntityCommand[F, I, R, E, PermissionsType] {
   def extractRepo(input: I): RepoType
 
   def query(repo: RepoType): F[Either[E, R]]
 
-  override def run[G[_]](input: I)(implicit monadF: Monad[F], monadH: Monad[H], transform: F ~> G, transformHF: H ~> F): G[Either[E, R]] =
-    EntityRepoManager.manageQuery[G, F, H, I, EntityQueryCommand[F, H, I, E, IdType, EntType, R, RepoType, PermissionsType], IdType, EntType, R, E, RepoType, PermissionsType](extractRepo(input))(this)
+  override def run[G[_]](input: I)(implicit monadF: Monad[F], transform: F ~> G): G[Either[E, R]] =
+    EntityRepoManager.manageQuery[G, F, I, EntityQueryCommand[F, I, E, IdType, EntType, R, RepoType, PermissionsType], IdType, EntType, R, E, RepoType, PermissionsType](extractRepo(input))(this)
 }

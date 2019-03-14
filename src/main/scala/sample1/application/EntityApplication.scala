@@ -3,7 +3,7 @@ package sample1.application
 import cats.{Monad, ~>}
 import sample1.domain.command.{CommandInput, RunnableCommand}
 
-trait EntityApplication[F[_], G[_], H[_], I <: CommandInput] {
+trait EntityApplication[F[_], G[_], I <: CommandInput] {
 
   def input: I
 
@@ -20,22 +20,18 @@ trait EntityApplication[F[_], G[_], H[_], I <: CommandInput] {
     * @tparam PermissionsType the permissions type for this command
     * @return
     */
-  def processCommand[R, Error, PermissionsType](cmd: RunnableCommand[G, H, I, R, Error, PermissionsType])
+  def processCommand[R, Error, PermissionsType](cmd: RunnableCommand[G, I, R, Error, PermissionsType])
                                                (implicit monadF: Monad[F],
                                                 monadG: Monad[G],
-                                                monadH: Monad[H],
                                                 naturalTransformation: G ~> F,
-                                                naturalTransformationHG: H ~> G
                                                ): F[Either[Error, R]] =
     cmd.run(input)
 
 
-  def processCommand[R, T, Error, PermissionsType](cmd: RunnableCommand[G, H, I, R, Error, PermissionsType], transformer: R => Either[Error, T])
+  def processCommand[R, T, Error, PermissionsType](cmd: RunnableCommand[G, I, R, Error, PermissionsType], transformer: R => Either[Error, T])
                                                   (implicit monadF: Monad[F],
                                                    monadG: Monad[G],
-                                                   monadH: Monad[H],
                                                    naturalTransformation: G ~> F,
-                                                   naturalTransformationHG: H ~> G
                                                   ): F[Either[Error, T]] =
     monadF.map(cmd.run(input))(_.flatMap(transformer))
 }

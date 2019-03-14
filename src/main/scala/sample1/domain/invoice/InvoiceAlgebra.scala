@@ -16,7 +16,7 @@ trait EntityInterface[IdType <: EntityId, EntityType <: VersionedEntity[IdType],
   //def actionStatus(entity: EntityType, action: ActionType): ActionStatusType
 
   def checkOptimisticLocking[A <: EntityType](entity: A, cmd: Command): Either[ErrType, A] = cmd match {
-    case c: EntityUpdateCommand[_, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
+    case c: EntityUpdateCommand[_, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
     case _ => Right(entity)
   }
 
@@ -39,9 +39,9 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
   override def statusToErrF: NotAllowed => InvoiceError = i => InvoiceError.fromActionStatus(i)
 
   def actionFromCommand(cmd: Command): InvoiceAction = cmd match {
-    case _: ApproveCmd[_, _] => InvoiceAction.Approve
-    case _: CreateRfiInvoiceCmd[_, _] => InvoiceAction.CreateRfi
-    case _: UpdateRfiCmd[_, _] => InvoiceAction.UpdateRfi
+    case _: ApproveCmd[_] => InvoiceAction.Approve
+    case _: CreateRfiInvoiceCmd[_] => InvoiceAction.CreateRfi
+    case _: UpdateRfiCmd[_] => InvoiceAction.UpdateRfi
   }
 
   def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
@@ -73,7 +73,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
     case _: SiteInvoice => Left(NotAllowedForProcessType())
   }
 
-  def createRfi[F[_], H[_]](invoice: Invoice, cmd: CreateRfiInvoiceCmd[F, H], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+  def createRfi[F[_]](invoice: Invoice, cmd: CreateRfiInvoiceCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     canDoAction(canCreateRfi)(invoice, cmd, permissions) map {
       InvoiceUtils.createRfi(_, cmd)
     }
@@ -81,7 +81,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
   def canApprove(invoice: Invoice, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] =
     Either.cond(invoice.status == NotApproved, invoice, NotAllowedInCurrentStatus())
 
-  def approve[F[_], H[_]](invoice: Invoice, cmd: ApproveCmd[F, H], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+  def approve[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     canDoAction(canApprove)(invoice, cmd, permissions) map { inv =>
       val pgm = for {
         _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
@@ -90,7 +90,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
       pgm.runS(inv).value
     }
 
-  def approveV2[F[_], H[_]](invoice: Invoice, cmd: ApproveCmdV2[F, H], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+  def approveV2[F[_]](invoice: Invoice, cmd: ApproveCmdV2[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     canDoAction(canApprove)(invoice, cmd, permissions) map {
       _
         .clearCosts()
@@ -105,7 +105,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
     case _: SiteInvoice => Left(NotAllowedForProcessType())
   }
 
-  def updateRfi[F[_], H[_]](invoice: Invoice, cmd: UpdateRfiCmd[F, H], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+  def updateRfi[F[_]](invoice: Invoice, cmd: UpdateRfiCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     canDoAction(canUpdateRfi)(invoice, cmd, permissions) map { inv =>
       val pgm = for {
         _ <- InvoiceStateUtils.clearCosts(inv, cmd)

@@ -14,7 +14,7 @@ import scala.concurrent.Future
   * @tparam F the context for the application
   * @tparam G the context for the underlying repo
   */
-trait InvoiceApplication[F[_], G[_], H[_]] extends EntityApplication[F, G, H, DomainCommandInput[G]] {
+trait InvoiceApplication[F[_], G[_], H[_]] extends EntityApplication[F, G, DomainCommandInput[G]] {
   def invoiceRepo: InvoiceRepo[G]
 
   def ctaRepo: CtaRepo[G]

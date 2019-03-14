@@ -132,10 +132,10 @@ object InvoiceStateBuilderTest {
   val testEntityPermissionsRetriever = TestInvoiceEntityPermissionRetriever()
   val testBasicPermissionsRetriever = TestInvoiceBasicPermissionRetriever()
 
-  val siteInv: SiteInvoice = Invoice.createSiteInvoice[Id, Id](CreateSiteInvoiceCmd(UserId(), testBasicPermissionsRetriever))
-  val sponsorInv: SponsorInvoice = Invoice.createRfiInvoiceG[Id, Id](CreateRfiInvoiceCmd(UserId(), testBasicPermissionsRetriever))
+  val siteInv: SiteInvoice = Invoice.createSiteInvoice[Id](CreateSiteInvoiceCmd(UserId(), testBasicPermissionsRetriever))
+  val sponsorInv: SponsorInvoice = Invoice.createRfiInvoice[Id](CreateRfiInvoiceCmd(UserId(), testBasicPermissionsRetriever))
   val inv: Invoice = sponsorInv
-  val cmd: CreateRfiInvoiceCmd[Id, Id] = CreateRfiInvoiceCmd[Id, Id](UserId(), testBasicPermissionsRetriever)
+  val cmd: CreateRfiInvoiceCmd[Id] = CreateRfiInvoiceCmd[Id](UserId(), testBasicPermissionsRetriever)
 
   val updated: SponsorInvoice = sponsorInv
     .clearCosts()

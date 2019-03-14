@@ -9,9 +9,8 @@ object EntityRepoManager {
   def manageRetrieve[
   F[_],
   G[_],
-  H[_],
   I <: CommandInput,
-  CmdType <: EntityRetrieveCommand[G, H, I, E, IdType, EntType, PermissionsType],
+  CmdType <: EntityRetrieveCommand[G, I, E, IdType, EntType, PermissionsType],
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
   E,
@@ -26,9 +25,8 @@ object EntityRepoManager {
   def manageCreate[
   F[_],
   G[_],
-  H[_],
   I <: CommandInput,
-  CmdType <: EntityCreateCommand[G, H, I, E, IdType, EntType, PermissionsType],
+  CmdType <: EntityCreateCommand[G, I, E, IdType, EntType, PermissionsType],
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
   E,
@@ -44,42 +42,37 @@ object EntityRepoManager {
   def manageUpdate[
   F[_],
   G[_],
-  H[_],
   I <: CommandInput,
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
   E,
   PermissionsType,
-  CmdType <: EntityUpdateCommand[G, H, I, E, IdType, EntType, PermissionsType]
+  CmdType <: EntityUpdateCommand[G, I, E, IdType, EntType, PermissionsType]
   ](repo: EntityRepo[G, IdType, EntType, E])
    (cmd: CmdType)
    (staleF: IdType => E)
-   (implicit monadG: Monad[G], transform: G ~> F, transformHG: H ~> G
+   (implicit monadG: Monad[G], transform: G ~> F
    ): F[Either[E, EntType]] =
     transform((for {
       inv <- EitherT(repo.retrieve(cmd.id))
       _ <- EitherT.fromEither(checkOptimisticLocking(inv, cmd, staleF))
-      permissions <- EitherT.right(transformHG(cmd.permissionsRetriever.retrieve(cmd.userId, inv)))
+      permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId, inv))
       updatedInv <- EitherT.fromEither[G](cmd.action(inv, permissions))
       savedInv <- EitherT(repo.save(updatedInv))
     } yield savedInv).value)
 
   private def checkOptimisticLocking[
   F[_],
-  H[_],
   EntType <: VersionedEntity[IdType],
-  IdType <: EntityId, E](entity: EntType, cmd: EntityUpdateCommand[F, H, _, _, _, _, _], staleF: IdType => E
+  IdType <: EntityId, E](entity: EntType, cmd: EntityUpdateCommand[F, _, _, _, _, _], staleF: IdType => E
                         ): Either[E, Unit] =
     Either.cond(cmd.version == entity.version, (), staleF(entity.id))
-
-  //private def getPermissions[F[_],H[_], EntType <: VersionedEntity[IdType], IdType <: EntityId, E](entity: EntType, cmd: EntityUpdateCommand[F,H, _, _, _, _]): H[Either[E,Set[PermissionsType]]]
 
   def manageQuery[
   F[_],
   G[_],
-  H[_],
   I <: CommandInput,
-  CmdType <: EntityQueryCommand[G, H, I, E, IdType, EntType, R, RepoType, PermissionsType],
+  CmdType <: EntityQueryCommand[G, I, E, IdType, EntType, R, RepoType, PermissionsType],
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
   R,
