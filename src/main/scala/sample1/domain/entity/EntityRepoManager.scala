@@ -10,14 +10,14 @@ object EntityRepoManager {
   F[_],
   G[_],
   I <: CommandInput,
-  CmdType <: EntityRetrieveCommand[G, I, E, IdType, EntType, PermissionsType],
+  CmdType <: EntityRetrieveCommand[G, I, ErrType, IdType, EntType, PermissionsType],
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
-  E,
-  PermissionsType](repo: EntityRepo[G, IdType, EntType, E])
+  ErrType,
+  PermissionsType](repo: EntityRepo[G, IdType, EntType, ErrType])
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
-                  ): F[Either[E, EntType]] =
+                  ): F[Either[ErrType, EntType]] =
     transform((for {
       inv <- EitherT(repo.retrieve(cmd.id))
     } yield inv).value)
@@ -26,14 +26,14 @@ object EntityRepoManager {
   F[_],
   G[_],
   I <: CommandInput,
-  CmdType <: EntityCreateCommand[G, I, E, IdType, EntType, PermissionsType],
+  CmdType <: EntityCreateCommand[G, I, ErrType, IdType, EntType, PermissionsType],
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
-  E,
-  PermissionsType](repo: EntityRepo[G, IdType, EntType, E])
+  ErrType,
+  PermissionsType](repo: EntityRepo[G, IdType, EntType, ErrType])
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
-                  ): F[Either[E, EntType]] =
+                  ): F[Either[ErrType, EntType]] =
     transform((for {
       updatedInv <- EitherT.fromEither[G](cmd.create())
       savedInv <- EitherT(repo.save(updatedInv))
@@ -45,14 +45,14 @@ object EntityRepoManager {
   I <: CommandInput,
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
-  E,
+  ErrType,
   PermissionsType,
-  CmdType <: EntityUpdateCommand[G, I, E, IdType, EntType, PermissionsType]
-  ](repo: EntityRepo[G, IdType, EntType, E])
+  CmdType <: EntityUpdateCommand[G, I, ErrType, IdType, EntType, PermissionsType]
+  ](repo: EntityRepo[G, IdType, EntType, ErrType])
    (cmd: CmdType)
-   (staleF: IdType => E)
+   (staleF: IdType => ErrType)
    (implicit monadG: Monad[G], transform: G ~> F
-   ): F[Either[E, EntType]] =
+   ): F[Either[ErrType, EntType]] =
     transform((for {
       inv <- EitherT(repo.retrieve(cmd.id))
       _ <- EitherT.fromEither(checkOptimisticLocking(inv, cmd, staleF))
@@ -72,16 +72,16 @@ object EntityRepoManager {
   F[_],
   G[_],
   I <: CommandInput,
-  CmdType <: EntityQueryCommand[G, I, E, IdType, EntType, R, RepoType, PermissionsType],
+  CmdType <: EntityQueryCommand[G, I, ErrType, IdType, EntType, ResType, RepoType, PermissionsType],
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
-  R,
-  E,
-  RepoType <: EntityRepo[G, IdType, EntType, E],
+  ResType,
+  ErrType,
+  RepoType <: EntityRepo[G, IdType, EntType, ErrType],
   PermissionsType](repo: RepoType)
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
-                  ): F[Either[E, R]] =
+                  ): F[Either[ErrType, ResType]] =
     transform((for {
       results <- EitherT(cmd.query(repo))
     } yield results).value)
