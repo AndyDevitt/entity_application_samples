@@ -10,5 +10,5 @@ case class ClinicalTrialAgreement(id: ClinicalTrialAgreementId, version: EntityV
 }
 
 object ClinicalTrialAgreement {
-  def create[F[_]](cmd: CreateCtaCmd[F]): ClinicalTrialAgreement = new ClinicalTrialAgreement(id = ClinicalTrialAgreementId(Random.nextInt().abs), EntityVersion(), "")
+  def create[F[_], H[_]](cmd: CreateCtaCmd[F, H]): ClinicalTrialAgreement = new ClinicalTrialAgreement(id = ClinicalTrialAgreementId(Random.nextInt().abs), EntityVersion(), "")
 }

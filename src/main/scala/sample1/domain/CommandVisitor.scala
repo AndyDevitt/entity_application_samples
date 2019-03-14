@@ -6,11 +6,11 @@ import sample1.domain.user.UserId
 
 trait CommandVisitor[A] {
 
-  def visit[F[_]](cmd: ApproveCmd[F]): A
+  def visit[F[_], H[_]](cmd: ApproveCmd[F, H]): A
 
-  def visit[F[_]](cmd: CreateRfiInvoiceCmd[F]): A
+  def visit[F[_], H[_]](cmd: CreateRfiInvoiceCmd[F, H]): A
 
-  def visit[F[_]](cmd: UpdateRfiCmd[F]): A
+  def visit[F[_], H[_]](cmd: UpdateRfiCmd[F, H]): A
 
 }
 
@@ -23,11 +23,11 @@ trait ActionVisitor[A] {
 }
 
 class CommandToActionVisitor extends CommandVisitor[InvoiceAction] {
-  override def visit[F[_]](cmd: ApproveCmd[F]): InvoiceAction.Approve.type = InvoiceAction.Approve
+  override def visit[F[_], H[_]](cmd: ApproveCmd[F, H]): InvoiceAction.Approve.type = InvoiceAction.Approve
 
-  override def visit[F[_]](cmd: CreateRfiInvoiceCmd[F]): InvoiceAction.CreateRfi.type = InvoiceAction.CreateRfi
+  override def visit[F[_], H[_]](cmd: CreateRfiInvoiceCmd[F, H]): InvoiceAction.CreateRfi.type = InvoiceAction.CreateRfi
 
-  override def visit[F[_]](cmd: UpdateRfiCmd[F]): InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
+  override def visit[F[_], H[_]](cmd: UpdateRfiCmd[F, H]): InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
 }
 
 class PrettifyActionVisitor extends ActionVisitor[String] {
@@ -40,9 +40,9 @@ class PrettifyActionVisitor extends ActionVisitor[String] {
 
 object CommandVisitor {
   def processCommand[A](cmd: Command, visitor: CommandVisitor[A]): A = cmd match {
-    case c: ApproveCmd[_] => visitor.visit(c)
-    case c: CreateRfiInvoiceCmd[_] => visitor.visit(c)
-    case c: UpdateRfiCmd[_] => visitor.visit(c)
+    case c: ApproveCmd[_, _] => visitor.visit(c)
+    case c: CreateRfiInvoiceCmd[_, _] => visitor.visit(c)
+    case c: UpdateRfiCmd[_, _] => visitor.visit(c)
   }
 }
 

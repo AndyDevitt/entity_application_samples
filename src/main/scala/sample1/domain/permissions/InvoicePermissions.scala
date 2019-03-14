@@ -4,15 +4,15 @@ sealed trait InvoicePermissions
 
 object InvoicePermissions {
 
-  final case object Create
+  final case class Create()
 
-  final case object Read
+  final case class Read()
 
-  final case object Approve
+  final case class Approve()
 
-  final case object Reject
+  final case class Reject()
 
-  final case object AddCost
+  final case class AddCost()
 
   final case class ApproveWithLimit(limit: Int)
 

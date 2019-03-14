@@ -27,10 +27,10 @@ final case class SponsorInvoice private(id: InvoiceId,
                                         rfi: RequestForInvoice) extends Invoice
 
 object Invoice {
-  def createRfiInvoiceG[F[_]](cmd: CreateRfiInvoiceCmd[F]): SponsorInvoice =
+  def createRfiInvoiceG[F[_], H[_]](cmd: CreateRfiInvoiceCmd[F, H]): SponsorInvoice =
     SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil, RequestForInvoice())
 
-  def createSiteInvoice[F[_]](cmd: CreateSiteInvoiceCmd[F]): SiteInvoice =
+  def createSiteInvoice[F[_], H[_]](cmd: CreateSiteInvoiceCmd[F, H]): SiteInvoice =
     SiteInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil)
 }
 

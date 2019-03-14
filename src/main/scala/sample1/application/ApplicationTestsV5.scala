@@ -1,7 +1,7 @@
 package sample1.application
 
 import cats.effect.IO
-import cats.~>
+import cats.{Id, ~>}
 import sample1.domain._
 import sample1.domain.command._
 import sample1.domain.cta.ClinicalTrialAgreement
@@ -40,8 +40,8 @@ object TestImplicits {
   implicit val ctaVersioned: Versioned[ClinicalTrialAgreement] =
     Versioned.instance(cta => cta.copy(version = cta.version.nextVersion))
 
-  implicit val invoiceToViewDecoder: Decoder[InvoiceView, Invoice, InvoiceError] =
-    (b: Invoice) => InvoiceView.create(b)
+  //  implicit val invoiceToViewDecoder: Decoder[InvoiceView, Invoice, InvoiceError] =
+  //    (b: Invoice) => InvoiceView.create(b)
 
   /**
     * CTA codec used to encode and decode between domain and persistence types (both the same type in this example) This
@@ -53,15 +53,13 @@ object TestImplicits {
       (cta: ClinicalTrialAgreement) => cta,
       (cta: ClinicalTrialAgreement) => Right(cta.copy(note = "I've been flipped!")))
 
-  implicit val invoiceToInvoiceView: Transform[Invoice, InvoiceView, InvoiceError] =
-    (from: Invoice) => InvoiceView.create(from)
+  //  implicit val invoiceToInvoiceView: Transform[Invoice, InvoiceView, InvoiceError] =
+  //    (from: Invoice) => InvoiceView.create(from)
 }
 
 object ApplicationTestsV5 extends App {
 
   import TestImplicits._
-  import Transform.Instances._
-  import Transform._
 
   val user1 = UserId("User1")
   val user2 = UserId("User2")
@@ -72,7 +70,7 @@ object ApplicationTestsV5 extends App {
 
 
   val res8 = for {
-    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd[Id, Id](user1))
     inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.id, inv1.version))
   } yield inv2
 
@@ -92,25 +90,25 @@ object ApplicationTestsV5 extends App {
 
   println(s"res10: $res10")
 
-  val res11 = for {
-    inv <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
-    invRetrieved <- testProcessorApp.processCommand(InvoiceRetrieveCommand(user1, inv.id)).to[InvoiceView]
-  } yield invRetrieved
+  //  val res11 = for {
+  //    inv <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
+  //    invRetrieved <- testProcessorApp.processCommand(InvoiceRetrieveCommand(user1, inv.id)).to[InvoiceView]
+  //  } yield invRetrieved
+  //
+  //  println(s"res11: $res11")
 
-  println(s"res11: $res11")
-
-  val res12 = for {
-    cta <- testProcessorApp.processCommand(CreateCtaCmd(user1))
-  } yield cta
-
-  println(s"res12: $res12")
-
-  val res13 = for {
-    cta <- testProcessorApp.processCommand(CreateCtaCmd(user1))
-    ctaRetrieved <- testProcessorApp.processCommand(CtaRetrieveCommand(user1, cta.id))
-  } yield ctaRetrieved
-
-  println(s"res13: $res13")
+  //  val res12 = for {
+  //    cta <- testProcessorApp.processCommand(CreateCtaCmd(user1))
+  //  } yield cta
+  //
+  //  println(s"res12: $res12")
+  //
+  //  val res13 = for {
+  //    cta <- testProcessorApp.processCommand(CreateCtaCmd(user1))
+  //    ctaRetrieved <- testProcessorApp.processCommand(CtaRetrieveCommand(user1, cta.id))
+  //  } yield ctaRetrieved
+  //
+  //  println(s"res13: $res13")
 
 
   val res15 = for {
@@ -127,19 +125,19 @@ object ApplicationTestsV5 extends App {
 
   println(s"res16: $res16")
 
-  val res17 = for {
-    res <- testProcessorApp.processCommand(FindAll(user1)).to[Seq[InvoiceView]]
-  } yield res
+  //  val res17 = for {
+  //    res <- testProcessorApp.processCommand(FindAll(user1)).to[Seq[InvoiceView]]
+  //  } yield res
+  //
+  //  println(s"res17: $res17")
 
-  println(s"res17: $res17")
-
-  val transformer = (inv: Invoice) => InvoiceView.create(inv)
-
-  val res18 = for {
-    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(user1), transformer)
-    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version), transformer)
-  } yield inv2
-
-  println(s"res18: $res18")
+  //  val transformer = (inv: Invoice) => InvoiceView.create(inv)
+  //
+  //  val res18 = for {
+  //    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(user1), transformer)
+  //    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version), transformer)
+  //  } yield inv2
+  //
+  //  println(s"res18: $res18")
 
 }
