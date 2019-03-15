@@ -52,10 +52,14 @@ final case class CtaRetrieveCommand[F[_]](userId: UserId,
   override def extractRepo(input: DomainCommandInput[F]
                           ): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] =
     input.ctaRepo
+
+  override def checkMinimumPermissions(permissions: CtaUserPermissions): Either[CtaError, Unit] = Right(())
 }
 
 final case class CreateCtaCmd[F[_]](userId: UserId, permissionsRetriever: CtaBasicPermissionRetriever[F])
   extends CtaCreateCommand[F] {
   override def create(permissions: CtaUserPermissions): Either[CtaError, ClinicalTrialAgreement] =
     Right(ClinicalTrialAgreement.create(this))
+
+  override def checkMinimumPermissions(permissions: CtaUserPermissions): Either[CtaError, Unit] = Right(())
 }

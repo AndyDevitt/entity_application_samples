@@ -38,7 +38,7 @@ trait RunnableCommand[F[_], -InpType <: CommandInput, ResType, ErrType, Permissi
     */
   def run[G[_]](input: InpType)(implicit monadF: Monad[F], transform: F ~> G): G[Either[ErrType, ResType]]
 
-  def checkMinimumPermissions(permissions: PermissionsType): Either[ErrType, Unit] = Right(())
+  def checkMinimumPermissions(permissions: PermissionsType): Either[ErrType, Unit]
 }
 
 final case class EntityResultWithPermissions[EntType, PermissionsType](entity: EntType, permissions: PermissionsType)
