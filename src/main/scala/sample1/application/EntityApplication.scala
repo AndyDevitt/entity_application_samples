@@ -28,7 +28,8 @@ trait EntityApplication[F[_], G[_], I <: CommandInput] {
     cmd.run(input)
 
 
-  def processCommand[R, T, Error, PermissionsType](cmd: RunnableCommand[G, I, R, Error, PermissionsType], transformer: R => Either[Error, T])
+  def processCommand[R, T, Error, PermissionsType](cmd: RunnableCommand[G, I, R, Error, PermissionsType],
+                                                   transformer: R => Either[Error, T])
                                                   (implicit monadF: Monad[F],
                                                    monadG: Monad[G],
                                                    naturalTransformation: G ~> F,
