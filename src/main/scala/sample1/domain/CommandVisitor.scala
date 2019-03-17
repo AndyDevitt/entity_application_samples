@@ -18,23 +18,19 @@ trait CommandVisitor[A] {
 trait ActionVisitor[A] {
   def visit(action: InvoiceAction.Approve.type): A
 
-  def visit(action: InvoiceAction.CreateRfi.type): A
-
   def visit(action: InvoiceAction.UpdateRfi.type): A
 }
 
 class CommandToActionVisitor extends CommandVisitor[InvoiceAction] {
   override def visit[F[_]](cmd: ApproveCmd[F]): InvoiceAction.Approve.type = InvoiceAction.Approve
 
-  override def visit[F[_]](cmd: CreateRfiInvoiceCmd[F]): InvoiceAction.CreateRfi.type = InvoiceAction.CreateRfi
-
   override def visit[F[_]](cmd: UpdateRfiCmd[F]): InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
+
+  override def visit[F[_]](cmd: CreateRfiInvoiceCmd[F]): InvoiceAction = ???
 }
 
 class PrettifyActionVisitor extends ActionVisitor[String] {
   override def visit(action: InvoiceAction.Approve.type): String = s"`${action.toString}`"
-
-  override def visit(action: InvoiceAction.CreateRfi.type): String = s"`${action.toString}`"
 
   override def visit(action: InvoiceAction.UpdateRfi.type): String = s"`${action.toString}`"
 }
@@ -50,7 +46,6 @@ object CommandVisitor {
 object ActionVisitor {
   def processAction[A](action: InvoiceAction, visitor: ActionVisitor[A]): A = action match {
     case a: InvoiceAction.Approve.type => visitor.visit(a)
-    case a: InvoiceAction.CreateRfi.type => visitor.visit(a)
     case a: InvoiceAction.UpdateRfi.type => visitor.visit(a)
   }
 }

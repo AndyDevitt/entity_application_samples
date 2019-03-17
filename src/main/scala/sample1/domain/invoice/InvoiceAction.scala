@@ -6,8 +6,6 @@ object InvoiceAction {
 
   case object Approve extends InvoiceAction
 
-  case object CreateRfi extends InvoiceAction
-
   case object UpdateRfi extends InvoiceAction
 
 }

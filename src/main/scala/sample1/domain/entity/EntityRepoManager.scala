@@ -51,7 +51,8 @@ object EntityRepoManager {
   EntType <: VersionedEntity[IdType],
   ErrType,
   PermissionsType,
-  CmdType <: EntityUpdateCommand[G, InpType, ErrType, IdType, EntType, PermissionsType]
+  ActionType,
+  CmdType <: EntityUpdateCommand[G, InpType, ErrType, IdType, EntType, PermissionsType, ActionType]
   ](repo: EntityRepo[G, IdType, EntType, ErrType])
    (cmd: CmdType)
    (staleF: IdType => ErrType)
@@ -69,7 +70,7 @@ object EntityRepoManager {
   private def checkOptimisticLocking[
   F[_],
   EntType <: VersionedEntity[IdType],
-  IdType <: EntityId, E](entity: EntType, cmd: EntityUpdateCommand[F, _, _, _, _, _], staleF: IdType => E
+  IdType <: EntityId, E](entity: EntType, cmd: EntityUpdateCommand[F, _, _, _, _, _, _], staleF: IdType => E
                         ): Either[E, Unit] =
     Either.cond(cmd.version == entity.version, (), staleF(entity.id))
 

@@ -118,12 +118,15 @@ F[_],
 ErrType,
 IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
-PermissionsType
+PermissionsType,
+ActionType
 ] extends EntityCommand[F, InpType, EntityResultWithPermissions[EntType, PermissionsType], ErrType, PermissionsType]
   with OptimisticLocking {
   def id: IdType
 
   def version: EntityVersion
+
+  def associatedAction: ActionType
 
   def action(entity: EntType, permissions: PermissionsType): Either[ErrType, EntType]
 
@@ -144,7 +147,8 @@ PermissionsType
       EntType,
       ErrType,
       PermissionsType,
-      EntityUpdateCommand[F, InpType, ErrType, IdType, EntType, PermissionsType]
+      ActionType,
+      EntityUpdateCommand[F, InpType, ErrType, IdType, EntType, PermissionsType, ActionType]
       ](extractRepo(input))(this)(staleF)
 }
 

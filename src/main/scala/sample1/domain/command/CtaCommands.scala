@@ -1,6 +1,6 @@
 package sample1.domain.command
 
-import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
+import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId, CtaAction}
 import sample1.domain.entity.EntityRepo
 import sample1.domain.errors.CtaError
 import sample1.domain.permissions.{CtaBasicPermissionRetriever, CtaEntityPermissionRetriever, CtaUserPermissions}
@@ -30,7 +30,8 @@ sealed trait CtaUpdateCommand[F[_], H[_], CmdType]
     CtaError,
     ClinicalTrialAgreementId,
     ClinicalTrialAgreement,
-    CtaUserPermissions] {
+    CtaUserPermissions,
+    CtaAction] {
   override def staleF(id: ClinicalTrialAgreementId): CtaError = CtaError.StaleCtaError(id)
 
   override def extractRepo(input: DomainCommandInput[F]
