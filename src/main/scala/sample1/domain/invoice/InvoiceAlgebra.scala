@@ -2,42 +2,11 @@ package sample1.domain.invoice
 
 import sample1.domain._
 import sample1.domain.command._
-import sample1.domain.entity.{EntityBehaviour, EntityId, VersionedEntity}
+import sample1.domain.entity.EntityBehaviour
 import sample1.domain.errors.{InvoiceError, ValidationError}
 import sample1.domain.invoice.InvoiceStateBuilder.Instances._
 import sample1.domain.permissions.InvoiceUserPermissions
 import sample1.utils.ReduceOptionWithFailure._
-
-trait EntityInterface[IdType <: EntityId, EntityType <: VersionedEntity[IdType], ErrType, ActionType, ActionStatusType, NotAllowedActionStatusType <: ActionStatusType, PermissionsType] {
-//  def staleF: EntityType => ErrType
-
-  //  def actionFromCommand(cmd: Command): ActionType
-
-//  def statusToErrF: NotAllowedActionStatusType => ErrType
-
-  //def actionStatus(entity: EntityType, action: ActionType): ActionStatusType
-
-//  def checkOptimisticLocking[A <: EntityType](entity: A, cmd: Command): Either[ErrType, A] = cmd match {
-//    case c: EntityUpdateCommand[_, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
-//    case _ => Right(entity)
-//  }
-
-  //  def canDoAction[A <: EntityType](f: (EntityType, PermissionsType) => Either[NotAllowedActionStatusType, A])(entity: EntityType, cmd: Command, permissions: PermissionsType): Either[ErrType, A] =
-  //    f(entity, permissions)
-  //      .left.map(statusToErrF)
-  //      .flatMap(inv => checkOptimisticLocking(inv, cmd))
-
-//  def canDoAction2[A <: EntityType](f: (EntityType, PermissionsType) => Either[NotAllowedActionStatusType, A])(entity: EntityType, cmd: Command, permissions: PermissionsType): Either[ErrType, A] =
-//    f(entity, permissions)
-//      .left.map(statusToErrF)
-//      .flatMap(inv => checkOptimisticLocking(inv, cmd))
-
-  //  def actionStatus(action: ActionType): ActionStatusType
-  //
-  //  def actionStatus[F[_]](cmd: EntityUpdateCommand[F, _, _, IdType, EntityType, PermissionsType, ActionType]): ActionStatusType =
-  //    actionStatus(cmd.associatedAction)
-
-}
 
 trait InvoiceEntityBehaviour[F[_], EntSubType <: Invoice, ActionType, CmdType <: EntityUpdateCommand[F, _, InvoiceError, _, Invoice, InvoiceUserPermissions, ActionType]]
   extends EntityBehaviour[F, Invoice, EntSubType, InvoiceError, InvoiceUserPermissions, ActionType, CmdType, ActionStatus, NotAllowed] {
@@ -47,14 +16,10 @@ trait InvoiceEntityBehaviour[F[_], EntSubType <: Invoice, ActionType, CmdType <:
   override def staleF: Invoice => InvoiceError = i => InvoiceError.StaleInvoiceError(i.id)
 }
 
-object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, InvoiceAction, ActionStatus, NotAllowed, InvoiceUserPermissions] {
+object InvoiceAlgebra {
 
   import cats.data.State
   import sample1.domain.invoice.InvoiceUtils._
-
-//  override def staleF: Invoice => InvoiceError = i => InvoiceError.StaleInvoiceError(i.id)
-//
-//  override def statusToErrF: NotAllowed => InvoiceError = i => InvoiceError.fromActionStatus(i)
 
   def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     EnumerableAdt[InvoiceAction].map(action => (action, actionStatus(invoice, action, permissions)))
