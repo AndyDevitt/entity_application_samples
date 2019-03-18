@@ -119,20 +119,20 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
     def actionStatus(entity: EntType, action: ActionType, permissions: PermissionsType): ActionStatus =
       canDo(entity, action, permissions).fold[ActionStatus]((na: NotAllowedActionStatusType) => na.asInstanceOf[ActionStatus], _ => Allowed)
 
-    def canDoWrapper(result: Either[NotAllowedActionStatusType, EntType], cmd: CmdType): Either[ErrType, EntType] =
+    protected def statusToErrF: NotAllowedActionStatusType => ErrType
+
+    protected def action(entity: EntType, cmd: CmdType, permissions: PermissionsType): EntSubType
+
+    protected def actionWithFailure(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntSubType]
+
+    protected def staleF: EntType => ErrType
+
+    private def canDoWrapper(result: Either[NotAllowedActionStatusType, EntType], cmd: CmdType): Either[ErrType, EntType] =
       result
         .left.map(statusToErrF)
         .flatMap(inv => checkOptimisticLocking(inv, cmd))
 
-    def statusToErrF: NotAllowedActionStatusType => ErrType
-
-    def action(entity: EntType, cmd: CmdType, permissions: PermissionsType): EntSubType
-
-    def actionWithFailure(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntSubType]
-
-    def staleF: EntType => ErrType
-
-    def checkOptimisticLocking(entity: EntType, cmd: Command): Either[ErrType, EntType] = cmd match {
+    private def checkOptimisticLocking(entity: EntType, cmd: Command): Either[ErrType, EntType] = cmd match {
       case c: EntityUpdateCommand[_, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
       case _ => Right(entity)
     }
