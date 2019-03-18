@@ -104,6 +104,52 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
       pgm.runS(inv).value
     })
 
+  trait EntityBehaviour[F[_], EntType <: VersionedEntity[_], ErrType, PermissionsType, ActionType, CmdType <: EntityUpdateCommand[F, _, ErrType, _, EntType, PermissionsType, ActionType], NotAllowedActionStatusType] {
+    def process(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
+      canDoWrapper(canDo(entity, cmd.associatedAction, permissions), cmd)
+        .map(inv => action(inv, cmd, permissions))
+
+    def processWithFailure(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
+      canDoWrapper(canDo(entity, cmd.associatedAction, permissions), cmd)
+        .flatMap(inv => actionWithFailure(inv, cmd, permissions))
+
+    def canDo(invoice: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntType]
+
+    def canDoWrapper(result: Either[NotAllowedActionStatusType, EntType], cmd: CmdType): Either[ErrType, EntType] =
+      result
+        .left.map(statusToErrF)
+        .flatMap(inv => checkOptimisticLocking(inv, cmd))
+
+    def statusToErrF: NotAllowedActionStatusType => ErrType
+
+    def action[F[_]](entity: EntType, cmd: CmdType, permissions: PermissionsType): EntType
+
+    def actionWithFailure[F[_]](entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType]
+
+    def staleF: EntType => ErrType
+
+    def checkOptimisticLocking(entity: EntType, cmd: Command): Either[ErrType, EntType] = cmd match {
+      case c: EntityUpdateCommand[_, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
+      case _ => Right(entity)
+    }
+
+    //    private def actionWithFailure[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
+    //      val pgm = for {
+    //        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
+    //        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
+    //      } yield ()
+    //      pgm.runS(invoice).value
+    //    })
+    //
+    //    private def action[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Invoice = {
+    //      val pgm = for {
+    //        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
+    //        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
+    //      } yield ()
+    //      pgm.runS(invoice).value
+    //    }
+  }
+
   object Approve {
     def process[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       canDo(invoice, cmd.associatedAction, permissions)
