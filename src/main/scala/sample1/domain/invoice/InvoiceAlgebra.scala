@@ -31,22 +31,22 @@ object InvoiceAlgebra {
     }
   }.fold[ActionStatus]((na: NotAllowed) => na, _ => Allowed)
 
-  case class Approve3[F[_]]() extends InvoiceEntityBehaviour[F, Invoice, InvoiceAction.Approve.type, ApproveCmd[F]] {
-    override def canDo(invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] = invoice match {
+  case class Approve3[F[_]]() extends InvoiceEntityBehaviour[F, SponsorInvoice, InvoiceAction.Approve.type, ApproveCmd[F]] {
+    override def canDo(invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, SponsorInvoice] = invoice match {
       case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
       case si: SponsorInvoice => Left(NotAllowedInCurrentStatus())
       case _: SiteInvoice => Left(NotAllowedForProcessType())
     }
 
-    override protected def action(entity: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Invoice = {
+    override protected def action(entity: SponsorInvoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Invoice = {
       val pgm = for {
-        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
-        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
+        _ <- State[SponsorInvoice, Unit] { s => (clearCosts(s, cmd), ()) }
+        _ <- State[SponsorInvoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
       } yield ()
       pgm.runS(entity).value
     }
 
-    override protected def actionWithFailure(entity: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
+    override protected def actionWithFailure(entity: SponsorInvoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
       val pgm = for {
         _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
         _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
