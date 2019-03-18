@@ -69,7 +69,7 @@ final case class ApproveCmd[F[_]](userId: UserId,
                                   permissionsRetriever: InvoiceEntityPermissionRetriever[F]
                                  ) extends InvoiceUpdateCommand[F, ApproveCmd[F], InvoiceAction.Approve.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    InvoiceAlgebra.Approve.process(invoice, this, permissions)
+    InvoiceAlgebra.Approve2().process(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
 
