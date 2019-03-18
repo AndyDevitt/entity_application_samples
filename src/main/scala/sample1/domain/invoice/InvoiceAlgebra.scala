@@ -71,7 +71,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
   def actionStatus(invoice: Invoice, action: InvoiceAction, permissions: InvoiceUserPermissions): ActionStatus = {
     action match {
       case a: InvoiceAction.Approve.type => Approve3().canDo(invoice, a, permissions)
-      case a: InvoiceAction.UpdateRfi.type => canDo(invoice, a, permissions)
+      case a: InvoiceAction.UpdateRfi.type => UpdateRfi().canDo(invoice, a, permissions)
     }
   }.fold[ActionStatus]((na: NotAllowed) => na, _ => Allowed)
 
@@ -85,51 +85,6 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
       .flatMap(inv => checkOptimisticLocking(inv, cmd))
 
 
-  //  private def checkOptimisticLocking[A <: Invoice](invoice: A, cmd: Command): Either[InvoiceError, A] = cmd match {
-  //    case c: EntityUpdateCommand[_, _, _, _, _] if c.enforceOptimisticLocking && c.version != invoice.version => Left(StaleInvoiceError(invoice.id))
-  //    case _ => Right(invoice)
-  //  }
-
-  //  def canDo(invoice: Invoice, action: InvoiceAction.CreateRfi.type, permissions: InvoiceUserPermissions): Either[NotAllowed, SponsorInvoice] = invoice match {
-  //    case si: SponsorInvoice => Right(si)
-  //    case _: SiteInvoice => Left(NotAllowedForProcessType())
-  //  }
-
-  //  def createRfi[F[_]](invoice: Invoice, cmd: CreateRfiInvoiceCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-  //    canDo(invoice, permissions) map {
-  //      InvoiceUtils.createRfi(_, cmd)
-  //    }
-  //
-  def canDo(invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] =
-    Either.cond(invoice.status == NotApproved, invoice, NotAllowedInCurrentStatus())
-
-  def approve[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    canDoWrapper(cmd)(canDo(invoice, cmd.associatedAction, permissions) map { inv =>
-      val pgm = for {
-        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
-        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
-      } yield ()
-      pgm.runS(inv).value
-    })
-
-
-  //    private def actionWithFailure[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
-  //      val pgm = for {
-  //        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
-  //        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
-  //      } yield ()
-  //      pgm.runS(invoice).value
-  //    })
-  //
-  //    private def action[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Invoice = {
-  //      val pgm = for {
-  //        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
-  //        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
-  //      } yield ()
-  //      pgm.runS(invoice).value
-  //    }
-  //    }
-
   case class Approve3[F[_]]() extends InvoiceEntityBehaviour[F, Invoice, InvoiceAction.Approve.type, ApproveCmd[F]] {
     override def canDo(invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] = invoice match {
       case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
@@ -137,7 +92,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
       case _: SiteInvoice => Left(NotAllowedForProcessType())
     }
 
-    override def action(entity: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Invoice = {
+    override protected def action(entity: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Invoice = {
       val pgm = for {
         _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
         _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
@@ -145,7 +100,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
       pgm.runS(entity).value
     }
 
-    override def actionWithFailure(entity: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
+    override protected def actionWithFailure(entity: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
       val pgm = for {
         _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
         _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
@@ -157,103 +112,54 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
   object Approve3 {
     def apply[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       new Approve3[F]().process(invoice, cmd, permissions)
-
-    def apply[F[_]](invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): ActionStatus =
-      new Approve3[F]().actionStatus(invoice, action, permissions)
   }
 
-  case class Approve2[F[_]]() extends EntityBehaviour[F, Invoice, Invoice, InvoiceError, InvoiceUserPermissions, InvoiceAction.Approve.type, ApproveCmd[F], ActionStatus, NotAllowed] {
-    override def canDo(invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] = invoice match {
+  case class ApproveV2[F[_]]() extends InvoiceEntityBehaviour[F, Invoice, InvoiceAction.Approve.type, ApproveCmdV2[F]] {
+    override def canDo(entity: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] =
+      Either.cond(entity.status == NotApproved, entity, NotAllowedInCurrentStatus())
+
+    override protected def action(entity: Invoice, cmd: ApproveCmdV2[F], permissions: InvoiceUserPermissions): Invoice =
+      InvoiceStateBuilder.Builder(entity)
+        .clearCosts()
+        .setStatus(Approved)
+        .updateLastEdited(cmd)
+        .build()
+
+    override protected def actionWithFailure(entity: Invoice, cmd: ApproveCmdV2[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = ???
+  }
+
+  case class UpdateRfi[F[_]]() extends InvoiceEntityBehaviour[F, Invoice, InvoiceAction.UpdateRfi.type, UpdateRfiCmd[F]] {
+    override def canDo(entity: Invoice, action: InvoiceAction.UpdateRfi.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] = entity match {
       case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
       case si: SponsorInvoice => Left(NotAllowedInCurrentStatus())
       case _: SiteInvoice => Left(NotAllowedForProcessType())
     }
 
-    override def statusToErrF: NotAllowed => InvoiceError = InvoiceError.fromActionStatus
-
-    override def staleF: Invoice => InvoiceError = i => InvoiceError.StaleInvoiceError(i.id)
-
-    override def action(entity: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Invoice = {
-      val pgm = for {
-        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
-        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
-      } yield ()
-      pgm.runS(entity).value
-    }
-
-    override def actionWithFailure(entity: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
-      val pgm = for {
-        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
-        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
-      } yield ()
-      pgm.runS(entity).value
-    })
-  }
-
-  object Approve2 {
-    def apply[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-      new Approve2[F]().process(invoice, cmd, permissions)
-  }
-
-  object Approve {
-    def process[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-      canDo(invoice, cmd.associatedAction, permissions)
-        .left.map(InvoiceError.fromActionStatus)
-        .flatMap(inv => checkOptimisticLocking(inv, cmd))
-        .map(inv => action(inv, cmd, permissions))
-
-    def processWithFailure[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-      canDo(invoice, cmd.associatedAction, permissions)
-        .left.map(InvoiceError.fromActionStatus)
-        .flatMap(inv => checkOptimisticLocking(inv, cmd))
-        .flatMap(inv => actionWithFailure(inv, cmd, permissions))
-
-    private def actionWithFailure[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
-      val pgm = for {
-        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
-        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
-      } yield ()
-      pgm.runS(invoice).value
-    })
-
-    private def action[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Invoice = {
-      val pgm = for {
-        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
-        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
-      } yield ()
-      pgm.runS(invoice).value
-    }
-  }
-
-  def approveV2[F[_]](invoice: Invoice, cmd: ApproveCmdV2[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    canDoWrapper(cmd)(canDo(invoice, cmd.associatedAction, permissions) map {
-      InvoiceStateBuilder.Builder(_)
+    override protected def action(entity: Invoice, cmd: UpdateRfiCmd[F], permissions: InvoiceUserPermissions): Invoice =
+      InvoiceStateBuilder.Builder(entity)
         .clearCosts()
         .setStatus(Approved)
         .updateLastEdited(cmd)
         .build()
-    })
 
-  //  def canDo(invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] = invoice match {
-  //    case i: Invoice if Set(NotApproved).exists(_ == i.status) => Right(i)
-  //    case _: SiteInvoice => Left(NotAllowedInCurrentStatus())
-  //  }
-
-  def canDo(invoice: Invoice, action: InvoiceAction.UpdateRfi.type, permissions: InvoiceUserPermissions): Either[NotAllowed, SponsorInvoice] = invoice match {
-    case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
-    case si: SponsorInvoice => Left(NotAllowedInCurrentStatus())
-    case _: SiteInvoice => Left(NotAllowedForProcessType())
+    override protected def actionWithFailure(entity: Invoice, cmd: UpdateRfiCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = ???
   }
 
-  def updateRfi[F[_]](invoice: Invoice, cmd: UpdateRfiCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    canDoWrapper(cmd)(canDo(invoice, cmd.associatedAction, permissions) map { inv =>
-      val pgm = for {
-        _ <- InvoiceStateUtils.clearCosts(inv, cmd)
-        _ <- InvoiceStateUtils.setStatus(inv, cmd, Approved)
-        _ <- InvoiceStateUtils.updateRfi(inv, cmd, RequestForInvoice())
-      } yield ()
-      pgm.runS(inv).value
-    })
+//  def canDo(invoice: Invoice, action: InvoiceAction.UpdateRfi.type, permissions: InvoiceUserPermissions): Either[NotAllowed, SponsorInvoice] = invoice match {
+//    case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
+//    case si: SponsorInvoice => Left(NotAllowedInCurrentStatus())
+//    case _: SiteInvoice => Left(NotAllowedForProcessType())
+//  }
+//
+//  def updateRfi[F[_]](invoice: Invoice, cmd: UpdateRfiCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+//    canDoWrapper(cmd)(canDo(invoice, cmd.associatedAction, permissions) map { inv =>
+//      val pgm = for {
+//        _ <- InvoiceStateUtils.clearCosts(inv, cmd)
+//        _ <- InvoiceStateUtils.setStatus(inv, cmd, Approved)
+//        _ <- InvoiceStateUtils.updateRfi(inv, cmd, RequestForInvoice())
+//      } yield ()
+//      pgm.runS(inv).value
+//    })
 
   def calculateTotal(invoice: Invoice): Either[ValidationError, Option[MonetaryAmount]] =
     invoice.costs

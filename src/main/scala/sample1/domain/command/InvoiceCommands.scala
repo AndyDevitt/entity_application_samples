@@ -69,7 +69,7 @@ final case class ApproveCmd[F[_]](userId: UserId,
                                   permissionsRetriever: InvoiceEntityPermissionRetriever[F]
                                  ) extends InvoiceUpdateCommand[F, ApproveCmd[F], InvoiceAction.Approve.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    InvoiceAlgebra.Approve2(invoice, this, permissions)
+    InvoiceAlgebra.Approve3(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
 
@@ -86,7 +86,7 @@ final case class ApproveCmdV2[F[_]](userId: UserId,
                                     permissionsRetriever: InvoiceEntityPermissionRetriever[F]
                                    ) extends InvoiceUpdateCommand[F, ApproveCmdV2[F], InvoiceAction.Approve.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    InvoiceAlgebra.approveV2(invoice, this, permissions)
+    InvoiceAlgebra.ApproveV2().process(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
 }
@@ -104,7 +104,7 @@ final case class UpdateRfiCmd[F[_]](userId: UserId,
                                     permissionsRetriever: InvoiceEntityPermissionRetriever[F]
                                    ) extends InvoiceUpdateCommand[F, UpdateRfiCmd[F], InvoiceAction.UpdateRfi.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    InvoiceAlgebra.updateRfi(invoice, this, permissions)
+    InvoiceAlgebra.UpdateRfi().process(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
 }
