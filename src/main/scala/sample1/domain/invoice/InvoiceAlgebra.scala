@@ -45,14 +45,6 @@ object InvoiceAlgebra {
       } yield ()
       pgm.runS(entity).value
     }
-
-    override protected def actionWithFailure(entity: SponsorInvoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
-      val pgm = for {
-        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
-        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
-      } yield ()
-      pgm.runS(entity).value
-    })
   }
 
   object Approve3 {
@@ -70,8 +62,6 @@ object InvoiceAlgebra {
         .setStatus(Approved)
         .updateLastEdited(cmd)
         .build()
-
-    override protected def actionWithFailure(entity: Invoice, cmd: ApproveCmdV2[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = ???
   }
 
   case class UpdateRfi[F[_]]() extends InvoiceEntityBehaviour[F, Invoice, InvoiceAction.UpdateRfi.type, UpdateRfiCmd[F]] {

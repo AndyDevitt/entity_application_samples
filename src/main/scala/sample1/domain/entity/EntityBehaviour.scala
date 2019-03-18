@@ -1,5 +1,6 @@
 package sample1.domain.entity
 
+import cats.syntax.either._
 import sample1.domain.command.{Command, EntityUpdateCommand}
 import sample1.domain.{ActionStatus, Allowed}
 
@@ -14,12 +15,10 @@ CmdType <: EntityUpdateCommand[F, _, ErrType, _, EntType, PermissionsType, Actio
 ActionStatusType,
 NotAllowedActionStatusType <: ActionStatusType] {
   def process(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
-    canDoWrapper(canDo(entity, cmd.associatedAction, permissions), cmd)
-      .map(inv => action(inv, cmd, permissions))
-
-  def processWithFailure(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
-    canDoWrapper(canDo(entity, cmd.associatedAction, permissions), cmd)
-      .flatMap(inv => actionWithFailure(inv, cmd, permissions))
+    canDo(entity, cmd.associatedAction, permissions)
+      .left.map(statusToErrF)
+      .flatMap(checkOptimisticLocking(_, cmd))
+      .flatMap(actionWithFailure(_, cmd, permissions))
 
   def canDo(entity: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntSubType]
 
@@ -30,14 +29,10 @@ NotAllowedActionStatusType <: ActionStatusType] {
 
   protected def action(entity: EntSubType, cmd: CmdType, permissions: PermissionsType): EntType
 
-  protected def actionWithFailure(entity: EntSubType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType]
+  protected def actionWithFailure(entity: EntSubType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
+    action(entity, cmd, permissions).asRight[ErrType]
 
   protected def staleF: EntType => ErrType
-
-  private def canDoWrapper(result: Either[NotAllowedActionStatusType, EntSubType], cmd: CmdType): Either[ErrType, EntSubType] =
-    result
-      .left.map(statusToErrF)
-      .flatMap(inv => checkOptimisticLocking(inv, cmd))
 
   private def checkOptimisticLocking(entity: EntSubType, cmd: Command): Either[ErrType, EntSubType] = cmd match {
     case c: EntityUpdateCommand[_, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
