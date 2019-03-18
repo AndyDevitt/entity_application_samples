@@ -2,7 +2,7 @@ package sample1.domain.invoice
 
 import sample1.domain._
 import sample1.domain.command._
-import sample1.domain.entity.{EntityId, VersionedEntity}
+import sample1.domain.entity.{EntityBehaviour, EntityId, VersionedEntity}
 import sample1.domain.errors.{InvoiceError, ValidationError}
 import sample1.domain.invoice.InvoiceStateBuilder.Instances._
 import sample1.domain.permissions.InvoiceUserPermissions
@@ -37,6 +37,14 @@ trait EntityInterface[IdType <: EntityId, EntityType <: VersionedEntity[IdType],
   //  def actionStatus[F[_]](cmd: EntityUpdateCommand[F, _, _, IdType, EntityType, PermissionsType, ActionType]): ActionStatusType =
   //    actionStatus(cmd.associatedAction)
 
+}
+
+trait InvoiceEntityBehaviour[F[_], EntSubType <: Invoice, ActionType, CmdType <: EntityUpdateCommand[F, _, InvoiceError, _, Invoice, InvoiceUserPermissions, ActionType]]
+  extends EntityBehaviour[F, Invoice, EntSubType, InvoiceError, InvoiceUserPermissions, ActionType, CmdType, ActionStatus, NotAllowed] {
+
+  override def statusToErrF: NotAllowed => InvoiceError = InvoiceError.fromActionStatus
+
+  override def staleF: Invoice => InvoiceError = i => InvoiceError.StaleInvoiceError(i.id)
 }
 
 object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, InvoiceAction, ActionStatus, NotAllowed, InvoiceUserPermissions] {
@@ -104,47 +112,6 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
       pgm.runS(inv).value
     })
 
-
-  trait EntityBehaviour[F[_], EntType <: VersionedEntity[_], EntSubType <: EntType, ErrType, PermissionsType, ActionType, CmdType <: EntityUpdateCommand[F, _, ErrType, _, EntType, PermissionsType, ActionType], ActionStatusType, NotAllowedActionStatusType <: ActionStatusType] {
-    def process(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
-      canDoWrapper(canDo(entity, cmd.associatedAction, permissions), cmd)
-        .map(inv => action(inv, cmd, permissions))
-
-    def processWithFailure(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
-      canDoWrapper(canDo(entity, cmd.associatedAction, permissions), cmd)
-        .flatMap(inv => actionWithFailure(inv, cmd, permissions))
-
-    def canDo(entity: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntType]
-
-    def actionStatus(entity: EntType, action: ActionType, permissions: PermissionsType): ActionStatus =
-      canDo(entity, action, permissions).fold[ActionStatus]((na: NotAllowedActionStatusType) => na.asInstanceOf[ActionStatus], _ => Allowed)
-
-    protected def statusToErrF: NotAllowedActionStatusType => ErrType
-
-    protected def action(entity: EntType, cmd: CmdType, permissions: PermissionsType): EntSubType
-
-    protected def actionWithFailure(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntSubType]
-
-    protected def staleF: EntType => ErrType
-
-    private def canDoWrapper(result: Either[NotAllowedActionStatusType, EntType], cmd: CmdType): Either[ErrType, EntType] =
-      result
-        .left.map(statusToErrF)
-        .flatMap(inv => checkOptimisticLocking(inv, cmd))
-
-    private def checkOptimisticLocking(entity: EntType, cmd: Command): Either[ErrType, EntType] = cmd match {
-      case c: EntityUpdateCommand[_, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
-      case _ => Right(entity)
-    }
-  }
-
-  trait InvoiceEntityBehaviour[F[_], EntSubType <: Invoice, ActionType, CmdType <: EntityUpdateCommand[F, _, InvoiceError, _, Invoice, InvoiceUserPermissions, ActionType]]
-    extends EntityBehaviour[F, Invoice, EntSubType, InvoiceError, InvoiceUserPermissions, ActionType, CmdType, ActionStatus, NotAllowed] {
-
-    override def statusToErrF: NotAllowed => InvoiceError = InvoiceError.fromActionStatus
-
-    override def staleF: Invoice => InvoiceError = i => InvoiceError.StaleInvoiceError(i.id)
-  }
 
   //    private def actionWithFailure[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
   //      val pgm = for {
