@@ -180,6 +180,11 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
     })
   }
 
+  object Approve2 {
+    def apply[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+      new Approve2[F]().process(invoice, cmd, permissions)
+  }
+
   object Approve {
     def process[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       canDo(invoice, cmd.associatedAction, permissions)
