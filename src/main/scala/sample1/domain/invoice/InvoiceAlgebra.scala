@@ -62,7 +62,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
 
   def actionStatus(invoice: Invoice, action: InvoiceAction, permissions: InvoiceUserPermissions): ActionStatus = {
     action match {
-      case a: InvoiceAction.Approve.type => canDo(invoice, a, permissions)
+      case a: InvoiceAction.Approve.type => Approve3().canDo(invoice, a, permissions)
       case a: InvoiceAction.UpdateRfi.type => canDo(invoice, a, permissions)
     }
   }.fold[ActionStatus]((na: NotAllowed) => na, _ => Allowed)
@@ -105,7 +105,7 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
     })
 
 
-  trait EntityBehaviour[F[_], EntType <: VersionedEntity[_], ErrType, PermissionsType, ActionType, CmdType <: EntityUpdateCommand[F, _, ErrType, _, EntType, PermissionsType, ActionType], NotAllowedActionStatusType] {
+  trait EntityBehaviour[F[_], EntType <: VersionedEntity[_], EntSubType <: EntType, ErrType, PermissionsType, ActionType, CmdType <: EntityUpdateCommand[F, _, ErrType, _, EntType, PermissionsType, ActionType], ActionStatusType, NotAllowedActionStatusType <: ActionStatusType] {
     def process(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
       canDoWrapper(canDo(entity, cmd.associatedAction, permissions), cmd)
         .map(inv => action(inv, cmd, permissions))
@@ -114,7 +114,10 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
       canDoWrapper(canDo(entity, cmd.associatedAction, permissions), cmd)
         .flatMap(inv => actionWithFailure(inv, cmd, permissions))
 
-    def canDo(invoice: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntType]
+    def canDo(entity: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntType]
+
+    def actionStatus(entity: EntType, action: ActionType, permissions: PermissionsType): ActionStatus =
+      canDo(entity, action, permissions).fold[ActionStatus]((na: NotAllowedActionStatusType) => na.asInstanceOf[ActionStatus], _ => Allowed)
 
     def canDoWrapper(result: Either[NotAllowedActionStatusType, EntType], cmd: CmdType): Either[ErrType, EntType] =
       result
@@ -123,9 +126,9 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
 
     def statusToErrF: NotAllowedActionStatusType => ErrType
 
-    def action(entity: EntType, cmd: CmdType, permissions: PermissionsType): EntType
+    def action(entity: EntType, cmd: CmdType, permissions: PermissionsType): EntSubType
 
-    def actionWithFailure(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType]
+    def actionWithFailure(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntSubType]
 
     def staleF: EntType => ErrType
 
@@ -133,6 +136,14 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
       case c: EntityUpdateCommand[_, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
       case _ => Right(entity)
     }
+  }
+
+  trait InvoiceEntityBehaviour[F[_], EntSubType <: Invoice, ActionType, CmdType <: EntityUpdateCommand[F, _, InvoiceError, _, Invoice, InvoiceUserPermissions, ActionType]]
+    extends EntityBehaviour[F, Invoice, EntSubType, InvoiceError, InvoiceUserPermissions, ActionType, CmdType, ActionStatus, NotAllowed] {
+
+    override def statusToErrF: NotAllowed => InvoiceError = InvoiceError.fromActionStatus
+
+    override def staleF: Invoice => InvoiceError = i => InvoiceError.StaleInvoiceError(i.id)
   }
 
   //    private def actionWithFailure[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
@@ -152,7 +163,39 @@ object InvoiceAlgebra extends EntityInterface[InvoiceId, Invoice, InvoiceError, 
   //    }
   //    }
 
-  case class Approve2[F[_]]() extends EntityBehaviour[F, Invoice, InvoiceError, InvoiceUserPermissions, InvoiceAction.Approve.type, ApproveCmd[F], NotAllowed] {
+  case class Approve3[F[_]]() extends InvoiceEntityBehaviour[F, Invoice, InvoiceAction.Approve.type, ApproveCmd[F]] {
+    override def canDo(invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] = invoice match {
+      case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
+      case si: SponsorInvoice => Left(NotAllowedInCurrentStatus())
+      case _: SiteInvoice => Left(NotAllowedForProcessType())
+    }
+
+    override def action(entity: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Invoice = {
+      val pgm = for {
+        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
+        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
+      } yield ()
+      pgm.runS(entity).value
+    }
+
+    override def actionWithFailure(entity: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = Right({
+      val pgm = for {
+        _ <- State[Invoice, Unit] { s => (clearCosts(s, cmd), ()) }
+        _ <- State[Invoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
+      } yield ()
+      pgm.runS(entity).value
+    })
+  }
+
+  object Approve3 {
+    def apply[F[_]](invoice: Invoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+      new Approve3[F]().process(invoice, cmd, permissions)
+
+    def apply[F[_]](invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): ActionStatus =
+      new Approve3[F]().actionStatus(invoice, action, permissions)
+  }
+
+  case class Approve2[F[_]]() extends EntityBehaviour[F, Invoice, Invoice, InvoiceError, InvoiceUserPermissions, InvoiceAction.Approve.type, ApproveCmd[F], ActionStatus, NotAllowed] {
     override def canDo(invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] = invoice match {
       case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
       case si: SponsorInvoice => Left(NotAllowedInCurrentStatus())
