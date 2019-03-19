@@ -29,10 +29,10 @@ trait EntityBehaviour[ActionType, ErrType, EntType <: VersionedEntity[_], Permis
   // A very localised use of a helper implicit conversion so that Jacob wouldn't have to keep writing Right(...) :-)
   implicit def convertToSuccess(entity: EntType): Either[ErrType, EntType] = Right(entity)
 
-  private def toActionStatus(checkResult: Either[ErrType, Unit]): ActionStatus =
+  private def toActionStatus(checkResult: Either[ErrType, EntType]): ActionStatus =
     checkResult.fold[ActionStatus](e => NotAllowedInCurrentState(e.toString), _ => Allowed)
 
-  protected def thisActionStatus(action: ActionType, entity: EntType, checkF: EntType => Either[ErrType, Unit]
+  protected def thisActionStatus(action: ActionType, entity: EntType, checkF: EntType => Either[ErrType, EntType]
                                 ): Set[(ActionType, ActionStatus)] =
     Set((action, toActionStatus(checkF(entity))))
 }
@@ -46,7 +46,8 @@ object InvoiceBehaviours {
 
   final case class SiteInvoiceBehaviour(siteInvoice: SiteInvoice)
     extends InvoiceBehaviours
-      with Implementations.CanApprove
+
+  //with Implementations.CanApprove
 
   final case class SponsorInvoiceBehaviour(sponsorInvoice: SponsorInvoice)
     extends InvoiceBehaviours
@@ -84,6 +85,8 @@ object Implementations {
 
   trait CanApprove extends InvoiceBehaviours.Approve {
 
+    self: InvoiceBehaviours.SponsorInvoiceBehaviour =>
+
     override def actionStatus(invoice: Invoice): Set[(InvoiceAction, ActionStatus)] =
       super.actionStatus(invoice) ++ thisActionStatus(InvoiceAction.Approve, invoice, validateActionIsAllowed)
 
@@ -91,32 +94,20 @@ object Implementations {
                                cmd: ApproveCmdMixin[F],
                                permissions: InvoiceUserPermissions
                               ): Either[InvoiceError, Invoice] =
-      validateActionIsAllowed(invoice) map { _ =>
-        InvoiceStateBuilder.Builder(invoice)
+      validateActionIsAllowed(invoice) map {
+        InvoiceStateBuilder.Builder(_)
           .clearCosts()
           .updateLastEdited(cmd)
           .build()
       }
 
-    private def validateActionIsAllowed(invoice: Invoice): Either[InvoiceError, Unit] =
-      Either.cond(invoice.costs.nonEmpty, (), InvoiceError.CannotApproveWithoutCosts())
+    private def validateActionIsAllowed(invoice: Invoice): Either[InvoiceError, SponsorInvoice] = invoice match {
+      case _: SiteInvoice =>
+        Left(InvoiceError.ActionNotAllowedForProcessType())
+      case sponsorInvoice: SponsorInvoice =>
+        Either.cond(invoice.costs.nonEmpty, sponsorInvoice, InvoiceError.CannotApproveWithoutCosts())
+    }
+
   }
-
-}
-
-object InvoiceBehaviourWrappers {
-
-  def apply(invoice: Invoice): InvoiceBehaviours = invoice match {
-    case siteInvoice: SiteInvoice => SiteInvoiceBehaviour(siteInvoice)
-    case sponsorInvoice: SponsorInvoice => SponsorInvoiceBehaviour(sponsorInvoice)
-  }
-
-  final case class SiteInvoiceBehaviour(siteInvoice: SiteInvoice)
-    extends InvoiceBehaviours
-      with Implementations.CanApprove
-
-  final case class SponsorInvoiceBehaviour(sponsorInvoice: SponsorInvoice)
-    extends InvoiceBehaviours
-      with Implementations.CanApprove
 
 }
