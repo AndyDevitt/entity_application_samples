@@ -1,6 +1,5 @@
 package sample1.domain.invoice
 
-import sample1.domain._
 import sample1.domain.command._
 
 object InvoiceUtils {

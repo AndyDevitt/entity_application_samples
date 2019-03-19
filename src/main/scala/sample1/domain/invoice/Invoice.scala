@@ -1,9 +1,9 @@
 package sample1.domain.invoice
 
+import sample1.domain.Cost
 import sample1.domain.command.{CreateRfiInvoiceCmd, CreateSiteInvoiceCmd}
 import sample1.domain.entity.{EntityVersion, VersionedEntity}
 import sample1.domain.user.UserId
-import sample1.domain.Cost
 
 trait Invoice extends VersionedEntity[InvoiceId] {
   def status: InvoiceStatus
@@ -45,7 +45,8 @@ object SiteInvoice {
                              version: EntityVersion,
                              lastEditedBy: UserId,
                              status: InvoiceStatus,
-                             costs: List[Cost]): SiteInvoice = new SiteInvoice(id, version, lastEditedBy, status, costs)
+                             costs: List[Cost]): SiteInvoice =
+    new SiteInvoice(id, version, lastEditedBy, status, costs)
 }
 
 object SponsorInvoice {
@@ -54,5 +55,6 @@ object SponsorInvoice {
                              lastEditedBy: UserId,
                              status: InvoiceStatus,
                              costs: List[Cost],
-                             rfi: RequestForInvoice): SponsorInvoice = new SponsorInvoice(id, version, lastEditedBy, status, costs, rfi)
+                             rfi: RequestForInvoice): SponsorInvoice =
+    new SponsorInvoice(id, version, lastEditedBy, status, costs, rfi)
 }
