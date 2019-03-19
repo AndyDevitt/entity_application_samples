@@ -83,6 +83,21 @@ object ApplicationTestsV5 extends App {
   val testEntityPermissionsRetriever = TestInvoiceEntityPermissionRetriever()
   val testBasicPermissionsRetriever = TestInvoiceBasicPermissionRetriever()
 
+
+  val res6 = for {
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmdV2Mixin(user2, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
+  } yield inv2
+
+  println(s"res6: $res6")
+
+  val res7 = for {
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmdMixin(user2, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
+  } yield inv2
+
+  println(s"res7: $res7")
+
   val res8 = for {
     inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1, testBasicPermissionsRetriever))
     inv2 <- testProcessorApp.processCommand(ApproveCmd(user2, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
