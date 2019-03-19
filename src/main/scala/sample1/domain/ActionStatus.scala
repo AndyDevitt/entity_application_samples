@@ -11,3 +11,5 @@ final case class Blocked() extends NotAllowed
 final case class NotAllowedInCurrentStatus() extends NotAllowed
 
 final case class NotAllowedForProcessType() extends NotAllowed
+
+final case class NotAllowedInCurrentState(reason: String) extends NotAllowed

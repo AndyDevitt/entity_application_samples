@@ -3,7 +3,9 @@ package sample1.domain.errors
 import sample1.domain._
 import sample1.domain.invoice.InvoiceId
 
-sealed trait InvoiceError
+sealed trait InvoiceError {
+  def msg: String = ""
+}
 
 sealed trait PermissionsError extends InvoiceError
 
@@ -21,6 +23,9 @@ object InvoiceError {
 
   final case class ActionNotAllowedInCurrentStatus() extends InvoiceError
 
+  final case class ActionNotAllowedInCurrentState(reason: String) extends InvoiceError
+
+  final case class CannotApproveWithoutCosts() extends InvoiceError
 
   final case class InsufficientPermissions() extends PermissionsError
 
@@ -30,8 +35,9 @@ object InvoiceError {
   final case class CurrencyMismatch(first: Currency, second: Currency) extends ValidationError
 
   def fromActionStatus(notAllowed: NotAllowed): InvoiceError = notAllowed match {
-    case _: Blocked => ActionBlocked()
-    case _: NotAllowedForProcessType => ActionNotAllowedForProcessType()
-    case _: NotAllowedInCurrentStatus => ActionNotAllowedInCurrentStatus()
+    case Blocked() => ActionBlocked()
+    case NotAllowedForProcessType() => ActionNotAllowedForProcessType()
+    case NotAllowedInCurrentStatus() => ActionNotAllowedInCurrentStatus()
+    case NotAllowedInCurrentState(reason) => ActionNotAllowedInCurrentState(reason)
   }
 }
