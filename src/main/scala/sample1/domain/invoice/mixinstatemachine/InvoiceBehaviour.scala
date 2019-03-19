@@ -7,17 +7,17 @@ import sample1.domain.invoice._
 import sample1.domain.permissions.InvoiceUserPermissions
 import sample1.domain.{ActionStatus, Allowed, NotAllowedInCurrentState}
 
-trait InvoiceBehaviours
+trait InvoiceBehaviour
   extends Actions[Invoice, InvoiceAction]
-    with InvoiceBehaviours.Approve
-    with InvoiceBehaviours.ApproveV2
-    with InvoiceBehaviours.UpdateRfi
+    with InvoiceBehaviour.Approve
+    with InvoiceBehaviour.ApproveV2
+    with InvoiceBehaviour.UpdateRfi
 
 trait Actions[EntType, ActionType] {
   def actionStatus(entity: EntType): Set[(ActionType, ActionStatus)]
 }
 
-trait EntityBehaviour[ActionType, ErrType, EntType <: VersionedEntity[_], PermissionType] extends Actions[EntType, ActionType] {
+trait EntityCommandProcessorMixin[ActionType, ErrType, EntType <: VersionedEntity[_], PermissionType] extends Actions[EntType, ActionType] {
 
   import scala.language.implicitConversions
   //  def entityState: EntType
@@ -37,41 +37,41 @@ trait EntityBehaviour[ActionType, ErrType, EntType <: VersionedEntity[_], Permis
     Set((action, toActionStatus(checkF(entity))))
 }
 
-object InvoiceBehaviours {
+object InvoiceBehaviour {
 
-  def apply(invoice: Invoice): InvoiceBehaviours = invoice match {
+  def apply(invoice: Invoice): InvoiceBehaviour = invoice match {
     case siteInvoice: SiteInvoice => SiteInvoiceBehaviour(siteInvoice)
     case sponsorInvoice: SponsorInvoice => SponsorInvoiceBehaviour(sponsorInvoice)
   }
 
   final case class SiteInvoiceBehaviour(siteInvoice: SiteInvoice)
-    extends InvoiceBehaviours
+    extends InvoiceBehaviour
 
   //with Implementations.CanApprove
 
   final case class SponsorInvoiceBehaviour(sponsorInvoice: SponsorInvoice)
-    extends InvoiceBehaviours
+    extends InvoiceBehaviour
       with Implementations.CanApprove
 
-  trait InvoiceBehaviour
-    extends EntityBehaviour[InvoiceAction, InvoiceError, Invoice, InvoiceUserPermissions] {
+  trait InvoiceCommandProcessorMixin
+    extends EntityCommandProcessorMixin[InvoiceAction, InvoiceError, Invoice, InvoiceUserPermissions] {
     override def notAllowedResult: Either[InvoiceError, Invoice] =
       Left(InvoiceError.ActionNotAllowedInCurrentStatus())
   }
 
-  trait Approve extends InvoiceBehaviour {
+  trait Approve extends InvoiceCommandProcessorMixin {
     def process[F[_]](invoice: Invoice, cmd: ApproveCmdMixin[F], permissions: InvoiceUserPermissions
                      ): Either[InvoiceError, Invoice] =
       notAllowedResult
   }
 
-  trait ApproveV2 extends InvoiceBehaviour {
+  trait ApproveV2 extends InvoiceCommandProcessorMixin {
     def process[F[_]](invoice: Invoice, cmd: ApproveCmdV2Mixin[F], permissions: InvoiceUserPermissions
                      ): Either[InvoiceError, Invoice] =
       notAllowedResult
   }
 
-  trait UpdateRfi extends InvoiceBehaviour {
+  trait UpdateRfi extends InvoiceCommandProcessorMixin {
     def process[F[_]](invoice: Invoice, cmd: UpdateRfiCmdMixin[F], permissions: InvoiceUserPermissions
                      ): Either[InvoiceError, Invoice] =
       notAllowedResult
@@ -83,9 +83,9 @@ object Implementations {
 
   import InvoiceStateBuilder.Instances._
 
-  trait CanApprove extends InvoiceBehaviours.Approve {
+  trait CanApprove extends InvoiceBehaviour.Approve {
 
-    self: InvoiceBehaviours.SponsorInvoiceBehaviour =>
+    self: InvoiceBehaviour.SponsorInvoiceBehaviour =>
 
     override def actionStatus(invoice: Invoice): Set[(InvoiceAction, ActionStatus)] =
       super.actionStatus(invoice) ++ thisActionStatus(InvoiceAction.Approve, invoice, validateActionIsAllowed)

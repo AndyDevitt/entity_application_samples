@@ -4,7 +4,7 @@ import sample1.domain.cta.CtaRepo
 import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
-import sample1.domain.invoice.mixinstatemachine.InvoiceBehaviours
+import sample1.domain.invoice.mixinstatemachine.InvoiceBehaviour
 import sample1.domain.permissions._
 import sample1.domain.user.UserId
 
@@ -87,7 +87,7 @@ final case class ApproveCmdMixin[F[_]](userId: UserId,
                                        permissionsRetriever: InvoiceEntityPermissionRetriever[F]
                                       ) extends InvoiceUpdateCommand[F, ApproveCmd[F], InvoiceAction.Approve.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    InvoiceBehaviours(invoice).process(invoice, this, permissions)
+    InvoiceBehaviour(invoice).process(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
 
@@ -115,7 +115,7 @@ final case class ApproveCmdV2Mixin[F[_]](userId: UserId,
                                          permissionsRetriever: InvoiceEntityPermissionRetriever[F]
                                         ) extends InvoiceUpdateCommand[F, ApproveCmdV2[F], InvoiceAction.Approve.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    InvoiceBehaviours(invoice).process(invoice, this, permissions)
+    InvoiceBehaviour(invoice).process(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
 }
@@ -144,7 +144,7 @@ final case class UpdateRfiCmdMixin[F[_]](userId: UserId,
                                          permissionsRetriever: InvoiceEntityPermissionRetriever[F]
                                         ) extends InvoiceUpdateCommand[F, UpdateRfiCmd[F], InvoiceAction.UpdateRfi.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    InvoiceBehaviours(invoice).process(invoice, this, permissions)
+    InvoiceBehaviour(invoice).process(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
 }
