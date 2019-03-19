@@ -17,12 +17,12 @@ object EntityRepoManager {
   PermissionsType](repo: EntityRepo[G, IdType, EntType, ErrType])
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
-                  ): F[Either[ErrType, EntityResultWithPermissions[EntType, PermissionsType]]] =
+                  ): F[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
     transform((for {
       entity <- EitherT(repo.retrieve(cmd.id))
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId, entity))
       _ <- EitherT.fromEither(cmd.checkMinimumPermissions(permissions))
-    } yield EntityResultWithPermissions(entity, permissions)).value)
+    } yield EntityResult(entity, permissions)).value)
 
   def manageCreate[
   F[_],
@@ -35,13 +35,13 @@ object EntityRepoManager {
   PermissionsType](repo: EntityRepo[G, IdType, EntType, ErrType])
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
-                  ): F[Either[ErrType, EntityResultWithPermissions[EntType, PermissionsType]]] =
+                  ): F[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
     transform((for {
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId))
       _ <- EitherT.fromEither(cmd.checkMinimumPermissions(permissions))
       created <- EitherT.fromEither[G](cmd.create(permissions))
       saved <- EitherT(repo.save(created))
-    } yield EntityResultWithPermissions(saved, permissions)).value)
+    } yield EntityResult(saved, permissions)).value)
 
   def manageUpdate[
   F[_],
@@ -57,7 +57,7 @@ object EntityRepoManager {
    (cmd: CmdType)
    (staleF: IdType => ErrType)
    (implicit monadG: Monad[G], transform: G ~> F
-   ): F[Either[ErrType, EntityResultWithPermissions[EntType, PermissionsType]]] =
+   ): F[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
     transform((for {
       entity <- EitherT(repo.retrieve(cmd.id))
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId, entity))
@@ -65,7 +65,7 @@ object EntityRepoManager {
       _ <- EitherT.fromEither(checkOptimisticLocking(entity, cmd, staleF))
       updated <- EitherT.fromEither[G](cmd.action(entity, permissions))
       saved <- EitherT(repo.save(updated))
-    } yield EntityResultWithPermissions(saved, permissions)).value)
+    } yield EntityResult(saved, permissions)).value)
 
   private def checkOptimisticLocking[
   F[_],

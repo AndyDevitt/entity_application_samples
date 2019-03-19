@@ -41,8 +41,6 @@ trait RunnableCommand[F[_], -InpType <: CommandInput, ResType, ErrType, Permissi
   def checkMinimumPermissions(permissions: PermissionsType): Either[ErrType, Unit]
 }
 
-final case class EntityResultWithPermissions[EntType, PermissionsType](entity: EntType, permissions: PermissionsType)
-
 sealed trait EntityCommand[F[_], -InpType <: CommandInput, ResType, ErrType, PermissionsType]
   extends RunnableCommand[F, InpType, ResType, ErrType, PermissionsType]
 
@@ -61,7 +59,7 @@ ErrType,
 IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
 PermissionsType
-] extends EntityCommand[F, InpType, EntityResultWithPermissions[EntType, PermissionsType], ErrType, PermissionsType] {
+] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType] {
   def create(permissions: PermissionsType): Either[ErrType, EntType]
 
   def extractRepo(input: InpType): EntityRepo[F, IdType, EntType, ErrType]
@@ -70,7 +68,7 @@ PermissionsType
 
   override def run[G[_]](input: InpType)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, EntityResultWithPermissions[EntType, PermissionsType]]] =
+                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
     EntityRepoManager.manageCreate[
       G,
       F,
@@ -90,7 +88,7 @@ ErrType,
 IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
 PermissionsType
-] extends EntityCommand[F, InpType, EntityResultWithPermissions[EntType, PermissionsType], ErrType, PermissionsType] {
+] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType] {
   def id: IdType
 
   def extractRepo(input: InpType): EntityRepo[F, IdType, EntType, ErrType]
@@ -99,7 +97,7 @@ PermissionsType
 
   override def run[G[_]](input: InpType)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, EntityResultWithPermissions[EntType, PermissionsType]]] =
+                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
     EntityRepoManager.manageRetrieve[
       G,
       F,
@@ -120,7 +118,7 @@ IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
 PermissionsType,
 ActionType
-] extends EntityCommand[F, InpType, EntityResultWithPermissions[EntType, PermissionsType], ErrType, PermissionsType]
+] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType]
   with OptimisticLocking {
   def id: IdType
 
@@ -138,7 +136,7 @@ ActionType
 
   override def run[G[_]](input: InpType)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, EntityResultWithPermissions[EntType, PermissionsType]]] =
+                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
     EntityRepoManager.manageUpdate[
       G,
       F,
