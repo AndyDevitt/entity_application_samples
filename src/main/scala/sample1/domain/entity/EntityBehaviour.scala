@@ -1,6 +1,5 @@
 package sample1.domain.entity
 
-import cats.syntax.either._
 import sample1.domain.command.{Command, EntityUpdateCommand}
 import sample1.domain.{ActionStatus, Allowed}
 
@@ -14,11 +13,14 @@ ActionType,
 CmdType <: EntityUpdateCommand[F, _, ErrType, _, EntType, PermissionsType, ActionType],
 ActionStatusType,
 NotAllowedActionStatusType <: ActionStatusType] {
+
+  import scala.language.implicitConversions
+
   def process(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
     canDo(entity, cmd.associatedAction, permissions)
       .left.map(statusToErrF)
       .flatMap(checkOptimisticLocking(_, cmd))
-      .flatMap(actionWithFailure(_, cmd, permissions))
+      .flatMap(action(_, cmd, permissions))
 
   def canDo(entity: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntSubType]
 
@@ -27,10 +29,10 @@ NotAllowedActionStatusType <: ActionStatusType] {
 
   protected def statusToErrF: NotAllowedActionStatusType => ErrType
 
-  protected def action(entity: EntSubType, cmd: CmdType, permissions: PermissionsType): EntType
+  protected def action(entity: EntSubType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType]
 
-  protected def actionWithFailure(entity: EntSubType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
-    action(entity, cmd, permissions).asRight[ErrType]
+  // Localised implicit conversion to avoid having to type Right(...) for most state operations that always succeed
+  protected implicit def convertEntityToSuccess(entity: EntType): Either[ErrType, EntType] = Right(entity)
 
   protected def staleF: EntType => ErrType
 

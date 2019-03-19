@@ -38,7 +38,7 @@ object InvoiceAlgebra {
       case _: SiteInvoice => Left(NotAllowedForProcessType())
     }
 
-    override protected def action(entity: SponsorInvoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Invoice = {
+    override protected def action(entity: SponsorInvoice, cmd: ApproveCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = {
       val pgm = for {
         _ <- State[SponsorInvoice, Unit] { s => (clearCosts(s, cmd), ()) }
         _ <- State[SponsorInvoice, Unit] { s => (setStatus(s, cmd, Approved), ()) }
@@ -56,7 +56,7 @@ object InvoiceAlgebra {
     override def canDo(entity: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] =
       Either.cond(entity.status == NotApproved, entity, NotAllowedInCurrentStatus())
 
-    override protected def action(entity: Invoice, cmd: ApproveCmdV2[F], permissions: InvoiceUserPermissions): Invoice =
+    override protected def action(entity: Invoice, cmd: ApproveCmdV2[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       InvoiceStateBuilder.Builder(entity)
         .clearCosts()
         .setStatus(Approved)
@@ -67,18 +67,16 @@ object InvoiceAlgebra {
   case class UpdateRfi[F[_]]() extends InvoiceEntityBehaviour[F, Invoice, InvoiceAction.UpdateRfi.type, UpdateRfiCmd[F]] {
     override def canDo(entity: Invoice, action: InvoiceAction.UpdateRfi.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] = entity match {
       case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
-      case si: SponsorInvoice => Left(NotAllowedInCurrentStatus())
+      case _: SponsorInvoice => Left(NotAllowedInCurrentStatus())
       case _: SiteInvoice => Left(NotAllowedForProcessType())
     }
 
-    override protected def action(entity: Invoice, cmd: UpdateRfiCmd[F], permissions: InvoiceUserPermissions): Invoice =
+    override protected def action(entity: Invoice, cmd: UpdateRfiCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       InvoiceStateBuilder.Builder(entity)
         .clearCosts()
         .setStatus(Approved)
         .updateLastEdited(cmd)
         .build()
-
-    override protected def actionWithFailure(entity: Invoice, cmd: UpdateRfiCmd[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] = ???
   }
 
   def calculateTotal(invoice: Invoice): Either[ValidationError, Option[MonetaryAmount]] =
