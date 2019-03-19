@@ -10,11 +10,12 @@ object EntityRepoManager {
   F[_],
   G[_],
   InpType <: CommandInput,
-  CmdType <: EntityRetrieveCommand[G, InpType, ErrType, IdType, EntType, PermissionsType],
+  CmdType <: EntityRetrieveCommand[G, InpType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType],
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
   ErrType,
-  PermissionsType](repo: EntityRepo[G, IdType, EntType, ErrType])
+  PermissionsType,
+  ActionsBaseType](repo: EntityRepo[G, IdType, EntType, ErrType])
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
                   ): F[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
@@ -28,11 +29,12 @@ object EntityRepoManager {
   F[_],
   G[_],
   InpType <: CommandInput,
-  CmdType <: EntityCreateCommand[G, InpType, ErrType, IdType, EntType, PermissionsType],
+  CmdType <: EntityCreateCommand[G, InpType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType],
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
   ErrType,
-  PermissionsType](repo: EntityRepo[G, IdType, EntType, ErrType])
+  PermissionsType,
+  ActionsBaseType](repo: EntityRepo[G, IdType, EntType, ErrType])
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
                   ): F[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
@@ -51,8 +53,9 @@ object EntityRepoManager {
   EntType <: VersionedEntity[IdType],
   ErrType,
   PermissionsType,
-  ActionType,
-  CmdType <: EntityUpdateCommand[G, InpType, ErrType, IdType, EntType, PermissionsType, ActionType]
+  ActionsBaseType,
+  ActionType <: ActionsBaseType,
+  CmdType <: EntityUpdateCommand[G, InpType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType, ActionType]
   ](repo: EntityRepo[G, IdType, EntType, ErrType])
    (cmd: CmdType)
    (staleF: IdType => ErrType)
@@ -70,7 +73,7 @@ object EntityRepoManager {
   private def checkOptimisticLocking[
   F[_],
   EntType <: VersionedEntity[IdType],
-  IdType <: EntityId, E](entity: EntType, cmd: EntityUpdateCommand[F, _, _, _, _, _, _], staleF: IdType => E
+  IdType <: EntityId, E](entity: EntType, cmd: EntityUpdateCommand[F, _, _, _, _, _, _, _], staleF: IdType => E
                         ): Either[E, Unit] =
     Either.cond(cmd.version == entity.version, (), staleF(entity.id))
 
@@ -78,13 +81,14 @@ object EntityRepoManager {
   F[_],
   G[_],
   InpType <: CommandInput,
-  CmdType <: EntityQueryCommand[G, InpType, ErrType, IdType, EntType, ResType, RepoType, PermissionsType],
+  CmdType <: EntityQueryCommand[G, InpType, ErrType, IdType, EntType, ResType, RepoType, PermissionsType, ActionsBaseType],
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
   ResType,
   ErrType,
   RepoType <: EntityRepo[G, IdType, EntType, ErrType],
-  PermissionsType](repo: RepoType)
+  PermissionsType,
+  ActionsBaseType](repo: RepoType)
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
                   ): F[Either[ErrType, ResType]] =

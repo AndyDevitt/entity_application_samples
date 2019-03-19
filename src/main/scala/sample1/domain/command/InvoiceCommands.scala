@@ -17,7 +17,7 @@ class DomainCommandInput[F[_]](val invoiceRepo: InvoiceRepo[F],
   */
 
 sealed trait InvoiceCreateCommand[F[_]]
-  extends EntityCreateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions] {
+  extends EntityCreateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions, InvoiceAction] {
   def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice]
 
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] =
@@ -28,15 +28,15 @@ sealed trait InvoiceCreateCommand[F[_]]
 }
 
 sealed trait InvoiceQueryCommand[F[_], R]
-  extends EntityQueryCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, R, InvoiceRepo[F], InvoiceUserPermissions] {
+  extends EntityQueryCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, R, InvoiceRepo[F], InvoiceUserPermissions, InvoiceAction] {
   override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
 
   override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
     Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions())
 }
 
-sealed trait InvoiceUpdateCommand[F[_], CmdType, ActionType]
-  extends EntityUpdateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions, ActionType] {
+sealed trait InvoiceUpdateCommand[F[_], CmdType, ActionType <: InvoiceAction]
+  extends EntityUpdateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions, InvoiceAction, ActionType] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice]
 
   override def staleF(id: InvoiceId): InvoiceError = InvoiceError.StaleInvoiceError(id)
@@ -51,7 +51,7 @@ sealed trait InvoiceUpdateCommand[F[_], CmdType, ActionType]
 final case class InvoiceRetrieveCommand[F[_]](userId: UserId,
                                               id: InvoiceId,
                                               permissionsRetriever: InvoiceEntityPermissionRetriever[F])
-  extends EntityRetrieveCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions] {
+  extends EntityRetrieveCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions, InvoiceAction] {
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] =
     input.invoiceRepo
 
@@ -62,7 +62,6 @@ final case class InvoiceRetrieveCommand[F[_]](userId: UserId,
 /**
   * Concrete command implementations
   */
-
 
 final case class ApproveCmd[F[_]](userId: UserId,
                                   id: InvoiceId,

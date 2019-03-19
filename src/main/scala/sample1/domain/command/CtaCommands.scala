@@ -15,7 +15,8 @@ sealed trait CtaCreateCommand[F[_]]
     CtaError,
     ClinicalTrialAgreementId,
     ClinicalTrialAgreement,
-    CtaUserPermissions] {
+    CtaUserPermissions,
+    CtaAction] {
   override def create(permissions: CtaUserPermissions): Either[CtaError, ClinicalTrialAgreement]
 
   override def extractRepo(input: DomainCommandInput[F]
@@ -23,7 +24,7 @@ sealed trait CtaCreateCommand[F[_]]
     input.ctaRepo
 }
 
-sealed trait CtaUpdateCommand[F[_], H[_], CmdType]
+sealed trait CtaUpdateCommand[F[_], CmdType]
   extends EntityUpdateCommand[
     F,
     DomainCommandInput[F],
@@ -31,6 +32,7 @@ sealed trait CtaUpdateCommand[F[_], H[_], CmdType]
     ClinicalTrialAgreementId,
     ClinicalTrialAgreement,
     CtaUserPermissions,
+    CtaAction,
     CtaAction] {
   override def staleF(id: ClinicalTrialAgreementId): CtaError = CtaError.StaleCtaError(id)
 
@@ -49,7 +51,8 @@ final case class CtaRetrieveCommand[F[_]](userId: UserId,
     CtaError,
     ClinicalTrialAgreementId,
     ClinicalTrialAgreement,
-    CtaUserPermissions] {
+    CtaUserPermissions,
+    CtaAction] {
   override def extractRepo(input: DomainCommandInput[F]
                           ): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] =
     input.ctaRepo

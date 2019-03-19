@@ -9,8 +9,9 @@ EntType <: VersionedEntity[_],
 EntSubType <: EntType,
 ErrType,
 PermissionsType,
-ActionType,
-CmdType <: EntityUpdateCommand[F, _, ErrType, _, EntType, PermissionsType, ActionType],
+ActionBaseType,
+ActionType <: ActionBaseType,
+CmdType <: EntityUpdateCommand[F, _, ErrType, _, EntType, PermissionsType, ActionBaseType, ActionType],
 ActionStatusType,
 NotAllowedActionStatusType <: ActionStatusType] {
 
@@ -37,7 +38,7 @@ NotAllowedActionStatusType <: ActionStatusType] {
   protected def staleF: EntType => ErrType
 
   private def checkOptimisticLocking(entity: EntSubType, cmd: Command): Either[ErrType, EntSubType] = cmd match {
-    case c: EntityUpdateCommand[_, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
+    case c: EntityUpdateCommand[_, _, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
     case _ => Right(entity)
   }
 }

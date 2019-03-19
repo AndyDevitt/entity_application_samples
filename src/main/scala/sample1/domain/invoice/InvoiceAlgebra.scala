@@ -8,8 +8,8 @@ import sample1.domain.invoice.InvoiceStateBuilder.Instances._
 import sample1.domain.permissions.InvoiceUserPermissions
 import sample1.utils.ReduceOptionWithFailure._
 
-trait InvoiceEntityCommandProcessor[F[_], EntSubType <: Invoice, ActionType, CmdType <: EntityUpdateCommand[F, _, InvoiceError, _, Invoice, InvoiceUserPermissions, ActionType]]
-  extends EntityCommandProcessor[F, Invoice, EntSubType, InvoiceError, InvoiceUserPermissions, ActionType, CmdType, ActionStatus, NotAllowed] {
+trait InvoiceEntityCommandProcessor[F[_], EntSubType <: Invoice, ActionType <: InvoiceAction, CmdType <: EntityUpdateCommand[F, _, InvoiceError, _, Invoice, InvoiceUserPermissions, InvoiceAction, ActionType]]
+  extends EntityCommandProcessor[F, Invoice, EntSubType, InvoiceError, InvoiceUserPermissions, InvoiceAction, ActionType, CmdType, ActionStatus, NotAllowed] {
 
   override def statusToErrF: NotAllowed => InvoiceError = InvoiceError.fromActionStatus
 

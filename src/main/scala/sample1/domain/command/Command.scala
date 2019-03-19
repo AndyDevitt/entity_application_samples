@@ -41,7 +41,7 @@ trait RunnableCommand[F[_], -InpType <: CommandInput, ResType, ErrType, Permissi
   def checkMinimumPermissions(permissions: PermissionsType): Either[ErrType, Unit]
 }
 
-sealed trait EntityCommand[F[_], -InpType <: CommandInput, ResType, ErrType, PermissionsType]
+sealed trait EntityCommand[F[_], -InpType <: CommandInput, ResType, ErrType, PermissionsType, ActionsBaseType]
   extends RunnableCommand[F, InpType, ResType, ErrType, PermissionsType]
 
 sealed trait OptimisticLocking {
@@ -58,8 +58,9 @@ F[_],
 ErrType,
 IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
-PermissionsType
-] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType] {
+PermissionsType,
+ActionsBaseType
+] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType, ActionsBaseType] {
   def create(permissions: PermissionsType): Either[ErrType, EntType]
 
   def extractRepo(input: InpType): EntityRepo[F, IdType, EntType, ErrType]
@@ -73,11 +74,12 @@ PermissionsType
       G,
       F,
       InpType,
-      EntityCreateCommand[F, InpType, ErrType, IdType, EntType, PermissionsType],
+      EntityCreateCommand[F, InpType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType],
       IdType,
       EntType,
       ErrType,
-      PermissionsType
+      PermissionsType,
+      ActionsBaseType
       ](extractRepo(input))(this)
 }
 
@@ -87,8 +89,9 @@ F[_],
 ErrType,
 IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
-PermissionsType
-] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType] {
+PermissionsType,
+ActionsBaseType
+] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType, ActionsBaseType] {
   def id: IdType
 
   def extractRepo(input: InpType): EntityRepo[F, IdType, EntType, ErrType]
@@ -102,11 +105,12 @@ PermissionsType
       G,
       F,
       InpType,
-      EntityRetrieveCommand[F, InpType, ErrType, IdType, EntType, PermissionsType],
+      EntityRetrieveCommand[F, InpType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType],
       IdType,
       EntType,
       ErrType,
-      PermissionsType
+      PermissionsType,
+      ActionsBaseType
       ](extractRepo(input))(this)
 }
 
@@ -117,8 +121,9 @@ ErrType,
 IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
 PermissionsType,
-ActionType
-] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType]
+ActionsBaseType,
+ActionType <: ActionsBaseType
+] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType, ActionsBaseType]
   with OptimisticLocking {
   def id: IdType
 
@@ -145,8 +150,9 @@ ActionType
       EntType,
       ErrType,
       PermissionsType,
+      ActionsBaseType,
       ActionType,
-      EntityUpdateCommand[F, InpType, ErrType, IdType, EntType, PermissionsType, ActionType]
+      EntityUpdateCommand[F, InpType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType, ActionType]
       ](extractRepo(input))(this)(staleF)
 }
 
@@ -158,8 +164,9 @@ IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
 ResType,
 RepoType <: EntityRepo[F, IdType, EntType, ErrType],
-PermissionsType
-] extends EntityCommand[F, InpType, ResType, ErrType, PermissionsType] {
+PermissionsType,
+ActionsBaseType
+] extends EntityCommand[F, InpType, ResType, ErrType, PermissionsType, ActionsBaseType] {
   def extractRepo(input: InpType): RepoType
 
   def query(repo: RepoType): F[Either[ErrType, ResType]]
@@ -171,12 +178,13 @@ PermissionsType
       G,
       F,
       InpType,
-      EntityQueryCommand[F, InpType, ErrType, IdType, EntType, ResType, RepoType, PermissionsType],
+      EntityQueryCommand[F, InpType, ErrType, IdType, EntType, ResType, RepoType, PermissionsType, ActionsBaseType],
       IdType,
       EntType,
       ResType,
       ErrType,
       RepoType,
-      PermissionsType
+      PermissionsType,
+      ActionsBaseType
       ](extractRepo(input))(this)
 }
