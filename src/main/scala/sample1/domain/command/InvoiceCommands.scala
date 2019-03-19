@@ -4,6 +4,7 @@ import sample1.domain.cta.CtaRepo
 import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
+import sample1.domain.invoice.mixinstatemachine.InvoiceBehaviours
 import sample1.domain.permissions._
 import sample1.domain.user.UserId
 
@@ -80,6 +81,23 @@ final case class ApproveCmd[F[_]](userId: UserId,
       InvoiceError.InsufficientPermissions())
 }
 
+final case class ApproveCmdMixin[F[_]](userId: UserId,
+                                       id: InvoiceId,
+                                       version: EntityVersion,
+                                       permissionsRetriever: InvoiceEntityPermissionRetriever[F]
+                                      ) extends InvoiceUpdateCommand[F, ApproveCmd[F], InvoiceAction.Approve.type] {
+  override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+    InvoiceBehaviours(invoice).process(invoice, this, permissions)
+
+  override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
+
+  override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
+    Either.cond(
+      permissions.hasReadPermission && permissions.has(InvoicePermissions.Approve()),
+      (),
+      InvoiceError.InsufficientPermissions())
+}
+
 final case class ApproveCmdV2[F[_]](userId: UserId,
                                     id: InvoiceId,
                                     version: EntityVersion,
@@ -87,6 +105,17 @@ final case class ApproveCmdV2[F[_]](userId: UserId,
                                    ) extends InvoiceUpdateCommand[F, ApproveCmdV2[F], InvoiceAction.Approve.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     InvoiceAlgebra.ApproveV2().process(invoice, this, permissions)
+
+  override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
+}
+
+final case class ApproveCmdV2Mixin[F[_]](userId: UserId,
+                                         id: InvoiceId,
+                                         version: EntityVersion,
+                                         permissionsRetriever: InvoiceEntityPermissionRetriever[F]
+                                        ) extends InvoiceUpdateCommand[F, ApproveCmdV2[F], InvoiceAction.Approve.type] {
+  override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+    InvoiceBehaviours(invoice).process(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
 }
@@ -105,6 +134,17 @@ final case class UpdateRfiCmd[F[_]](userId: UserId,
                                    ) extends InvoiceUpdateCommand[F, UpdateRfiCmd[F], InvoiceAction.UpdateRfi.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     InvoiceAlgebra.UpdateRfi().process(invoice, this, permissions)
+
+  override def associatedAction: InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
+}
+
+final case class UpdateRfiCmdMixin[F[_]](userId: UserId,
+                                         id: InvoiceId,
+                                         version: EntityVersion,
+                                         permissionsRetriever: InvoiceEntityPermissionRetriever[F]
+                                        ) extends InvoiceUpdateCommand[F, UpdateRfiCmd[F], InvoiceAction.UpdateRfi.type] {
+  override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+    InvoiceBehaviours(invoice).process(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
 }
