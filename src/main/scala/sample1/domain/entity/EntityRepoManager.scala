@@ -18,12 +18,13 @@ object EntityRepoManager {
   ActionsBaseType](repo: EntityRepo[G, IdType, EntType, ErrType])
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
-                  ): F[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
+                  ): F[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =
     transform((for {
       entity <- EitherT(repo.retrieve(cmd.id))
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId, entity))
       _ <- EitherT.fromEither(cmd.checkMinimumPermissions(permissions))
-    } yield EntityResult(entity, permissions)).value)
+      actions <- EitherT.pure[G, ErrType](cmd.extractActionStatuses(entity, permissions))
+    } yield EntityResult(entity, permissions, actions)).value)
 
   def manageCreate[
   F[_],
@@ -37,13 +38,14 @@ object EntityRepoManager {
   ActionsBaseType](repo: EntityRepo[G, IdType, EntType, ErrType])
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
-                  ): F[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
+                  ): F[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =
     transform((for {
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId))
       _ <- EitherT.fromEither(cmd.checkMinimumPermissions(permissions))
       created <- EitherT.fromEither[G](cmd.create(permissions))
       saved <- EitherT(repo.save(created))
-    } yield EntityResult(saved, permissions)).value)
+      actions <- EitherT.pure[G, ErrType](cmd.extractActionStatuses(saved, permissions))
+    } yield EntityResult(saved, permissions, actions)).value)
 
   def manageUpdate[
   F[_],
@@ -60,7 +62,7 @@ object EntityRepoManager {
    (cmd: CmdType)
    (staleF: IdType => ErrType)
    (implicit monadG: Monad[G], transform: G ~> F
-   ): F[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
+   ): F[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =
     transform((for {
       entity <- EitherT(repo.retrieve(cmd.id))
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId, entity))
@@ -68,7 +70,8 @@ object EntityRepoManager {
       _ <- EitherT.fromEither(checkOptimisticLocking(entity, cmd, staleF))
       updated <- EitherT.fromEither[G](cmd.action(entity, permissions))
       saved <- EitherT(repo.save(updated))
-    } yield EntityResult(saved, permissions)).value)
+      actions <- EitherT.pure[G, ErrType](cmd.extractActionStatuses(saved, permissions))
+    } yield EntityResult(saved, permissions, actions)).value)
 
   private def checkOptimisticLocking[
   F[_],

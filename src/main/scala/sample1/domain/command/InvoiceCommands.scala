@@ -1,5 +1,6 @@
 package sample1.domain.command
 
+import sample1.domain.ActionStatus
 import sample1.domain.cta.CtaRepo
 import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.errors.InvoiceError
@@ -20,6 +21,9 @@ sealed trait InvoiceCreateCommand[F[_]]
   extends EntityCreateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions, InvoiceAction] {
   def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice]
 
+  override def extractActionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
+    InvoiceAlgebra.actionStatuses(invoice, permissions)
+
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] =
     input.invoiceRepo
 
@@ -30,6 +34,9 @@ sealed trait InvoiceCreateCommand[F[_]]
 sealed trait InvoiceQueryCommand[F[_], R]
   extends EntityQueryCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, R, InvoiceRepo[F], InvoiceUserPermissions, InvoiceAction] {
   override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
+
+  override def extractActionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
+    InvoiceAlgebra.actionStatuses(invoice, permissions)
 
   override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
     Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions())
@@ -44,6 +51,9 @@ sealed trait InvoiceUpdateCommand[F[_], CmdType, ActionType <: InvoiceAction]
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] =
     input.invoiceRepo
 
+  override def extractActionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
+    InvoiceAlgebra.actionStatuses(invoice, permissions)
+
   override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
     Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions())
 }
@@ -54,6 +64,9 @@ final case class InvoiceRetrieveCommand[F[_]](userId: UserId,
   extends EntityRetrieveCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions, InvoiceAction] {
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] =
     input.invoiceRepo
+
+  override def extractActionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
+    InvoiceAlgebra.actionStatuses(invoice, permissions)
 
   override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
     Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions())

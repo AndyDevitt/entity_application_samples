@@ -1,3 +1,7 @@
 package sample1.domain.command
 
-final case class EntityResult[EntType, PermissionsType](entity: EntType, permissions: PermissionsType)
+import sample1.domain.ActionStatus
+
+final case class EntityResult[EntType, PermissionsType, ActionBaseType](entity: EntType,
+                                                                        permissions: PermissionsType,
+                                                                        actions: Set[(ActionBaseType, ActionStatus)])

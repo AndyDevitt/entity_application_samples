@@ -1,6 +1,7 @@
 package sample1.domain.command
 
 import cats.{Monad, ~>}
+import sample1.domain.ActionStatus
 import sample1.domain.entity._
 import sample1.domain.permissions.{BasicPermissionRetriever, EntityPermissionsRetriever}
 import sample1.domain.user.UserId
@@ -41,8 +42,10 @@ trait RunnableCommand[F[_], -InpType <: CommandInput, ResType, ErrType, Permissi
   def checkMinimumPermissions(permissions: PermissionsType): Either[ErrType, Unit]
 }
 
-sealed trait EntityCommand[F[_], -InpType <: CommandInput, ResType, ErrType, PermissionsType, ActionsBaseType]
-  extends RunnableCommand[F, InpType, ResType, ErrType, PermissionsType]
+sealed trait EntityCommand[F[_], -InpType <: CommandInput, ResType, ErrType, IdType <: EntityId, EntType <: VersionedEntity[IdType], PermissionsType, ActionsBaseType]
+  extends RunnableCommand[F, InpType, ResType, ErrType, PermissionsType] {
+  def extractActionStatuses(entity: EntType, permissions: PermissionsType): Set[(ActionsBaseType, ActionStatus)]
+}
 
 sealed trait OptimisticLocking {
   def enforceOptimisticLocking: Boolean = true
@@ -60,7 +63,7 @@ IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
 PermissionsType,
 ActionsBaseType
-] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType, ActionsBaseType] {
+] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType, ActionsBaseType], ErrType, IdType, EntType, PermissionsType, ActionsBaseType] {
   def create(permissions: PermissionsType): Either[ErrType, EntType]
 
   def extractRepo(input: InpType): EntityRepo[F, IdType, EntType, ErrType]
@@ -69,7 +72,7 @@ ActionsBaseType
 
   override def run[G[_]](input: InpType)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
+                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =
     EntityRepoManager.manageCreate[
       G,
       F,
@@ -91,7 +94,7 @@ IdType <: EntityId,
 EntType <: VersionedEntity[IdType],
 PermissionsType,
 ActionsBaseType
-] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType, ActionsBaseType] {
+] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType, ActionsBaseType], ErrType, IdType, EntType, PermissionsType, ActionsBaseType] {
   def id: IdType
 
   def extractRepo(input: InpType): EntityRepo[F, IdType, EntType, ErrType]
@@ -100,7 +103,7 @@ ActionsBaseType
 
   override def run[G[_]](input: InpType)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
+                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =
     EntityRepoManager.manageRetrieve[
       G,
       F,
@@ -123,7 +126,7 @@ EntType <: VersionedEntity[IdType],
 PermissionsType,
 ActionsBaseType,
 ActionType <: ActionsBaseType
-] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType], ErrType, PermissionsType, ActionsBaseType]
+] extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType, ActionsBaseType], ErrType, IdType, EntType, PermissionsType, ActionsBaseType]
   with OptimisticLocking {
   def id: IdType
 
@@ -141,7 +144,7 @@ ActionType <: ActionsBaseType
 
   override def run[G[_]](input: InpType)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType]]] =
+                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =
     EntityRepoManager.manageUpdate[
       G,
       F,
@@ -166,7 +169,7 @@ ResType,
 RepoType <: EntityRepo[F, IdType, EntType, ErrType],
 PermissionsType,
 ActionsBaseType
-] extends EntityCommand[F, InpType, ResType, ErrType, PermissionsType, ActionsBaseType] {
+] extends EntityCommand[F, InpType, ResType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType] {
   def extractRepo(input: InpType): RepoType
 
   def query(repo: RepoType): F[Either[ErrType, ResType]]

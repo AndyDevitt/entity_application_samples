@@ -1,5 +1,6 @@
 package sample1.domain.command
 
+import sample1.domain.ActionStatus
 import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId, CtaAction}
 import sample1.domain.entity.EntityRepo
 import sample1.domain.errors.CtaError
@@ -22,6 +23,9 @@ sealed trait CtaCreateCommand[F[_]]
   override def extractRepo(input: DomainCommandInput[F]
                           ): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] =
     input.ctaRepo
+
+  override def extractActionStatuses(entity: ClinicalTrialAgreement, permissions: CtaUserPermissions
+                                    ): Set[(CtaAction, ActionStatus)] = Set.empty
 }
 
 sealed trait CtaUpdateCommand[F[_], CmdType]
@@ -39,6 +43,9 @@ sealed trait CtaUpdateCommand[F[_], CmdType]
   override def extractRepo(input: DomainCommandInput[F]
                           ): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] =
     input.ctaRepo
+
+  override def extractActionStatuses(entity: ClinicalTrialAgreement, permissions: CtaUserPermissions
+                                    ): Set[(CtaAction, ActionStatus)] = Set.empty
 }
 
 
@@ -58,6 +65,9 @@ final case class CtaRetrieveCommand[F[_]](userId: UserId,
     input.ctaRepo
 
   override def checkMinimumPermissions(permissions: CtaUserPermissions): Either[CtaError, Unit] = Right(())
+
+  override def extractActionStatuses(entity: ClinicalTrialAgreement, permissions: CtaUserPermissions
+                                    ): Set[(CtaAction, ActionStatus)] = Set.empty
 }
 
 final case class CreateCtaCmd[F[_]](userId: UserId, permissionsRetriever: CtaBasicPermissionRetriever[F])
