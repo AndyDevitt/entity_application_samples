@@ -24,7 +24,7 @@ object InvoiceAlgebra {
   def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     EnumerableAdt[InvoiceAction].map(action => (action, actionStatus(invoice, action, permissions)))
 
-  def actionStatus(invoice: Invoice, action: InvoiceAction, permissions: InvoiceUserPermissions): ActionStatus = {
+  private def actionStatus(invoice: Invoice, action: InvoiceAction, permissions: InvoiceUserPermissions): ActionStatus = {
     action match {
       case a: InvoiceAction.Approve.type => Approve3().canDo(invoice, a, permissions)
       case a: InvoiceAction.UpdateRfi.type => UpdateRfi().canDo(invoice, a, permissions)
