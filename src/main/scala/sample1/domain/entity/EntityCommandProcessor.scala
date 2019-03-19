@@ -3,7 +3,7 @@ package sample1.domain.entity
 import sample1.domain.command.{Command, EntityUpdateCommand}
 import sample1.domain.{ActionStatus, Allowed}
 
-trait EntityBehaviour[
+trait EntityCommandProcessor[
 F[_],
 EntType <: VersionedEntity[_],
 EntSubType <: EntType,

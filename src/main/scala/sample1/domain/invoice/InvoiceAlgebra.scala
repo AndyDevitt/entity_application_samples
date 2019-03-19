@@ -2,14 +2,14 @@ package sample1.domain.invoice
 
 import sample1.domain._
 import sample1.domain.command._
-import sample1.domain.entity.EntityBehaviour
+import sample1.domain.entity.EntityCommandProcessor
 import sample1.domain.errors.{InvoiceError, ValidationError}
 import sample1.domain.invoice.InvoiceStateBuilder.Instances._
 import sample1.domain.permissions.InvoiceUserPermissions
 import sample1.utils.ReduceOptionWithFailure._
 
-trait InvoiceEntityBehaviour[F[_], EntSubType <: Invoice, ActionType, CmdType <: EntityUpdateCommand[F, _, InvoiceError, _, Invoice, InvoiceUserPermissions, ActionType]]
-  extends EntityBehaviour[F, Invoice, EntSubType, InvoiceError, InvoiceUserPermissions, ActionType, CmdType, ActionStatus, NotAllowed] {
+trait InvoiceEntityCommandProcessor[F[_], EntSubType <: Invoice, ActionType, CmdType <: EntityUpdateCommand[F, _, InvoiceError, _, Invoice, InvoiceUserPermissions, ActionType]]
+  extends EntityCommandProcessor[F, Invoice, EntSubType, InvoiceError, InvoiceUserPermissions, ActionType, CmdType, ActionStatus, NotAllowed] {
 
   override def statusToErrF: NotAllowed => InvoiceError = InvoiceError.fromActionStatus
 
@@ -31,7 +31,7 @@ object InvoiceAlgebra {
     }
   }.fold[ActionStatus]((na: NotAllowed) => na, _ => Allowed)
 
-  case class Approve3[F[_]]() extends InvoiceEntityBehaviour[F, SponsorInvoice, InvoiceAction.Approve.type, ApproveCmd[F]] {
+  case class Approve3[F[_]]() extends InvoiceEntityCommandProcessor[F, SponsorInvoice, InvoiceAction.Approve.type, ApproveCmd[F]] {
     override def canDo(invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, SponsorInvoice] = invoice match {
       case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
       case si: SponsorInvoice => Left(NotAllowedInCurrentStatus())
@@ -52,7 +52,7 @@ object InvoiceAlgebra {
       new Approve3[F]().process(invoice, cmd, permissions)
   }
 
-  case class ApproveV2[F[_]]() extends InvoiceEntityBehaviour[F, Invoice, InvoiceAction.Approve.type, ApproveCmdV2[F]] {
+  case class ApproveV2[F[_]]() extends InvoiceEntityCommandProcessor[F, Invoice, InvoiceAction.Approve.type, ApproveCmdV2[F]] {
     override def canDo(entity: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] =
       Either.cond(entity.status == NotApproved, entity, NotAllowedInCurrentStatus())
 
@@ -64,7 +64,7 @@ object InvoiceAlgebra {
         .build()
   }
 
-  case class UpdateRfi[F[_]]() extends InvoiceEntityBehaviour[F, Invoice, InvoiceAction.UpdateRfi.type, UpdateRfiCmd[F]] {
+  case class UpdateRfi[F[_]]() extends InvoiceEntityCommandProcessor[F, Invoice, InvoiceAction.UpdateRfi.type, UpdateRfiCmd[F]] {
     override def canDo(entity: Invoice, action: InvoiceAction.UpdateRfi.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] = entity match {
       case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
       case _: SponsorInvoice => Left(NotAllowedInCurrentStatus())
