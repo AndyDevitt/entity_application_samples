@@ -72,12 +72,12 @@ object ApplicationTestsV5 extends App {
 
   case class TestInvoiceBasicPermissionRetriever() extends InvoiceBasicPermissionRetriever[Id] {
     override def retrieve(userId: UserId): Id[InvoiceUserPermissions] =
-      InvoiceUserPermissions(Set(InvoicePermissions.Create()))
+      InvoiceUserPermissions(Set(InvoicePermissions.Create))
   }
 
   case class TestInvoiceEntityPermissionRetriever() extends InvoiceEntityPermissionRetriever[Id] {
     override def retrieve(userId: UserId, entity: Invoice): Id[InvoiceUserPermissions] =
-      InvoiceUserPermissions(Set(InvoicePermissions.Read()))
+      InvoiceUserPermissions(Set(InvoicePermissions.Read))
   }
 
   val testEntityPermissionsRetriever = TestInvoiceEntityPermissionRetriever()
