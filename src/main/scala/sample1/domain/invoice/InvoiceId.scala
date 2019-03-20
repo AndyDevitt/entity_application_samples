@@ -1,11 +1,10 @@
 package sample1.domain.invoice
 
 import sample1.domain.entity.EntityId
+import sample1.domain.shared.Uuid
 
-import scala.util.Random
-
-final case class InvoiceId(value: Int) extends EntityId
+final case class InvoiceId(value: Uuid) extends EntityId
 
 object InvoiceId {
-  def apply(): InvoiceId = new InvoiceId(Random.nextInt().abs)
+  def apply(): InvoiceId = new InvoiceId(Uuid())
 }

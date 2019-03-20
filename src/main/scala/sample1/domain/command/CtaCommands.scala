@@ -5,6 +5,7 @@ import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId, Cta
 import sample1.domain.entity.EntityRepo
 import sample1.domain.errors.CtaError
 import sample1.domain.permissions.{CtaBasicPermissionRetriever, CtaEntityPermissionRetriever, CtaUserPermissions}
+import sample1.domain.shared.DateTime
 import sample1.domain.user.UserId
 
 sealed trait CtaPermissions
@@ -70,7 +71,9 @@ final case class CtaRetrieveCommand[F[_]](userId: UserId,
                                     ): Set[(CtaAction, ActionStatus)] = Set.empty
 }
 
-final case class CreateCtaCmd[F[_]](userId: UserId, permissionsRetriever: CtaBasicPermissionRetriever[F])
+final case class CreateCtaCmd[F[_]](userId: UserId,
+                                    permissionsRetriever: CtaBasicPermissionRetriever[F],
+                                    effectiveDate: DateTime)
   extends CtaCreateCommand[F] {
   override def create(permissions: CtaUserPermissions): Either[CtaError, ClinicalTrialAgreement] =
     Right(ClinicalTrialAgreement.create(this))
