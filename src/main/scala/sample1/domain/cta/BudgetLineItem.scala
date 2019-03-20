@@ -7,4 +7,5 @@ sealed trait BudgetLineItem
 case class SimpleBudgetLineItem(id: BudgetLineItemId,
                                 context: ContextFilter,
                                 condition: PaymentCondition,
-                                payeeId: PayeeId)
+                                payeeId: PayeeId
+                               ) extends BudgetLineItem

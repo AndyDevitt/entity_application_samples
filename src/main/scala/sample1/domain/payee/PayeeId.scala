@@ -1,3 +1,9 @@
 package sample1.domain.payee
 
-case class PayeeId(value: Int)
+import sample1.domain.shared.Uuid
+
+case class PayeeId(value: Uuid)
+
+object PayeeId {
+  def apply(): PayeeId = new PayeeId(Uuid())
+}
