@@ -3,7 +3,9 @@ package sample1.domain.invoice
 import cats.Id
 import sample1.application.ApplicationTestsV5.{TestInvoiceBasicPermissionRetriever, TestInvoiceEntityPermissionRetriever}
 import sample1.domain.command.{Command, CreateRfiInvoiceCmd}
+import sample1.domain.errors.InvoiceError
 import sample1.domain.user.UserId
+import sample1.domain.{Cost, Currency, MonetaryAmount}
 
 object InvoiceStateBuilder {
 
@@ -59,6 +61,9 @@ object InvoiceStateBuilder {
 
     def updateRfi(requestForInvoice: RequestForInvoice)(implicit impl: UpdateRfi[A]): Builder[A, B] =
       Builder(impl.updateRfi(invoice, requestForInvoice))
+
+    def addCost(cost: Cost)(implicit impl: AddCost[A]): Either[InvoiceError, Builder[A, B]] =
+      impl.addCost(invoice, cost).map(Builder(_))
   }
 
   object Builder {
@@ -85,6 +90,10 @@ object InvoiceStateBuilder {
 
   trait UpdateRfi[A] {
     def updateRfi(a: A, rfi: RequestForInvoice): A
+  }
+
+  trait AddCost[A] {
+    def addCost(a: A, cost: Cost): Either[InvoiceError, A]
   }
 
   /**
@@ -119,6 +128,13 @@ object InvoiceStateBuilder {
 
     implicit val updateRfiSponsor: UpdateRfi[SponsorInvoice] = (inv, rfi) => inv.copy(rfi = rfi)
 
+    implicit val addCostSite: AddCost[SiteInvoice] = (inv, cost) => Right(inv.copy(costs = inv.costs :+ cost))
+    implicit val addCostSponsor: AddCost[SponsorInvoice] = (inv, cost) => Right(inv.copy(costs = inv.costs :+ cost))
+
+    implicit def addCostInvoice(implicit siteImpl: AddCost[SiteInvoice], sponsorImpl: AddCost[SponsorInvoice]): AddCost[Invoice] = (inv, cost) => inv match {
+      case i: SiteInvoice => siteImpl.addCost(i, cost)
+      case i: SponsorInvoice => sponsorImpl.addCost(i, cost)
+    }
   }
 
 }
@@ -135,6 +151,7 @@ object InvoiceStateBuilderTest {
   val sponsorInv: SponsorInvoice = Invoice.createRfiInvoiceEmpty[Id]()
   val inv: Invoice = sponsorInv
   val cmd: CreateRfiInvoiceCmd[Id] = CreateRfiInvoiceCmd[Id](UserId(), testBasicPermissionsRetriever)
+  val cost: Cost = Cost(MonetaryAmount(0, Currency("USD")))
 
   val updated: SponsorInvoice = sponsorInv
     .clearCosts()
@@ -155,5 +172,13 @@ object InvoiceStateBuilderTest {
     // The following line will not compile since there is no implementation for UpdateRfi[Invoice]
     // .updateRfi(RequestForInvoice())
     .build()
+
+  val updateWithFailure: Either[InvoiceError, SponsorInvoice] = sponsorInv
+    .addCost(cost)
+    .map(_.clearCosts())
+    .map(_.updateRfi(RequestForInvoice()))
+    .map(_.updateLastEdited(cmd))
+    .flatMap(_.addCost(cost))
+    .map(_.build())
 
 }
