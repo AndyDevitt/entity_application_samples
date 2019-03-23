@@ -1,18 +1,15 @@
 package sample1.application.persistence.clinicaltrialagreement
 
-import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
-import sample1.domain.entity.EntityVersion
+import sample1.domain.cta.ClinicalTrialAgreement
 
-case class ClinicalTrialAgreementDto(id: ClinicalTrialAgreementId,
-                                     version: EntityVersion,
-                                     note: String,
-                                     amendments: List[ClinicalTrialAgreementAmendmentDto])
+case class ClinicalTrialAgreementDto(state: ClinicalTrialAgreementTableDto,
+                                     amendments: List[ClinicalTrialAgreementAmendmentDto],
+                                     budgetLineItems: List[BudgetLineItemDto])
 
 object ClinicalTrialAgreementDto {
   def apply(cta: ClinicalTrialAgreement): ClinicalTrialAgreementDto =
     new ClinicalTrialAgreementDto(
-      id = cta.id,
-      version = cta.version,
-      note = cta.note,
-      amendments = cta.amendments.map(ClinicalTrialAgreementAmendmentDto(_, cta)).toList)
+      state = ClinicalTrialAgreementTableDto(cta),
+      amendments = cta.amendments.toList.map(ClinicalTrialAgreementAmendmentDto(_, cta)),
+      budgetLineItems = cta.amendments.toList.flatMap(a => a.budgetLineItems.map(BudgetLineItemDto(_, cta, a))))
 }
