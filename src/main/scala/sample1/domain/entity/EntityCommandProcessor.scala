@@ -24,11 +24,11 @@ NotAllowedActionStatusType <: ActionStatusType] {
       .flatMap(checkOptimisticLocking(_, cmd))
       .flatMap(action(_, cmd, permissions))
 
-  def canDo(entity: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntSubType]
-
   def actionStatus(entity: EntType, action: ActionType, permissions: PermissionsType): ActionStatus =
     canDo(entity, action, permissions)
       .fold[ActionStatus]((na: NotAllowedActionStatusType) => na.asInstanceOf[ActionStatus], _ => Allowed)
+
+  protected def canDo(entity: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntSubType]
 
   protected def statusToErrF: NotAllowedActionStatusType => ErrType
 
