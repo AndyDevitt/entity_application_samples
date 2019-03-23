@@ -74,7 +74,7 @@ object Implementations {
 
   trait CanApprove extends InvoiceBehaviour.Approve {
 
-    self: InvoiceBehaviour.SponsorInvoiceBehaviour =>
+    self: InvoiceBehaviour.BaseInvoiceBehaviour =>
 
     override def actionStatus(): Set[(InvoiceAction, ActionStatus)] =
       super.actionStatus() ++ thisActionStatus(InvoiceAction.Approve, self.invoice, validateActionIsAllowed)

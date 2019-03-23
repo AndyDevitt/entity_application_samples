@@ -1,5 +1,6 @@
 package sample1.domain.entity
 
+import cats.syntax.either._
 import sample1.domain.command.{Command, EntityUpdateCommand}
 import sample1.domain.{ActionStatus, Allowed}
 
@@ -26,19 +27,22 @@ NotAllowedActionStatusType <: ActionStatusType] {
   def canDo(entity: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntSubType]
 
   def actionStatus(entity: EntType, action: ActionType, permissions: PermissionsType): ActionStatus =
-    canDo(entity, action, permissions).fold[ActionStatus]((na: NotAllowedActionStatusType) => na.asInstanceOf[ActionStatus], _ => Allowed)
+    canDo(entity, action, permissions)
+      .fold[ActionStatus]((na: NotAllowedActionStatusType) => na.asInstanceOf[ActionStatus], _ => Allowed)
 
   protected def statusToErrF: NotAllowedActionStatusType => ErrType
 
   protected def action(entity: EntSubType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType]
 
   // Localised implicit conversion to avoid having to type Right(...) for most state operations that always succeed
-  protected implicit def convertEntityToSuccess(entity: EntType): Either[ErrType, EntType] = Right(entity)
+  protected implicit def convertEntityToSuccess(entity: EntType): Either[ErrType, EntType] = entity.asRight[ErrType]
 
   protected def staleF: EntType => ErrType
 
   private def checkOptimisticLocking(entity: EntSubType, cmd: Command): Either[ErrType, EntSubType] = cmd match {
-    case c: EntityUpdateCommand[_, _, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version => Left(staleF(entity))
-    case _ => Right(entity)
+    case c: EntityUpdateCommand[_, _, _, _, _, _, _, _] if c.enforceOptimisticLocking && c.version != entity.version =>
+      staleF(entity).asLeft[EntSubType]
+    case _ =>
+      entity.asRight[ErrType]
   }
 }
