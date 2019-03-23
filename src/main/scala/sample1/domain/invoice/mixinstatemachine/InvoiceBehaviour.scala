@@ -48,6 +48,9 @@ object InvoiceBehaviour {
       Left(InvoiceError.ActionNotAllowedInCurrentStatus())
   }
 
+  // TODO: Should permissions validation ALWAYS come before any other kind of check? Probably yes...
+  // In which case the permissions check should also be performed in the default status, hence defined here as a
+  // separate method and then called by the command when it is called to check minimum permissions...
   trait Approve extends InvoiceCommandProcessorMixin {
     def process[F[_]](cmd: ApproveCmdMixin[F], permissions: InvoiceUserPermissions
                      ): Either[InvoiceError, Invoice] =
