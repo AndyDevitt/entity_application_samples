@@ -16,18 +16,31 @@ trait InvoiceBehaviour
 object InvoiceBehaviour {
 
   def apply(invoice: Invoice): InvoiceBehaviour = invoice match {
-    case siteInvoice: SiteInvoice => SiteInvoiceBehaviour(siteInvoice)
-    case sponsorInvoice: SponsorInvoice => SponsorInvoiceBehaviour(sponsorInvoice)
+    case siteInvoice: SiteInvoice => siteInvoice.status match {
+      case NotApproved =>
+        new SiteInvoiceBehaviour(siteInvoice) // with Implementations.CanApprove
+      case Approved =>
+        SiteInvoiceBehaviour(siteInvoice)
+    }
+    case sponsorInvoice: SponsorInvoice => sponsorInvoice.status match {
+      case NotApproved =>
+        new SponsorInvoiceBehaviour(sponsorInvoice) with Implementations.CanApprove
+      case Approved =>
+        SponsorInvoiceBehaviour(sponsorInvoice)
+    }
   }
 
-  final case class SiteInvoiceBehaviour(siteInvoice: SiteInvoice)
-    extends InvoiceBehaviour
+  sealed trait BaseInvoiceBehaviour extends InvoiceBehaviour {
+    def invoice: Invoice
+  }
+
+  case class SiteInvoiceBehaviour(override val invoice: SiteInvoice)
+    extends BaseInvoiceBehaviour
 
   //with Implementations.CanApprove
 
-  final case class SponsorInvoiceBehaviour(sponsorInvoice: SponsorInvoice)
-    extends InvoiceBehaviour
-      with Implementations.CanApprove
+  case class SponsorInvoiceBehaviour(override val invoice: SponsorInvoice)
+    extends BaseInvoiceBehaviour
 
   trait InvoiceCommandProcessorMixin
     extends EntityCommandProcessorMixin[InvoiceAction, InvoiceError, Invoice, InvoiceUserPermissions] {
@@ -36,19 +49,19 @@ object InvoiceBehaviour {
   }
 
   trait Approve extends InvoiceCommandProcessorMixin {
-    def process[F[_]](invoice: Invoice, cmd: ApproveCmdMixin[F], permissions: InvoiceUserPermissions
+    def process[F[_]](cmd: ApproveCmdMixin[F], permissions: InvoiceUserPermissions
                      ): Either[InvoiceError, Invoice] =
       notAllowedResult
   }
 
   trait ApproveV2 extends InvoiceCommandProcessorMixin {
-    def process[F[_]](invoice: Invoice, cmd: ApproveCmdV2Mixin[F], permissions: InvoiceUserPermissions
+    def process[F[_]](cmd: ApproveCmdV2Mixin[F], permissions: InvoiceUserPermissions
                      ): Either[InvoiceError, Invoice] =
       notAllowedResult
   }
 
   trait UpdateRfi extends InvoiceCommandProcessorMixin {
-    def process[F[_]](invoice: Invoice, cmd: UpdateRfiCmdMixin[F], permissions: InvoiceUserPermissions
+    def process[F[_]](cmd: UpdateRfiCmdMixin[F], permissions: InvoiceUserPermissions
                      ): Either[InvoiceError, Invoice] =
       notAllowedResult
   }
@@ -63,14 +76,13 @@ object Implementations {
 
     self: InvoiceBehaviour.SponsorInvoiceBehaviour =>
 
-    override def actionStatus(invoice: Invoice): Set[(InvoiceAction, ActionStatus)] =
-      super.actionStatus(invoice) ++ thisActionStatus(InvoiceAction.Approve, invoice, validateActionIsAllowed)
+    override def actionStatus(): Set[(InvoiceAction, ActionStatus)] =
+      super.actionStatus() ++ thisActionStatus(InvoiceAction.Approve, self.invoice, validateActionIsAllowed)
 
-    override def process[F[_]](invoice: Invoice,
-                               cmd: ApproveCmdMixin[F],
+    override def process[F[_]](cmd: ApproveCmdMixin[F],
                                permissions: InvoiceUserPermissions
                               ): Either[InvoiceError, Invoice] =
-      validateActionIsAllowed(invoice) map {
+      validateActionIsAllowed(self.invoice) flatMap {
         InvoiceStateBuilder.Builder(_)
           .clearCosts()
           .updateLastEdited(cmd)

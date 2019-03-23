@@ -6,9 +6,8 @@ import sample1.domain.{ActionStatus, Allowed, NotAllowedInCurrentState}
 trait EntityCommandProcessorMixin[ActionType, ErrType, EntType <: VersionedEntity[_], PermissionType] extends Actions[EntType, ActionType] {
 
   import scala.language.implicitConversions
-  //  def entityState: EntType
 
-  override def actionStatus(entity: EntType): Set[(ActionType, ActionStatus)] = Set.empty
+  override def actionStatus(): Set[(ActionType, ActionStatus)] = Set.empty
 
   def notAllowedResult: Either[ErrType, EntType]
 
