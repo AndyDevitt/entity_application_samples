@@ -3,11 +3,12 @@ package sample1.domain.entity.mixinstatemachine
 import sample1.domain.entity.VersionedEntity
 import sample1.domain.{ActionStatus, Allowed, NotAllowedInCurrentState}
 
-trait EntityCommandProcessorMixin[ActionType, ErrType, EntType <: VersionedEntity[_], PermissionType] extends Actions[EntType, ActionType] {
+trait EntityCommandProcessorMixin[ActionType, ErrType, EntType <: VersionedEntity[_], PermissionType]
+  extends Actions[EntType, ActionType, PermissionType] {
 
   import scala.language.implicitConversions
 
-  override def actionStatus(): Set[(ActionType, ActionStatus)] = Set.empty
+  override def actionStatus(permissions: PermissionType): Set[(ActionType, ActionStatus)] = Set.empty
 
   def notAllowedResult: Either[ErrType, EntType]
 
@@ -17,11 +18,10 @@ trait EntityCommandProcessorMixin[ActionType, ErrType, EntType <: VersionedEntit
   private def toActionStatus(checkResult: Either[ErrType, EntType]): ActionStatus =
     checkResult.fold[ActionStatus](e => NotAllowedInCurrentState(e.toString), _ => Allowed)
 
-  protected def thisActionStatus(action: ActionType, entity: EntType, checkF: EntType => Either[ErrType, EntType]
+  protected def thisActionStatus(action: ActionType,
+                                 entity: EntType,
+                                 permissions: PermissionType,
+                                 checkF: (EntType, PermissionType) => Either[ErrType, EntType]
                                 ): Set[(ActionType, ActionStatus)] =
-    Set((action, toActionStatus(checkF(entity))))
-
-  protected def thisActionStatus(action: ActionType
-                                ): Set[(ActionType, ActionStatus)] =
-    Set((action, Allowed))
+    Set((action, toActionStatus(checkF(entity, permissions))))
 }
