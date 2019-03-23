@@ -3,6 +3,8 @@ package sample1.domain.invoice
 import sample1.domain.Cost
 import sample1.domain.command.{CreateRfiInvoiceCmd, CreateSiteInvoiceCmd}
 import sample1.domain.entity.{EntityVersion, VersionedEntity}
+import sample1.domain.errors.InvoiceError
+import sample1.domain.permissions.InvoiceUserPermissions
 import sample1.domain.user.UserId
 
 trait Invoice extends VersionedEntity[InvoiceId] {
@@ -27,14 +29,21 @@ final case class SponsorInvoice private(id: InvoiceId,
                                         rfi: RequestForInvoice) extends Invoice
 
 object Invoice {
-  def createRfiInvoice[F[_]](cmd: CreateRfiInvoiceCmd[F]): SponsorInvoice =
-    SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil, RequestForInvoice())
+  def createRfiInvoice[F[_]](cmd: CreateRfiInvoiceCmd[F],
+                             permissions: InvoiceUserPermissions): Either[InvoiceError, SponsorInvoice] =
+    Either.cond(permissions.hasCreatePermission,
+      SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil, RequestForInvoice()),
+      InvoiceError.InsufficientPermissions())
+
 
   def createRfiInvoiceEmpty[F[_]](): SponsorInvoice =
     SponsorInvoice(InvoiceId(), EntityVersion(), UserId(), NotApproved, Nil, RequestForInvoice())
 
-  def createSiteInvoice[F[_]](cmd: CreateSiteInvoiceCmd[F]): SiteInvoice =
-    SiteInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil)
+  def createSiteInvoice[F[_]](cmd: CreateSiteInvoiceCmd[F],
+                              permissions: InvoiceUserPermissions): Either[InvoiceError, SiteInvoice] =
+    Either.cond(permissions.hasCreatePermission,
+      SiteInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil),
+      InvoiceError.InsufficientPermissions())
 
   def createSiteInvoiceEmpty[F[_]](): SiteInvoice =
     SiteInvoice(InvoiceId(), EntityVersion(), UserId(), NotApproved, Nil)

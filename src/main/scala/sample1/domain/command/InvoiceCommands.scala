@@ -136,7 +136,7 @@ final case class CreateRfiInvoiceCmd[F[_]](userId: UserId,
                                            permissionsRetriever: InvoiceBasicPermissionRetriever[F]
                                           ) extends InvoiceCreateCommand[F] {
   override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    Right(Invoice.createRfiInvoice(this))
+    Invoice.createRfiInvoice(this, permissions)
 }
 
 final case class UpdateRfiCmd[F[_]](userId: UserId,
@@ -165,7 +165,7 @@ final case class CreateSiteInvoiceCmd[F[_]](userId: UserId,
                                             permissionsRetriever: InvoiceBasicPermissionRetriever[F]
                                            ) extends InvoiceCreateCommand[F] {
   override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    Right(Invoice.createSiteInvoice(this))
+    Invoice.createSiteInvoice(this, permissions)
 }
 
 final case class FindAll[F[_]](userId: UserId,
