@@ -2,6 +2,7 @@ package sample1.domain.invoice
 
 import sample1.domain._
 import sample1.domain.command._
+import sample1.domain.command.invoicecommands.{ApproveCmd, ApproveCmdV2, UpdateRfiCmd}
 import sample1.domain.entity.EntityCommandProcessor
 import sample1.domain.errors.{InvoiceError, ValidationError}
 import sample1.domain.invoice.InvoiceStateBuilder.Instances._

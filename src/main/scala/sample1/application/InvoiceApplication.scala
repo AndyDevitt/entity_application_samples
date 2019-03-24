@@ -2,7 +2,7 @@ package sample1.application
 
 import cats.Id
 import cats.effect.IO
-import sample1.domain.command._
+import sample1.domain.command.DomainCommandInput
 import sample1.domain.cta.CtaRepo
 import sample1.domain.invoice.InvoiceRepo
 

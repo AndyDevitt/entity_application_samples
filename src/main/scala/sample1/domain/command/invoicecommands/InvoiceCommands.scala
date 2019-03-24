@@ -1,7 +1,7 @@
-package sample1.domain.command
+package sample1.domain.command.invoicecommands
 
 import sample1.domain.ActionStatus
-import sample1.domain.cta.CtaRepo
+import sample1.domain.command._
 import sample1.domain.entity.{EntityRepo, EntityVersion}
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
@@ -9,9 +9,6 @@ import sample1.domain.invoice.mixinstatemachine.InvoiceBehaviour
 import sample1.domain.permissions._
 import sample1.domain.user.UserId
 
-class DomainCommandInput[F[_]](val invoiceRepo: InvoiceRepo[F],
-                               val ctaRepo: CtaRepo[F]
-                              ) extends CommandInput
 
 /**
   * Generic Invoice commands

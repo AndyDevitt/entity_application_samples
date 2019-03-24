@@ -2,8 +2,7 @@ package sample1.application
 
 import cats.effect.IO
 import cats.{Id, ~>}
-import sample1.domain._
-import sample1.domain.command._
+import sample1.domain.command.invoicecommands._
 import sample1.domain.cta.ClinicalTrialAgreement
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.errors.InvoiceError
