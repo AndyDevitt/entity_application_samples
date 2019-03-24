@@ -8,4 +8,6 @@ object InvoiceAction {
 
   case object UpdateRfi extends InvoiceAction
 
+  case object AddCost extends InvoiceAction
+
 }

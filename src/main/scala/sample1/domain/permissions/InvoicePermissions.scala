@@ -1,5 +1,7 @@
 package sample1.domain.permissions
 
+import sample1.domain.permissions.InvoicePermissions.ApproveWithLimit
+
 sealed trait InvoicePermissions
 
 object InvoicePermissions {
@@ -22,4 +24,10 @@ final case class InvoiceUserPermissions(permissions: Set[InvoicePermissions]) ex
   def hasReadPermission: Boolean = permissions.contains(InvoicePermissions.Read)
 
   def hasCreatePermission: Boolean = permissions.contains(InvoicePermissions.Create)
+
+  def approvalLimit: Option[ApproveWithLimit] = permissions
+    .collect({ case p: ApproveWithLimit => p })
+    .reduceLeftOption { (acc: ApproveWithLimit, perm: ApproveWithLimit) =>
+      if (acc.limit > perm.limit) acc else perm
+    }
 }

@@ -39,5 +39,6 @@ object InvoiceError {
     case NotAllowedForProcessType() => ActionNotAllowedForProcessType()
     case NotAllowedInCurrentStatus() => ActionNotAllowedInCurrentStatus()
     case NotAllowedInCurrentState(reason) => ActionNotAllowedInCurrentState(reason)
+    case NotEnoughPermissions(reason) => InsufficientPermissions()
   }
 }

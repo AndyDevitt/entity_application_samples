@@ -1,5 +1,6 @@
 package sample1.domain.command.invoicecommands
 
+import sample1.domain.Cost
 import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
@@ -10,6 +11,24 @@ import sample1.domain.user.UserId
 /**
   * Concrete command implementations
   */
+
+final case class AddCostCmd[F[_]](userId: UserId,
+                                  id: InvoiceId,
+                                  version: EntityVersion,
+                                  permissionsRetriever: InvoiceEntityPermissionRetriever[F],
+                                  cost: Cost
+                                 ) extends InvoiceUpdateCommand[F, AddCostCmd[F], InvoiceAction.AddCost.type] {
+  override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
+    InvoiceAlgebra.AddCost().process(invoice, this, permissions)
+
+  override def associatedAction: InvoiceAction.AddCost.type = InvoiceAction.AddCost
+
+  override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
+    Either.cond(
+      permissions.hasReadPermission && permissions.has(InvoicePermissions.Approve),
+      (),
+      InvoiceError.InsufficientPermissions())
+}
 
 final case class ApproveCmd[F[_]](userId: UserId,
                                   id: InvoiceId,

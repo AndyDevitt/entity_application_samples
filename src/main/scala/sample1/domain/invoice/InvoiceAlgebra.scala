@@ -1,12 +1,13 @@
 package sample1.domain.invoice
 
+import cats.syntax.either._
 import sample1.domain._
 import sample1.domain.command._
-import sample1.domain.command.invoicecommands.{ApproveCmd, ApproveCmdV2, UpdateRfiCmd}
+import sample1.domain.command.invoicecommands.{AddCostCmd, ApproveCmd, ApproveCmdV2, UpdateRfiCmd}
 import sample1.domain.entity.EntityCommandProcessor
 import sample1.domain.errors.{InvoiceError, ValidationError}
 import sample1.domain.invoice.InvoiceStateBuilder.Instances._
-import sample1.domain.permissions.InvoiceUserPermissions
+import sample1.domain.permissions.{InvoicePermissions, InvoiceUserPermissions}
 import sample1.utils.ReduceOptionWithFailure._
 
 trait InvoiceEntityCommandProcessor[F[_], EntSubType <: Invoice, ActionType <: InvoiceAction, CmdType <: EntityUpdateCommand[F, _, InvoiceError, _, Invoice, InvoiceUserPermissions, InvoiceAction, ActionType]]
@@ -22,6 +23,9 @@ object InvoiceAlgebra {
   import cats.data.State
   import sample1.domain.invoice.InvoiceUtils._
 
+  private def isInOneOfStatus(invoice: Invoice, statuses: Set[InvoiceStatus]): Boolean =
+    statuses.contains(invoice.status)
+
   def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     EnumerableAdt[InvoiceAction].map(action => (action, actionStatus(invoice, action, permissions)))
 
@@ -29,8 +33,34 @@ object InvoiceAlgebra {
     action match {
       case a: InvoiceAction.Approve.type => Approve3().canDo(invoice, a, permissions)
       case a: InvoiceAction.UpdateRfi.type => UpdateRfi().canDo(invoice, a, permissions)
+      case a: InvoiceAction.AddCost.type => AddCost().canDo(invoice, a, permissions)
     }
   }.fold[ActionStatus]((na: NotAllowed) => na, _ => Allowed)
+
+  // TODO: provide this action as an example of where the command state is required to check full permissions (i.e. cannot
+  // add costs to bring total over a certain limit)
+  case class AddCost[F[_]]() extends InvoiceEntityCommandProcessor[F, SponsorInvoice, InvoiceAction.AddCost.type, AddCostCmd[F]] {
+
+    val allowedStatuses: Set[InvoiceStatus] = Set(NotApproved)
+    val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.Read, InvoicePermissions.AddCost)
+
+    override def canDo(invoice: Invoice, action: InvoiceAction.AddCost.type, permissions: InvoiceUserPermissions
+                      ): Either[NotAllowed, SponsorInvoice] =
+      Either.cond(permissions.hasAll(requiredPermissions), (), NotEnoughPermissions("")) flatMap { _ =>
+        invoice match {
+          case si: SponsorInvoice if isInOneOfStatus(si, allowedStatuses) => Right(si)
+          case _: SponsorInvoice => Left(NotAllowedInCurrentStatus())
+          case _: SiteInvoice => Left(NotAllowedForProcessType())
+        }
+      }
+
+    override protected def action(entity: SponsorInvoice, cmd: AddCostCmd[F], permissions: InvoiceUserPermissions
+                                 ): Either[InvoiceError, Invoice] =
+      InvoiceStateBuilder.Builder(entity)
+        .updateLastEdited(cmd)
+        .addCost(cmd.cost)
+        .map(_.build())
+  }
 
   case class Approve3[F[_]]() extends InvoiceEntityCommandProcessor[F, SponsorInvoice, InvoiceAction.Approve.type, ApproveCmd[F]] {
     override def canDo(invoice: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, SponsorInvoice] = invoice match {
@@ -53,13 +83,27 @@ object InvoiceAlgebra {
       new Approve3[F]().process(invoice, cmd, permissions)
   }
 
+  // TODO: provide this action as an example of where the command state is NOT required to check full permissions (i.e. cannot
+  // approve an invoice over a certain amount). Use this to add some common comparison behaviour to permissions possibly..
   case class ApproveV2[F[_]]() extends InvoiceEntityCommandProcessor[F, Invoice, InvoiceAction.Approve.type, ApproveCmdV2[F]] {
+
+    val allowedStatuses: Set[InvoiceStatus] = Set(NotApproved)
+    val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.Read, InvoicePermissions.Approve)
+
     override def canDo(entity: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] =
-      Either.cond(entity.status == NotApproved, entity, NotAllowedInCurrentStatus())
+      for {
+        _ <- Either.cond(permissions.hasAll(requiredPermissions), (), NotEnoughPermissions("Minimum required permissions not found"))
+        _ <- Either.cond(isInOneOfStatus(entity, allowedStatuses), (), NotAllowedInCurrentStatus())
+        limit <- Either.fromOption(permissions.approvalLimit.map(_.limit), NotEnoughPermissions("No approval limit found"))
+        // TODO: The following statement if it failed would actually be a bug in the application - figure out how this should be handled.
+        // It feels like there should be an error, but the signature doesn't currently allow for this...
+        totalOpt <- calculateTotal(entity).leftMap(_ => NotEnoughPermissions("Error calculating the total"))
+        total <- Either.fromOption(totalOpt, NotAllowedInCurrentState("Cannot approve with no costs"))
+        _ <- Either.cond(limit < total.amount, (), NotEnoughPermissions("Approval limit is below the invoice total"))
+      } yield entity
 
     override protected def action(entity: Invoice, cmd: ApproveCmdV2[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       InvoiceStateBuilder.Builder(entity)
-        .clearCosts()
         .setStatus(Approved)
         .updateLastEdited(cmd)
         .build()
