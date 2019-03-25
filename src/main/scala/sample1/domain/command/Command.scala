@@ -101,6 +101,9 @@ ActionsBaseType
 
   def permissionsRetriever: EntityPermissionsRetriever[F, IdType, EntType, PermissionsType]
 
+  // TODO: Could this require an entity algebra to implement this function...?
+  def minimumAccessPermissionsCheck(entity: EntType, permissions: PermissionsType): Either[ErrType, Unit]
+
   override def run[G[_]](input: InpType)
                         (implicit monadF: Monad[F], transform: F ~> G
                         ): G[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =

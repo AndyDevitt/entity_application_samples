@@ -67,6 +67,10 @@ final case class CtaRetrieveCommand[F[_]](userId: UserId,
 
   override def checkMinimumPermissions(permissions: CtaUserPermissions): Either[CtaError, Unit] = Right(())
 
+  override def minimumAccessPermissionsCheck(entity: ClinicalTrialAgreement, permissions: CtaUserPermissions
+                                            ): Either[CtaError, Unit] =
+    Right(())
+
   override def extractActionStatuses(entity: ClinicalTrialAgreement, permissions: CtaUserPermissions
                                     ): Set[(CtaAction, ActionStatus)] = Set.empty
 }

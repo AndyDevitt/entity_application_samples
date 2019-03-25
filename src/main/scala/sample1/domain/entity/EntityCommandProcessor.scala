@@ -20,17 +20,17 @@ NotAllowedActionStatusType <: ActionStatusType] {
 
   def process(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
     minimumAccessPermissionsCheck(entity, permissions)
-      .flatMap(canDo(_, cmd.associatedAction, permissions))
+      .flatMap(_ => canDo(entity, cmd.associatedAction, permissions))
       .left.map(statusToErrF)
       .flatMap(checkOptimisticLocking(_, cmd))
       .flatMap(action(_, cmd, permissions))
 
   def actionStatus(entity: EntType, action: ActionType, permissions: PermissionsType): ActionStatus =
     minimumAccessPermissionsCheck(entity, permissions)
-      .flatMap(canDo(_, action, permissions))
+      .flatMap(_ => canDo(entity, action, permissions))
       .fold[ActionStatus]((na: NotAllowedActionStatusType) => na.asInstanceOf[ActionStatus], _ => ActionStatus.Allowed)
 
-  protected def minimumAccessPermissionsCheck(entity: EntType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntType]
+  protected def minimumAccessPermissionsCheck(entity: EntType, permissions: PermissionsType): Either[NotAllowedActionStatusType, Unit]
 
   protected def canDo(entity: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntSubType]
 

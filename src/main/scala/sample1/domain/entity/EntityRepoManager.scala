@@ -22,7 +22,7 @@ object EntityRepoManager {
     transform((for {
       entity <- EitherT(repo.retrieve(cmd.id))
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId, entity))
-      _ <- EitherT.fromEither(cmd.checkMinimumPermissions(permissions))
+      _ <- EitherT.fromEither(cmd.minimumAccessPermissionsCheck(entity, permissions))
       actions <- EitherT.pure[G, ErrType](cmd.extractActionStatuses(entity, permissions))
     } yield EntityResult(entity, permissions, actions)).value)
 

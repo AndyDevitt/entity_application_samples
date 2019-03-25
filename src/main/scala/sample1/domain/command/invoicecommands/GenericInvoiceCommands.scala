@@ -64,6 +64,9 @@ final case class InvoiceRetrieveCommand[F[_]](userId: UserId,
   override def extractActionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     InvoiceAlgebra.actionStatuses(invoice, permissions)
 
+  override def minimumAccessPermissionsCheck(entity: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
+    InvoiceAlgebra.minimumAccessPermissionsCheck(entity, permissions)
+
   override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
     Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions("Read permission not found for retrieve command"))
 }

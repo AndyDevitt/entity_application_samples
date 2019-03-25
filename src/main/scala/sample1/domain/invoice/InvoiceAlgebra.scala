@@ -17,8 +17,8 @@ trait InvoiceEntityCommandProcessor[F[_], EntSubType <: Invoice, ActionType <: I
 
   override def staleF: Invoice => InvoiceError = i => InvoiceError.StaleInvoiceError(i.id)
 
-  override protected def minimumAccessPermissionsCheck(entity: Invoice, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] =
-    InvoiceAlgebra.minimumAccessPermissionsCheck(entity, permissions)
+  override protected def minimumAccessPermissionsCheck(entity: Invoice, permissions: InvoiceUserPermissions): Either[NotAllowed, Unit] =
+    InvoiceAlgebra.minimumAccessPermissionsCheck(entity, permissions).leftMap(_ => ActionStatus.AccessDenied())
 }
 
 object InvoiceAlgebra {
@@ -42,8 +42,8 @@ object InvoiceAlgebra {
     }
 
   def minimumAccessPermissionsCheck(invoice: Invoice, permissions: InvoiceUserPermissions
-                                   ): Either[NotAllowed, Invoice] =
-    Either.cond(permissions.hasReadPermission, invoice, ActionStatus.AccessDenied())
+                                   ): Either[InvoiceError, Unit] =
+    Either.cond(permissions.hasReadPermission, (), InvoiceError.AccessDenied())
 
   def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     EnumerableAdt[InvoiceAction].map(action => (action, actionStatus(invoice, action, permissions)))
