@@ -2,14 +2,16 @@ package sample1.application
 
 import cats.effect.IO
 import cats.{Id, ~>}
+import sample1.domain._
 import sample1.domain.command.invoicecommands._
+import sample1.domain.command.{CreateCtaCmd, CtaRetrieveCommand, EntityResult}
 import sample1.domain.cta.ClinicalTrialAgreement
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.errors.InvoiceError
-import sample1.domain.invoice.{Invoice, SiteInvoice, SponsorInvoice}
-import sample1.domain.permissions.{InvoiceBasicPermissionRetriever, InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
+import sample1.domain.invoice.{Invoice, InvoiceAction, SiteInvoice, SponsorInvoice}
+import sample1.domain.permissions._
+import sample1.domain.shared.DateTime
 import sample1.domain.user.UserId
-import sample1.domain.{Cost, Currency, MonetaryAmount}
 import sample1.infrastructure.{TestCtaRepo, TestInvoiceRepo}
 
 import scala.concurrent.Future
@@ -42,8 +44,8 @@ object TestImplicits {
   implicit val ctaVersioned: Versioned[ClinicalTrialAgreement] =
     Versioned.instance(cta => cta.copy(version = cta.version.nextVersion))
 
-  //  implicit val invoiceToViewDecoder: Decoder[InvoiceView, Invoice, InvoiceError] =
-  //    (b: Invoice) => InvoiceView.create(b)
+  implicit val invoiceToViewDecoder: Decoder[InvoiceView, EntityResult[Invoice, InvoiceUserPermissions, InvoiceAction], InvoiceError] =
+    (b: EntityResult[Invoice, InvoiceUserPermissions, InvoiceAction]) => InvoiceView.create(b.entity, b.permissions)
 
   /**
     * CTA codec used to encode and decode between domain and persistence types (both the same type in this example) This
@@ -55,8 +57,8 @@ object TestImplicits {
       (cta: ClinicalTrialAgreement) => cta,
       (cta: ClinicalTrialAgreement) => Right(cta.copy(note = "I've been flipped!")))
 
-  //    implicit val invoiceToInvoiceView: Transform[Invoice, InvoiceView, InvoiceError] =
-  //      (from: Invoice) => InvoiceView.create(from)
+  implicit val invoiceToInvoiceView: Transform[EntityResult[Invoice, InvoiceUserPermissions, InvoiceAction], InvoiceView, InvoiceError] =
+    (from: EntityResult[Invoice, InvoiceUserPermissions, InvoiceAction]) => InvoiceView.create(from.entity, from.permissions)
 }
 
 object ApplicationTestsV5 extends App {
@@ -74,6 +76,10 @@ object ApplicationTestsV5 extends App {
     InvoicePermissions.ReadSponsorInvoice,
     InvoicePermissions.Create))
 
+  val standardCtaUserPermissions = CtaUserPermissions(Set(
+    CtaPermissions.Read,
+    CtaPermissions.Create))
+
   val approverPermissions = InvoiceUserPermissions(Set(
     InvoicePermissions.Read,
     InvoicePermissions.ReadSiteInvoice,
@@ -81,6 +87,11 @@ object ApplicationTestsV5 extends App {
     InvoicePermissions.AddCost,
     InvoicePermissions.Approve,
     InvoicePermissions.Create))
+
+  val approverCtaUserPermissions = CtaUserPermissions(Set(
+    CtaPermissions.Read,
+    CtaPermissions.Approve,
+    CtaPermissions.Create))
 
   val approverWithLimitPermissions = InvoiceUserPermissions(Set(
     InvoicePermissions.Read,
@@ -90,6 +101,11 @@ object ApplicationTestsV5 extends App {
     InvoicePermissions.Approve,
     InvoicePermissions.ApproveWithLimit(10000),
     InvoicePermissions.Create))
+
+  val approverWithLimitCtaUserPermissions = CtaUserPermissions(Set(
+    CtaPermissions.Read,
+    CtaPermissions.Approve,
+    CtaPermissions.Create))
 
   val cost1usd: Cost = Cost(MonetaryAmount(1200, Currency("USD")))
   val cost2usd: Cost = Cost(MonetaryAmount(5005, Currency("USD")))
@@ -118,8 +134,29 @@ object ApplicationTestsV5 extends App {
     }
   }
 
-  val testEntityPermissionsRetriever = TestInvoiceEntityPermissionRetriever()
+  case class TestCtaBasicPermissionRetriever() extends CtaBasicPermissionRetriever[Id] {
+    override def retrieve(userId: UserId): Id[CtaUserPermissions] = userId match {
+      case UserId(ApplicationTestsV5.standardUser.id) => standardCtaUserPermissions
+      case UserId(ApplicationTestsV5.approver.id) => approverCtaUserPermissions
+      case UserId(ApplicationTestsV5.approverWithLimit.id) => approverWithLimitCtaUserPermissions
+      case _ => CtaUserPermissions(Set())
+    }
+  }
+
+  case class TestCtaEntityPermissionRetriever() extends CtaEntityPermissionRetriever[Id] {
+    override def retrieve(userId: UserId, entity: ClinicalTrialAgreement): Id[CtaUserPermissions] = userId match {
+      case UserId(ApplicationTestsV5.standardUser.id) => standardCtaUserPermissions
+      case UserId(ApplicationTestsV5.approver.id) => approverCtaUserPermissions
+      case UserId(ApplicationTestsV5.approverWithLimit.id) => approverWithLimitCtaUserPermissions
+      case _ => CtaUserPermissions(Set())
+    }
+  }
+
   val testBasicPermissionsRetriever = TestInvoiceBasicPermissionRetriever()
+  val testEntityPermissionsRetriever = TestInvoiceEntityPermissionRetriever()
+
+  val testCtaBasicPermissionsRetriever = TestCtaBasicPermissionRetriever()
+  val testCtaEntityPermissionsRetriever = TestCtaEntityPermissionRetriever()
 
 
   val res6 = for {
@@ -158,24 +195,24 @@ object ApplicationTestsV5 extends App {
   println(s"res10: $res10")
 
   //  val res11 = for {
-  //    inv <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(user1))
-  //    invRetrieved <- testProcessorApp.processCommand(InvoiceRetrieveCommand(user1, inv.id)).to[InvoiceView]
+  //    inv: EntityResult[Invoice, InvoiceUserPermissions, InvoiceAction] <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(standardUser, testBasicPermissionsRetriever))
+  //    invRetrieved <- testProcessorApp.processCommand(InvoiceRetrieveCommand(standardUser, inv.entity.id, testEntityPermissionsRetriever)).to[InvoiceView]
   //  } yield invRetrieved
   //
   //  println(s"res11: $res11")
 
-  //  val res12 = for {
-  //    cta <- testProcessorApp.processCommand(CreateCtaCmd(user1))
-  //  } yield cta
-  //
-  //  println(s"res12: $res12")
-  //
-  //  val res13 = for {
-  //    cta <- testProcessorApp.processCommand(CreateCtaCmd(user1))
-  //    ctaRetrieved <- testProcessorApp.processCommand(CtaRetrieveCommand(user1, cta.id))
-  //  } yield ctaRetrieved
-  //
-  //  println(s"res13: $res13")
+  val res12 = for {
+    cta <- testProcessorApp.processCommand(CreateCtaCmd(standardUser, testCtaBasicPermissionsRetriever, DateTime.now()))
+  } yield cta
+
+  println(s"res12: $res12")
+
+  val res13 = for {
+    cta <- testProcessorApp.processCommand(CreateCtaCmd(standardUser, testCtaBasicPermissionsRetriever, DateTime.now()))
+    ctaRetrieved <- testProcessorApp.processCommand(CtaRetrieveCommand(standardUser, cta.entity.id, testCtaEntityPermissionsRetriever))
+  } yield ctaRetrieved
+
+  println(s"res13: $res13")
 
 
   val res15 = for {
@@ -213,18 +250,18 @@ object ApplicationTestsV5 extends App {
   println(s"res18: $res18")
 
   //  val res17 = for {
-  //    res <- testProcessorApp.processCommand(FindAll(user1)).to[Seq[InvoiceView]]
+  //    res <- testProcessorApp.processCommand(FindAll(standardUser, testBasicPermissionsRetriever)).to[Seq[InvoiceView]]
   //  } yield res
   //
   //  println(s"res17: $res17")
 
-  //  val transformer = (inv: Invoice) => InvoiceView.create(inv)
-  //
-  //  val res18 = for {
-  //    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(user1), transformer)
-  //    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(user2, inv1.id, inv1.version), transformer)
-  //  } yield inv2
-  //
-  //  println(s"res18: $res18")
+  val transformer = (res: EntityResult[Invoice, InvoiceUserPermissions, InvoiceAction]) => InvoiceView.create(res.entity, res.permissions)
+
+  val res19 = for {
+    inv1 <- testProcessorApp.processCommand(CreateSiteInvoiceCmd(standardUser, testBasicPermissionsRetriever), transformer)
+    inv2 <- testProcessorApp.processCommand(ApproveCmdV2(approver, inv1.id, inv1.version, testEntityPermissionsRetriever), transformer)
+  } yield inv2
+
+  println(s"res19: $res19")
 
 }
