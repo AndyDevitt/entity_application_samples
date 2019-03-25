@@ -1,7 +1,7 @@
 package sample1.domain.entity.mixinstatemachine
 
+import sample1.domain.ActionStatus
 import sample1.domain.entity.VersionedEntity
-import sample1.domain.{ActionStatus, Allowed, NotAllowedInCurrentState}
 
 trait EntityCommandProcessorMixin[ActionType, ErrType, EntType <: VersionedEntity[_], PermissionType]
   extends Actions[EntType, ActionType, PermissionType] {
@@ -16,7 +16,7 @@ trait EntityCommandProcessorMixin[ActionType, ErrType, EntType <: VersionedEntit
   implicit def convertToSuccess(entity: EntType): Either[ErrType, EntType] = Right(entity)
 
   private def toActionStatus(checkResult: Either[ErrType, EntType]): ActionStatus =
-    checkResult.fold[ActionStatus](e => NotAllowedInCurrentState(e.toString), _ => Allowed)
+    checkResult.fold[ActionStatus](e => ActionStatus.NotAllowedInCurrentState(e.toString), _ => ActionStatus.Allowed)
 
   protected def thisActionStatus(action: ActionType,
                                  entity: EntType,

@@ -17,7 +17,7 @@ object InvoiceError {
 
   final case class StaleInvoiceError(id: InvoiceId) extends InvoiceError
 
-  final case class ActionBlocked() extends InvoiceError
+  final case class AccessDenied() extends InvoiceError
 
   final case class ActionNotAllowedForProcessType() extends InvoiceError
 
@@ -35,10 +35,10 @@ object InvoiceError {
   final case class CurrencyMismatch(first: Currency, second: Currency) extends ValidationError
 
   def fromActionStatus(notAllowed: NotAllowed): InvoiceError = notAllowed match {
-    case Blocked() => ActionBlocked()
-    case NotAllowedForProcessType() => ActionNotAllowedForProcessType()
-    case NotAllowedInCurrentStatus() => ActionNotAllowedInCurrentStatus()
-    case NotAllowedInCurrentState(reason) => ActionNotAllowedInCurrentState(reason)
-    case NotEnoughPermissions(reason) => InsufficientPermissions(reason)
+    case ActionStatus.AccessDenied() => AccessDenied()
+    case ActionStatus.NotAllowedForProcessType() => ActionNotAllowedForProcessType()
+    case ActionStatus.NotAllowedInCurrentStatus() => ActionNotAllowedInCurrentStatus()
+    case ActionStatus.NotAllowedInCurrentState(reason) => ActionNotAllowedInCurrentState(reason)
+    case ActionStatus.NotEnoughPermissions(reason) => InsufficientPermissions(reason)
   }
 }

@@ -1,8 +1,8 @@
 package sample1.domain.entity
 
 import cats.syntax.either._
+import sample1.domain.ActionStatus
 import sample1.domain.command.{Command, EntityUpdateCommand}
-import sample1.domain.{ActionStatus, Allowed}
 
 trait EntityCommandProcessor[
 F[_],
@@ -19,14 +19,18 @@ NotAllowedActionStatusType <: ActionStatusType] {
   import scala.language.implicitConversions
 
   def process(entity: EntType, cmd: CmdType, permissions: PermissionsType): Either[ErrType, EntType] =
-    canDo(entity, cmd.associatedAction, permissions)
+    minimumAccessPermissionsCheck(entity, permissions)
+      .flatMap(canDo(_, cmd.associatedAction, permissions))
       .left.map(statusToErrF)
       .flatMap(checkOptimisticLocking(_, cmd))
       .flatMap(action(_, cmd, permissions))
 
   def actionStatus(entity: EntType, action: ActionType, permissions: PermissionsType): ActionStatus =
-    canDo(entity, action, permissions)
-      .fold[ActionStatus]((na: NotAllowedActionStatusType) => na.asInstanceOf[ActionStatus], _ => Allowed)
+    minimumAccessPermissionsCheck(entity, permissions)
+      .flatMap(canDo(_, action, permissions))
+      .fold[ActionStatus]((na: NotAllowedActionStatusType) => na.asInstanceOf[ActionStatus], _ => ActionStatus.Allowed)
+
+  protected def minimumAccessPermissionsCheck(entity: EntType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntType]
 
   protected def canDo(entity: EntType, action: ActionType, permissions: PermissionsType): Either[NotAllowedActionStatusType, EntSubType]
 
