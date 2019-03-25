@@ -125,5 +125,5 @@ final case class CreateSiteInvoiceCmd[F[_]](userId: UserId,
 final case class FindAll[F[_]](userId: UserId,
                                permissionsRetriever: InvoiceBasicPermissionRetriever[F]
                               ) extends InvoiceQueryCommand[F, Seq[Invoice]] {
-  override def query(repo: InvoiceRepo[F]): F[Either[InvoiceError, Seq[Invoice]]] = repo.find()
+  override def query(repo: InvoiceRepo[F], permissions: InvoiceUserPermissions): F[Either[InvoiceError, Seq[Invoice]]] = repo.find()
 }

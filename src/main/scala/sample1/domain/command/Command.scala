@@ -172,7 +172,7 @@ ActionsBaseType
 ] extends EntityCommand[F, InpType, ResType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType] {
   def extractRepo(input: InpType): RepoType
 
-  def query(repo: RepoType): F[Either[ErrType, ResType]]
+  def query(repo: RepoType, permissions: PermissionsType): F[Either[ErrType, ResType]]
 
   def permissionsRetriever: BasicPermissionRetriever[F, PermissionsType]
 
