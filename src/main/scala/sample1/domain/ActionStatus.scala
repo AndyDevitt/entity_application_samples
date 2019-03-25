@@ -18,4 +18,6 @@ object ActionStatus {
 
   final case class NotEnoughPermissions(reason: String) extends NotAllowed
 
+  final case class UnknownStatus(reason: String) extends NotAllowed
+
 }

@@ -27,8 +27,11 @@ object InvoiceError {
 
   final case class CannotApproveWithoutCosts() extends InvoiceError
 
+  final case class CannotAddCostsWithDifferentCurrencies() extends InvoiceError
+
   final case class InsufficientPermissions(reason: String) extends PermissionsError
 
+  final case class ActionRequestCouldNotBeValidated(reason: String) extends InvoiceError
 
   final case class InvalidCurrencyCode(code: String) extends ValidationError
 
@@ -36,6 +39,7 @@ object InvoiceError {
 
   def fromActionStatus(notAllowed: NotAllowed): InvoiceError = notAllowed match {
     case ActionStatus.AccessDenied() => AccessDenied()
+    case ActionStatus.UnknownStatus(reason) => ActionRequestCouldNotBeValidated(reason)
     case ActionStatus.NotAllowedForProcessType() => ActionNotAllowedForProcessType()
     case ActionStatus.NotAllowedInCurrentStatus() => ActionNotAllowedInCurrentStatus()
     case ActionStatus.NotAllowedInCurrentState(reason) => ActionNotAllowedInCurrentState(reason)

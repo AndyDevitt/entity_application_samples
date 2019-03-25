@@ -77,10 +77,13 @@ object InvoiceAlgebra {
 
     override protected def action(entity: SponsorInvoice, cmd: AddCostCmd[F], permissions: InvoiceUserPermissions
                                  ): Either[InvoiceError, Invoice] =
-      InvoiceStateBuilder.Builder(entity)
-        .updateLastEdited(cmd)
-        .addCost(cmd.cost)
-        .map(_.build())
+      for {
+        _ <- Either.cond(entity.costs.forall(c => c.amount.currency == cmd.cost.amount.currency), (), InvoiceError.CannotAddCostsWithDifferentCurrencies())
+        res <- InvoiceStateBuilder.Builder(entity)
+          .updateLastEdited(cmd)
+          .addCost(cmd.cost)
+          .map(_.build())
+      } yield res
   }
 
   case class Approve3[F[_]]() extends InvoiceEntityCommandProcessor[F, SponsorInvoice, InvoiceAction.Approve.type, ApproveCmd[F]] {
@@ -118,9 +121,9 @@ object InvoiceAlgebra {
         limit <- Either.fromOption(permissions.approvalLimit.map(_.limit), ActionStatus.NotEnoughPermissions("No approval limit found"))
         // TODO: The following statement if it failed would actually be a bug in the application - figure out how this should be handled.
         // It feels like there should be an error, but the signature doesn't currently allow for this...
-        totalOpt <- calculateTotal(entity).leftMap(_ => ActionStatus.NotEnoughPermissions("Error calculating the total"))
+        totalOpt <- calculateTotal(entity).leftMap(_ => ActionStatus.UnknownStatus("Error calculating the total"))
         total <- Either.fromOption(totalOpt, ActionStatus.NotAllowedInCurrentState("Cannot approve with no costs"))
-        _ <- Either.cond(limit < total.amount, (), ActionStatus.NotEnoughPermissions("Approval limit is below the invoice total"))
+        _ <- Either.cond(limit >= total.amount, (), ActionStatus.NotEnoughPermissions(s"Approval limit is below the invoice total ($limit < ${total.amount})"))
       } yield entity
 
     override protected def action(entity: Invoice, cmd: ApproveCmdV2[F], permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
