@@ -99,7 +99,7 @@ object Implementations {
           Left(InvoiceError.ActionNotAllowedForProcessType())
         case sponsorInvoice: SponsorInvoice =>
           for {
-            _ <- Either.cond(permissions.has(InvoicePermissions.Approve), (), InvoiceError.InsufficientPermissions())
+            _ <- Either.cond(permissions.has(InvoicePermissions.Approve), (), InvoiceError.InsufficientPermissions("Approve permission not found for Approve command"))
             _ <- Either.cond(invoice.costs.nonEmpty, (), InvoiceError.CannotApproveWithoutCosts())
           } yield sponsorInvoice
       }

@@ -24,7 +24,7 @@ trait InvoiceCreateCommand[F[_]]
     input.invoiceRepo
 
   override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(permissions.hasCreatePermission, (), InvoiceError.InsufficientPermissions())
+    Either.cond(permissions.hasCreatePermission, (), InvoiceError.InsufficientPermissions("Create permission not found for create command"))
 }
 
 trait InvoiceQueryCommand[F[_], R]
@@ -35,7 +35,7 @@ trait InvoiceQueryCommand[F[_], R]
     InvoiceAlgebra.actionStatuses(invoice, permissions)
 
   override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions())
+    Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions("Read permission not found for query command"))
 }
 
 trait InvoiceUpdateCommand[F[_], CmdType, ActionType <: InvoiceAction]
@@ -51,7 +51,7 @@ trait InvoiceUpdateCommand[F[_], CmdType, ActionType <: InvoiceAction]
     InvoiceAlgebra.actionStatuses(invoice, permissions)
 
   override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions())
+    Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions("Read permission not found for update command"))
 }
 
 final case class InvoiceRetrieveCommand[F[_]](userId: UserId,
@@ -65,5 +65,5 @@ final case class InvoiceRetrieveCommand[F[_]](userId: UserId,
     InvoiceAlgebra.actionStatuses(invoice, permissions)
 
   override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions())
+    Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions("Read permission not found for retrieve command"))
 }

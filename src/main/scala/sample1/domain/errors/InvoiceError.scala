@@ -27,7 +27,7 @@ object InvoiceError {
 
   final case class CannotApproveWithoutCosts() extends InvoiceError
 
-  final case class InsufficientPermissions() extends PermissionsError
+  final case class InsufficientPermissions(reason: String) extends PermissionsError
 
 
   final case class InvalidCurrencyCode(code: String) extends ValidationError
@@ -39,6 +39,6 @@ object InvoiceError {
     case NotAllowedForProcessType() => ActionNotAllowedForProcessType()
     case NotAllowedInCurrentStatus() => ActionNotAllowedInCurrentStatus()
     case NotAllowedInCurrentState(reason) => ActionNotAllowedInCurrentState(reason)
-    case NotEnoughPermissions(reason) => InsufficientPermissions()
+    case NotEnoughPermissions(reason) => InsufficientPermissions(reason)
   }
 }

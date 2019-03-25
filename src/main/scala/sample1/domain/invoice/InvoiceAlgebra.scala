@@ -26,6 +26,18 @@ object InvoiceAlgebra {
   private def isInOneOfStatus(invoice: Invoice, statuses: Set[InvoiceStatus]): Boolean =
     statuses.contains(invoice.status)
 
+  private def validateSiteInvoice(invoice: Invoice): Either[NotAllowed, SiteInvoice] =
+    invoice match {
+      case i: SiteInvoice => Right(i)
+      case _: SponsorInvoice => Left(NotAllowedForProcessType())
+    }
+
+  private def validateSponsorInvoice(invoice: Invoice): Either[NotAllowed, SponsorInvoice] =
+    invoice match {
+      case i: SponsorInvoice => Right(i)
+      case _: SiteInvoice => Left(NotAllowedForProcessType())
+    }
+
   def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     EnumerableAdt[InvoiceAction].map(action => (action, actionStatus(invoice, action, permissions)))
 
@@ -46,13 +58,11 @@ object InvoiceAlgebra {
 
     override def canDo(invoice: Invoice, action: InvoiceAction.AddCost.type, permissions: InvoiceUserPermissions
                       ): Either[NotAllowed, SponsorInvoice] =
-      Either.cond(permissions.hasAll(requiredPermissions), (), NotEnoughPermissions("")) flatMap { _ =>
-        invoice match {
-          case si: SponsorInvoice if isInOneOfStatus(si, allowedStatuses) => Right(si)
-          case _: SponsorInvoice => Left(NotAllowedInCurrentStatus())
-          case _: SiteInvoice => Left(NotAllowedForProcessType())
-        }
-      }
+      for {
+        _ <- Either.cond(permissions.hasAll(requiredPermissions), (), NotEnoughPermissions(s"Not all permissions are present ($requiredPermissions)"))
+        i <- validateSponsorInvoice(invoice)
+        _ <- Either.cond(isInOneOfStatus(i, allowedStatuses), (), NotAllowedInCurrentStatus())
+      } yield i
 
     override protected def action(entity: SponsorInvoice, cmd: AddCostCmd[F], permissions: InvoiceUserPermissions
                                  ): Either[InvoiceError, Invoice] =
@@ -92,7 +102,7 @@ object InvoiceAlgebra {
 
     override def canDo(entity: Invoice, action: InvoiceAction.Approve.type, permissions: InvoiceUserPermissions): Either[NotAllowed, Invoice] =
       for {
-        _ <- Either.cond(permissions.hasAll(requiredPermissions), (), NotEnoughPermissions("Minimum required permissions not found"))
+        _ <- Either.cond(permissions.hasAll(requiredPermissions), (), NotEnoughPermissions(s"Minimum required permissions not found ($requiredPermissions)"))
         _ <- Either.cond(isInOneOfStatus(entity, allowedStatuses), (), NotAllowedInCurrentStatus())
         limit <- Either.fromOption(permissions.approvalLimit.map(_.limit), NotEnoughPermissions("No approval limit found"))
         // TODO: The following statement if it failed would actually be a bug in the application - figure out how this should be handled.

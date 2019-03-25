@@ -27,7 +27,7 @@ final case class AddCostCmd[F[_]](userId: UserId,
     Either.cond(
       permissions.hasReadPermission && permissions.has(InvoicePermissions.Approve),
       (),
-      InvoiceError.InsufficientPermissions())
+      InvoiceError.InsufficientPermissions(""))
 }
 
 final case class ApproveCmd[F[_]](userId: UserId,
@@ -44,7 +44,7 @@ final case class ApproveCmd[F[_]](userId: UserId,
     Either.cond(
       permissions.hasReadPermission && permissions.has(InvoicePermissions.Approve),
       (),
-      InvoiceError.InsufficientPermissions())
+      InvoiceError.InsufficientPermissions(""))
 }
 
 final case class ApproveCmdMixin[F[_]](userId: UserId,
@@ -61,7 +61,7 @@ final case class ApproveCmdMixin[F[_]](userId: UserId,
     Either.cond(
       permissions.hasReadPermission && permissions.has(InvoicePermissions.Approve),
       (),
-      InvoiceError.InsufficientPermissions())
+      InvoiceError.InsufficientPermissions(""))
 }
 
 final case class ApproveCmdV2[F[_]](userId: UserId,

@@ -33,7 +33,7 @@ object Invoice {
                              permissions: InvoiceUserPermissions): Either[InvoiceError, SponsorInvoice] =
     Either.cond(permissions.hasCreatePermission,
       SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil, RequestForInvoice()),
-      InvoiceError.InsufficientPermissions())
+      InvoiceError.InsufficientPermissions("Create permission not found for update command"))
 
 
   def createRfiInvoiceEmpty[F[_]](): SponsorInvoice =
@@ -43,7 +43,7 @@ object Invoice {
                               permissions: InvoiceUserPermissions): Either[InvoiceError, SiteInvoice] =
     Either.cond(permissions.hasCreatePermission,
       SiteInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil),
-      InvoiceError.InsufficientPermissions())
+      InvoiceError.InsufficientPermissions("Create permission not found for update command"))
 
   def createSiteInvoiceEmpty[F[_]](): SiteInvoice =
     SiteInvoice(InvoiceId(), EntityVersion(), UserId(), NotApproved, Nil)
