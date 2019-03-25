@@ -5,7 +5,7 @@ import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
 import sample1.domain.invoice.mixinstatemachine.InvoiceBehaviour
-import sample1.domain.permissions.{InvoiceBasicPermissionRetriever, InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
+import sample1.domain.permissions.{InvoiceBasicPermissionRetriever, InvoiceEntityPermissionRetriever, InvoiceUserPermissions}
 import sample1.domain.user.UserId
 
 /**
@@ -22,12 +22,6 @@ final case class AddCostCmd[F[_]](userId: UserId,
     InvoiceAlgebra.AddCost().process(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.AddCost.type = InvoiceAction.AddCost
-
-  override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(
-      permissions.hasReadPermission && permissions.has(InvoicePermissions.Approve),
-      (),
-      InvoiceError.InsufficientPermissions(""))
 }
 
 final case class ApproveCmd[F[_]](userId: UserId,
@@ -39,12 +33,6 @@ final case class ApproveCmd[F[_]](userId: UserId,
     InvoiceAlgebra.Approve3(invoice, this, permissions)
 
   override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
-
-  override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(
-      permissions.hasReadPermission && permissions.has(InvoicePermissions.Approve),
-      (),
-      InvoiceError.InsufficientPermissions(""))
 }
 
 final case class ApproveCmdMixin[F[_]](userId: UserId,
@@ -56,12 +44,6 @@ final case class ApproveCmdMixin[F[_]](userId: UserId,
     InvoiceBehaviour(invoice).process(this, permissions)
 
   override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
-
-  override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(
-      permissions.hasReadPermission && permissions.has(InvoicePermissions.Approve),
-      (),
-      InvoiceError.InsufficientPermissions(""))
 }
 
 final case class ApproveCmdV2[F[_]](userId: UserId,

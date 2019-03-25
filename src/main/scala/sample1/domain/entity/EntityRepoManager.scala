@@ -41,7 +41,6 @@ object EntityRepoManager {
                   ): F[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =
     transform((for {
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId))
-      _ <- EitherT.fromEither(cmd.checkMinimumPermissions(permissions))
       created <- EitherT.fromEither[G](cmd.create(permissions))
       saved <- EitherT(repo.save(created))
       actions <- EitherT.pure[G, ErrType](cmd.extractActionStatuses(saved, permissions))
@@ -66,7 +65,6 @@ object EntityRepoManager {
     transform((for {
       entity <- EitherT(repo.retrieve(cmd.id))
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId, entity))
-      _ <- EitherT.fromEither(cmd.checkMinimumPermissions(permissions))
       _ <- EitherT.fromEither(checkOptimisticLocking(entity, cmd, staleF))
       updated <- EitherT.fromEither[G](cmd.action(entity, permissions))
       saved <- EitherT(repo.save(updated))
@@ -97,7 +95,6 @@ object EntityRepoManager {
                   ): F[Either[ErrType, ResType]] =
     transform((for {
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId))
-      _ <- EitherT.fromEither(cmd.checkMinimumPermissions(permissions))
       results <- EitherT(cmd.query(repo, permissions))
     } yield results).value)
 

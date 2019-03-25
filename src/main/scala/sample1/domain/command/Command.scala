@@ -38,8 +38,6 @@ trait RunnableCommand[F[_], -InpType <: CommandInput, ResType, ErrType, Permissi
     * @return returns the result of executing the command
     */
   def run[G[_]](input: InpType)(implicit monadF: Monad[F], transform: F ~> G): G[Either[ErrType, ResType]]
-
-  def checkMinimumPermissions(permissions: PermissionsType): Either[ErrType, Unit]
 }
 
 sealed trait EntityCommand[F[_], -InpType <: CommandInput, ResType, ErrType, IdType <: EntityId, EntType <: VersionedEntity[IdType], PermissionsType, ActionsBaseType]

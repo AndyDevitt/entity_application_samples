@@ -22,9 +22,6 @@ trait InvoiceCreateCommand[F[_]]
 
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] =
     input.invoiceRepo
-
-  override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(permissions.hasCreatePermission, (), InvoiceError.InsufficientPermissions("Create permission not found for create command"))
 }
 
 trait InvoiceQueryCommand[F[_], R]
@@ -33,9 +30,6 @@ trait InvoiceQueryCommand[F[_], R]
 
   override def extractActionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     InvoiceAlgebra.actionStatuses(invoice, permissions)
-
-  override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions("Read permission not found for query command"))
 }
 
 trait InvoiceUpdateCommand[F[_], CmdType, ActionType <: InvoiceAction]
@@ -49,9 +43,6 @@ trait InvoiceUpdateCommand[F[_], CmdType, ActionType <: InvoiceAction]
 
   override def extractActionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     InvoiceAlgebra.actionStatuses(invoice, permissions)
-
-  override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions("Read permission not found for update command"))
 }
 
 final case class InvoiceRetrieveCommand[F[_]](userId: UserId,
@@ -66,7 +57,4 @@ final case class InvoiceRetrieveCommand[F[_]](userId: UserId,
 
   override def minimumAccessPermissionsCheck(entity: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
     InvoiceAlgebra.minimumAccessPermissionsCheck(entity, permissions)
-
-  override def checkMinimumPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError, Unit] =
-    Either.cond(permissions.hasReadPermission, (), InvoiceError.InsufficientPermissions("Read permission not found for retrieve command"))
 }
