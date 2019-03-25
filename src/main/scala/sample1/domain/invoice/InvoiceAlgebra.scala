@@ -43,7 +43,11 @@ object InvoiceAlgebra {
 
   def minimumAccessPermissionsCheck(invoice: Invoice, permissions: InvoiceUserPermissions
                                    ): Either[InvoiceError, Unit] =
-    Either.cond(permissions.hasReadPermission, (), InvoiceError.AccessDenied())
+    for {
+      _ <- Either.cond(permissions.hasReadPermission, (), InvoiceError.AccessDenied())
+      _ <- Either.cond(!(invoice.isInstanceOf[SiteInvoice] && !permissions.has(InvoicePermissions.ReadSiteInvoice)), (), InvoiceError.AccessDenied())
+      _ <- Either.cond(!(invoice.isInstanceOf[SponsorInvoice] && !permissions.has(InvoicePermissions.ReadSponsorInvoice)), (), InvoiceError.AccessDenied())
+    } yield ()
 
   def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     EnumerableAdt[InvoiceAction].map(action => (action, actionStatus(invoice, action, permissions)))

@@ -10,6 +10,10 @@ object InvoicePermissions {
 
   final case object Read extends InvoicePermissions
 
+  final case object ReadSiteInvoice extends InvoicePermissions
+
+  final case object ReadSponsorInvoice extends InvoicePermissions
+
   final case object Approve extends InvoicePermissions
 
   final case object Reject extends InvoicePermissions
