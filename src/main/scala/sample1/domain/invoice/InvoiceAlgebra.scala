@@ -45,8 +45,10 @@ object InvoiceAlgebra {
                                    ): Either[InvoiceError, Unit] =
     for {
       _ <- Either.cond(permissions.hasReadPermission, (), InvoiceError.AccessDenied())
-      _ <- Either.cond(!(invoice.isInstanceOf[SiteInvoice] && !permissions.has(InvoicePermissions.ReadSiteInvoice)), (), InvoiceError.AccessDenied())
-      _ <- Either.cond(!(invoice.isInstanceOf[SponsorInvoice] && !permissions.has(InvoicePermissions.ReadSponsorInvoice)), (), InvoiceError.AccessDenied())
+      _ <- invoice match {
+        case _: SiteInvoice => Either.cond(permissions.has(InvoicePermissions.ReadSiteInvoice), (), InvoiceError.AccessDenied())
+        case _: SponsorInvoice => Either.cond(permissions.has(InvoicePermissions.ReadSponsorInvoice), (), InvoiceError.AccessDenied())
+      }
     } yield ()
 
   def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
