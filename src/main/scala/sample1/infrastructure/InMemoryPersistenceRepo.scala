@@ -12,14 +12,14 @@ trait InMemoryPersistenceRepo[F[_], PersIdType <: EntityId, PersEntType <: Versi
 
   def staleErrorF: PersIdType => ErrType
 
-  override def save(persistenceEntity: PersEntType)(implicit monad: Monad[F]): F[Either[ErrType, PersEntType]] = {
+  override def save(persistenceEntity: PersEntType)(implicit monad: Monad[F]): F[Either[ErrType, Unit]] = {
     val key = extractPersistenceKey(persistenceEntity)
     monad.pure {
       if (store.get(key).isDefined) {
         Left(staleErrorF(key._1))
       } else {
         store(key) = persistenceEntity
-        Right(persistenceEntity)
+        Right(())
       }
     }
   }
