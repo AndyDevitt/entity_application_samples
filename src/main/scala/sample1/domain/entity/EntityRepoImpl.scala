@@ -18,8 +18,6 @@ import sample1.domain.Encoder
   */
 trait EntityRepoImpl[F[_], IdType <: EntityId, EntType <: VersionedEntity[IdType], ErrType, PersType, PersIdType] {
 
-  def cleanEntityForResultAfterSaveF: EntType => EntType = (x: EntType) => x
-
   def persistenceRepo: PersistenceRepo[F, ErrType, PersType, PersIdType]
 
   def saveEntity(entity: EntType)
@@ -27,7 +25,7 @@ trait EntityRepoImpl[F[_], IdType <: EntityId, EntType <: VersionedEntity[IdType
                 ): F[Either[ErrType, EntType]] = {
     val newVer = versioned.incrementVersion(entity)
     monad.map(persistenceRepo.save(codec.encode(newVer)))(
-      _.map(_ => cleanEntityForResultAfterSaveF(newVer)))
+      _.map(_ => newVer))
   }
 
   def retrieveEntity(id: IdType)
