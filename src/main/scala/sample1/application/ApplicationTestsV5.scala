@@ -69,7 +69,7 @@ object TestImplicits {
       })
 
   val invoicePersistenceRepo: InvoicePersistenceRepo[Id, InvoiceId, Invoice] =
-    new InvoicePersistenceRepo[Id, InvoiceId, Invoice] with InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] {
+    new InvoicePersistenceRepo[Id, InvoiceId, Invoice] with InMemoryPersistenceRepo[Id, InvoiceId, Invoice, InvoiceError] {
       override def notFoundErrorF: InvoiceId => InvoiceError = InvoiceError.InvoiceNotFound
 
       override def staleErrorF: InvoiceId => InvoiceError = InvoiceError.StaleInvoiceError
@@ -83,7 +83,7 @@ object TestImplicits {
     }
 
   val ctaPersistenceRepo: CtaPersistenceRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement] =
-    new CtaPersistenceRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement] with InMemoryPersistenceRepo[Id, CtaError, ClinicalTrialAgreement, ClinicalTrialAgreementId] {
+    new CtaPersistenceRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement] with InMemoryPersistenceRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] {
       override def notFoundErrorF: ClinicalTrialAgreementId => CtaError = CtaError.CtaNotFound
 
       override def staleErrorF: ClinicalTrialAgreementId => CtaError = CtaError.StaleCtaError

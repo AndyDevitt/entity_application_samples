@@ -5,10 +5,10 @@ import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId, Cta
 import sample1.domain.entity.{EntityRepoCodec, EntityRepoImpl, PersistenceRepo, Versioned}
 import sample1.domain.errors.CtaError
 
-class TestCtaRepo(override val persistenceRepo: PersistenceRepo[Id, CtaError, ClinicalTrialAgreement, ClinicalTrialAgreementId],
+class TestCtaRepo(override val persistenceRepo: PersistenceRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError],
                   override val codec: EntityRepoCodec[ClinicalTrialAgreement, ClinicalTrialAgreement, CtaError])
                  (implicit versioned: Versioned[ClinicalTrialAgreement])
-  extends CtaRepo[Id] with EntityRepoImpl[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError, ClinicalTrialAgreement, ClinicalTrialAgreementId] {
+  extends CtaRepo[Id] with EntityRepoImpl[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError, ClinicalTrialAgreementId, ClinicalTrialAgreement] {
 
   override def save(entity: ClinicalTrialAgreement)(implicit monad: Monad[Id]): Id[Either[CtaError, ClinicalTrialAgreement]] =
     saveEntity(entity)

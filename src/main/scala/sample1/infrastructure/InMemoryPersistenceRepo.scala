@@ -5,8 +5,8 @@ import sample1.domain.entity.{EntityId, EntityVersion, PersistenceRepo, Versione
 
 import scala.collection.mutable
 
-trait InMemoryPersistenceRepo[F[_], ErrType, PersEntType <: VersionedEntity[PersIdType], PersIdType <: EntityId]
-  extends PersistenceRepo[F, ErrType, PersEntType, PersIdType] {
+trait InMemoryPersistenceRepo[F[_], PersIdType <: EntityId, PersEntType <: VersionedEntity[PersIdType], ErrType]
+  extends PersistenceRepo[F, PersIdType, PersEntType, ErrType] {
 
   def notFoundErrorF: PersIdType => ErrType
 

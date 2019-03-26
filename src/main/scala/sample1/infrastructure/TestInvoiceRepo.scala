@@ -11,7 +11,7 @@ class TestInvoiceRepo(override val persistenceRepo: InvoicePersistenceRepo[Id, I
                       override val codec: EntityRepoCodec[Invoice, Invoice, InvoiceError])
                      (implicit versioned: Versioned[Invoice])
   extends InvoiceRepo[Id]
-    with EntityRepoImpl[Id, InvoiceId, Invoice, InvoiceError, Invoice, InvoiceId] {
+    with EntityRepoImpl[Id, InvoiceId, Invoice, InvoiceError, InvoiceId, Invoice] {
   self =>
 
   override def save(invoice: Invoice)(implicit monad: Monad[Id]): Id[Either[InvoiceError, Invoice]] =

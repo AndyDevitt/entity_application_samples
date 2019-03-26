@@ -16,9 +16,9 @@ import sample1.domain.Encoder
   * @tparam PersType   the type of the persistence object for the entity
   * @tparam PersIdType the type of the persistence object identifier
   */
-trait EntityRepoImpl[F[_], IdType <: EntityId, EntType <: VersionedEntity[IdType], ErrType, PersType, PersIdType] {
+trait EntityRepoImpl[F[_], IdType <: EntityId, EntType <: VersionedEntity[IdType], ErrType, PersIdType, PersType] {
 
-  def persistenceRepo: PersistenceRepo[F, ErrType, PersType, PersIdType]
+  def persistenceRepo: PersistenceRepo[F, PersIdType, PersType, ErrType]
 
   def codec: EntityRepoCodec[EntType, PersType, ErrType]
 
