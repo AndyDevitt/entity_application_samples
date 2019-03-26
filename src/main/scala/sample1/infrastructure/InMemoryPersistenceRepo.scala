@@ -1,15 +1,12 @@
 package sample1.infrastructure
 
 import cats.Monad
-import sample1.domain.entity.{EntityVersion, PersistenceRepo}
+import sample1.domain.entity.{EntityId, EntityVersion, PersistenceRepo, VersionedEntity}
 
 import scala.collection.mutable
 
-trait InMemoryPersistenceRepo[F[_], ErrType, PersEntType, PersIdType] extends PersistenceRepo[F, ErrType, PersEntType, PersIdType] {
-
-  private val store: mutable.Map[(PersIdType, EntityVersion), PersEntType] = mutable.Map()
-
-  def extractPersistenceKey(persEntity: PersEntType): (PersIdType, EntityVersion)
+trait InMemoryPersistenceRepo[F[_], ErrType, PersEntType <: VersionedEntity[PersIdType], PersIdType <: EntityId]
+  extends PersistenceRepo[F, ErrType, PersEntType, PersIdType] {
 
   def notFoundErrorF: PersIdType => ErrType
 
@@ -27,14 +24,21 @@ trait InMemoryPersistenceRepo[F[_], ErrType, PersEntType, PersIdType] extends Pe
     }
   }
 
-  private type KeyValuePair = ((PersIdType, EntityVersion), PersEntType)
-
-  private val reduceF: (KeyValuePair, KeyValuePair) => KeyValuePair =
-    (acc, next) => if (acc._1._2 > next._1._2) acc else next
-
   override def retrieve(aId: PersIdType)(implicit monad: Monad[F]): F[Either[ErrType, PersEntType]] =
     monad.pure(store.filter(x => x._1._1 == aId)
       .reduceLeftOption(reduceF)
       .map(_._2)
       .toRight(notFoundErrorF(aId)))
+
+  private val store: mutable.Map[(PersIdType, EntityVersion), PersEntType] =
+    mutable.Map()
+
+  private def extractPersistenceKey(persEntity: PersEntType): (PersIdType, EntityVersion) =
+    (persEntity.id, persEntity.version)
+
+  private type KeyValuePair = ((PersIdType, EntityVersion), PersEntType)
+
+  private val reduceF: (KeyValuePair, KeyValuePair) => KeyValuePair =
+    (acc, next) => if (acc._1._2 > next._1._2) acc else next
+
 }

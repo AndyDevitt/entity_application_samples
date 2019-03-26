@@ -13,8 +13,6 @@ trait InMemoryRepo[F[_], IdType <: EntityId, EntType <: VersionedEntity[IdType],
   def staleErrorF: IdType => ErrType
 
   override val persistenceRepo: PersistenceRepo[F, ErrType, EntType, IdType] = new InMemoryPersistenceRepo[F, ErrType, EntType, IdType] {
-    override def extractPersistenceKey(persEntity: EntType): (IdType, EntityVersion) = (persEntity.id, persEntity.version)
-
     override def notFoundErrorF: IdType => ErrType = self.notFoundErrorF
 
     override def staleErrorF: IdType => ErrType = self.staleErrorF

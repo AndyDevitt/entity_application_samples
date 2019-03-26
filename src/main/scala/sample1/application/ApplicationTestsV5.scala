@@ -5,14 +5,14 @@ import cats.{Id, ~>}
 import sample1.domain._
 import sample1.domain.command.invoicecommands._
 import sample1.domain.command.{CreateCtaCmd, CtaRetrieveCommand, EntityResult}
-import sample1.domain.cta.ClinicalTrialAgreement
+import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
-import sample1.domain.errors.InvoiceError
-import sample1.domain.invoice.{Invoice, InvoiceAction, SiteInvoice, SponsorInvoice}
+import sample1.domain.errors.{CtaError, InvoiceError}
+import sample1.domain.invoice._
 import sample1.domain.permissions._
 import sample1.domain.shared.DateTime
 import sample1.domain.user.UserId
-import sample1.infrastructure.{TestCtaRepo, TestInvoiceRepo}
+import sample1.infrastructure.{InMemoryPersistenceRepo, TestCtaRepo, TestInvoiceRepo}
 
 import scala.concurrent.Future
 import scala.language.postfixOps
@@ -52,10 +52,32 @@ object TestImplicits {
     * is where a business process transformation may be injected (i.e. between the domain repo and persistence repo
     * layers). Hence the encode must always succeed, but the decode may fail.
     */
-  implicit val ctaRepoCodec: EntityRepoCodec[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError] =
-    EntityRepoCodec.instance[ClinicalTrialAgreement, ClinicalTrialAgreement, InvoiceError](
+  implicit val ctaRepoCodec: EntityRepoCodec[ClinicalTrialAgreement, ClinicalTrialAgreement, CtaError] =
+    EntityRepoCodec.instance[ClinicalTrialAgreement, ClinicalTrialAgreement, CtaError](
       (cta: ClinicalTrialAgreement) => cta,
       (cta: ClinicalTrialAgreement) => Right(cta.copy(note = "I've been flipped!")))
+
+  val invoiceRepoCodecV1: EntityRepoCodec[Invoice, Invoice, InvoiceError] =
+    EntityRepoCodec.instance[Invoice, Invoice, InvoiceError](
+      (invoice: Invoice) => invoice,
+      (invoice: Invoice) => invoice match {
+        case i: SiteInvoice => Right(i)
+        case i: SponsorInvoice => Right(i)
+      })
+
+  val invoicePersistenceRepo: InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] =
+    new InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] {
+      override def notFoundErrorF: InvoiceId => InvoiceError = InvoiceError.InvoiceNotFound
+
+      override def staleErrorF: InvoiceId => InvoiceError = InvoiceError.StaleInvoiceError
+    }
+
+  val ctaPersistenceRepo: InMemoryPersistenceRepo[Id, CtaError, ClinicalTrialAgreement, ClinicalTrialAgreementId] =
+    new InMemoryPersistenceRepo[Id, CtaError, ClinicalTrialAgreement, ClinicalTrialAgreementId] {
+      override def notFoundErrorF: ClinicalTrialAgreementId => CtaError = CtaError.CtaNotFound
+
+      override def staleErrorF: ClinicalTrialAgreementId => CtaError = CtaError.StaleCtaError
+    }
 
   implicit val invoiceToInvoiceView: Transform[EntityResult[Invoice, InvoiceUserPermissions, InvoiceAction], InvoiceView, InvoiceError] =
     (from: EntityResult[Invoice, InvoiceUserPermissions, InvoiceAction]) => InvoiceView.create(from.entity, from.permissions)
@@ -114,7 +136,9 @@ object ApplicationTestsV5 extends App {
 
   // TODO [AD]: consider naming of the application transformer and the repo codec and also their current inheritance
   //  structure (i.e. deriving from the Codec family of traits). Also, should these simply be explicit parameters?
-  val testProcessorApp = new TestApplication(new TestInvoiceRepo(), new TestCtaRepo())
+  val testProcessorApp = new TestApplication(
+    new TestInvoiceRepo(invoicePersistenceRepo, invoiceRepoCodecV1),
+    new TestCtaRepo(ctaPersistenceRepo, ctaRepoCodec))
 
   case class TestInvoiceBasicPermissionRetriever() extends InvoiceBasicPermissionRetriever[Id] {
     override def retrieve(userId: UserId): Id[InvoiceUserPermissions] = userId match {
