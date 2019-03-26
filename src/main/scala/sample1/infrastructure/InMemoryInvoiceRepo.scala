@@ -1,6 +1,5 @@
 package sample1.infrastructure
 
-import sample1.domain._
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
 
