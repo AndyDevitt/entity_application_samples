@@ -3,6 +3,7 @@ package sample1.application
 import cats.effect.IO
 import cats.syntax.either._
 import cats.{Id, ~>}
+import sample1.application.persistence.clinicaltrialagreement.CtaPersistenceRepo
 import sample1.application.persistence.invoice.InvoicePersistenceRepo
 import sample1.domain._
 import sample1.domain.command.invoicecommands._
@@ -67,13 +68,6 @@ object TestImplicits {
         case i: SponsorInvoice => Right(i)
       })
 
-//  val invoicePersistenceRepo_old: InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] =
-//    new InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] {
-//      override def notFoundErrorF: InvoiceId => InvoiceError = InvoiceError.InvoiceNotFound
-//
-//      override def staleErrorF: InvoiceId => InvoiceError = InvoiceError.StaleInvoiceError
-//    }
-
   val invoicePersistenceRepo: InvoicePersistenceRepo[Id, InvoiceId, Invoice] =
     new InvoicePersistenceRepo[Id, InvoiceId, Invoice] with InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] {
       override def notFoundErrorF: InvoiceId => InvoiceError = InvoiceError.InvoiceNotFound
@@ -88,11 +82,13 @@ object TestImplicits {
         ).asRight[InvoiceError]
     }
 
-  val ctaPersistenceRepo: InMemoryPersistenceRepo[Id, CtaError, ClinicalTrialAgreement, ClinicalTrialAgreementId] =
-    new InMemoryPersistenceRepo[Id, CtaError, ClinicalTrialAgreement, ClinicalTrialAgreementId] {
+  val ctaPersistenceRepo: CtaPersistenceRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement] =
+    new CtaPersistenceRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement] with InMemoryPersistenceRepo[Id, CtaError, ClinicalTrialAgreement, ClinicalTrialAgreementId] {
       override def notFoundErrorF: ClinicalTrialAgreementId => CtaError = CtaError.CtaNotFound
 
       override def staleErrorF: ClinicalTrialAgreementId => CtaError = CtaError.StaleCtaError
+
+      override def find(): Id[Either[CtaError, Seq[ClinicalTrialAgreement]]] = Right(Seq())
     }
 
   implicit val invoiceToInvoiceView: Transform[EntityResult[Invoice, InvoiceUserPermissions, InvoiceAction], InvoiceView, InvoiceError] =
