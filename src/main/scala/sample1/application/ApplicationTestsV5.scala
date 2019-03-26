@@ -1,7 +1,9 @@
 package sample1.application
 
 import cats.effect.IO
+import cats.syntax.either._
 import cats.{Id, ~>}
+import sample1.application.persistence.invoice.InvoicePersistenceRepo
 import sample1.domain._
 import sample1.domain.command.invoicecommands._
 import sample1.domain.command.{CreateCtaCmd, CtaRetrieveCommand, EntityResult}
@@ -65,11 +67,25 @@ object TestImplicits {
         case i: SponsorInvoice => Right(i)
       })
 
-  val invoicePersistenceRepo: InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] =
-    new InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] {
+//  val invoicePersistenceRepo_old: InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] =
+//    new InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] {
+//      override def notFoundErrorF: InvoiceId => InvoiceError = InvoiceError.InvoiceNotFound
+//
+//      override def staleErrorF: InvoiceId => InvoiceError = InvoiceError.StaleInvoiceError
+//    }
+
+  val invoicePersistenceRepo: InvoicePersistenceRepo[Id, InvoiceId, Invoice] =
+    new InvoicePersistenceRepo[Id, InvoiceId, Invoice] with InMemoryPersistenceRepo[Id, InvoiceError, Invoice, InvoiceId] {
       override def notFoundErrorF: InvoiceId => InvoiceError = InvoiceError.InvoiceNotFound
 
       override def staleErrorF: InvoiceId => InvoiceError = InvoiceError.StaleInvoiceError
+
+      override def find(): Id[Either[InvoiceError, Seq[Invoice]]] =
+        Seq(
+          Invoice.createSiteInvoiceEmpty(),
+          Invoice.createSiteInvoiceEmpty(),
+          Invoice.createRfiInvoiceEmpty()
+        ).asRight[InvoiceError]
     }
 
   val ctaPersistenceRepo: InMemoryPersistenceRepo[Id, CtaError, ClinicalTrialAgreement, ClinicalTrialAgreementId] =
