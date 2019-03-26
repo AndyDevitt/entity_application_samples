@@ -20,8 +20,10 @@ trait EntityRepoImpl[F[_], IdType <: EntityId, EntType <: VersionedEntity[IdType
 
   def persistenceRepo: PersistenceRepo[F, ErrType, PersType, PersIdType]
 
+  def codec: EntityRepoCodec[EntType, PersType, ErrType]
+
   def saveEntity(entity: EntType)
-                (implicit monad: Monad[F], versioned: Versioned[EntType], codec: EntityRepoCodec[EntType, PersType, ErrType]
+                (implicit monad: Monad[F], versioned: Versioned[EntType]
                 ): F[Either[ErrType, EntType]] = {
     val newVer = versioned.incrementVersion(entity)
     monad.map(persistenceRepo.save(codec.encode(newVer)))(
@@ -29,7 +31,7 @@ trait EntityRepoImpl[F[_], IdType <: EntityId, EntType <: VersionedEntity[IdType
   }
 
   def retrieveEntity(id: IdType)
-                    (implicit monad: Monad[F], codec: EntityRepoCodec[EntType, PersType, ErrType], idEncoder: Encoder[IdType, PersIdType]
+                    (implicit monad: Monad[F], idEncoder: Encoder[IdType, PersIdType]
                     ): F[Either[ErrType, EntType]] =
     monad.map(persistenceRepo.retrieve(idEncoder.encode(id)))(
       _.flatMap(codec.decode))
