@@ -3,12 +3,12 @@ package sample1.domain.invoice.commands
 import sample1.domain.command.invoicecommands.InvoiceUpdateCommand
 import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
-import sample1.domain.invoice.InvoiceAlgebraHelpers.{isInOneOfStatus, validateSponsorInvoice}
+import sample1.domain.invoice.InvoiceAlgebraHelpers._
 import sample1.domain.invoice.InvoiceStateBuilder.Instances._
 import sample1.domain.invoice._
 import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
-import sample1.domain.{ActionStatus, Cost, NotAllowed}
+import sample1.domain.{Cost, NotAllowed}
 
 final case class AddCostCmd[F[_]](userId: UserId,
                                   id: InvoiceId,
@@ -33,12 +33,9 @@ final case class AddCostCmdProcessor[F[_]]()
   override def canDo(invoice: Invoice, action: InvoiceAction.AddCost.type, permissions: InvoiceUserPermissions
                     ): Either[NotAllowed, SponsorInvoice] =
     for {
-      _ <- Either.cond(
-        permissions.hasAll(requiredPermissions),
-        (),
-        ActionStatus.NotEnoughPermissions(s"Not all permissions are present ($requiredPermissions)"))
+      _ <- validateRequiredPermissions(permissions, requiredPermissions)
       sponsorInv <- validateSponsorInvoice(invoice)
-      _ <- Either.cond(isInOneOfStatus(sponsorInv, allowedStatuses), (), ActionStatus.NotAllowedInCurrentStatus())
+      _ <- validateAllowedStatus(sponsorInv, allowedStatuses)
     } yield sponsorInv
 
   override protected def action(entity: SponsorInvoice, cmd: AddCostCmd[F], permissions: InvoiceUserPermissions

@@ -24,6 +24,18 @@ object InvoiceAlgebraHelpers {
       case _: SiteInvoice => Left(ActionStatus.NotAllowedForProcessType())
     }
 
+  def validateRequiredPermissions(permissions: InvoiceUserPermissions,
+                                  requiredPermissions: Set[InvoicePermissions]
+                                 ): Either[ActionStatus.NotEnoughPermissions, Unit] =
+    Either.cond(
+      permissions.hasAll(requiredPermissions),
+      (),
+      ActionStatus.NotEnoughPermissions(s"Not all permissions are present ($requiredPermissions)"))
+
+  def validateAllowedStatus(invoice: Invoice,
+                            allowedStatuses: Set[InvoiceStatus]
+                           ): Either[NotAllowed, Unit] =
+    Either.cond(isInOneOfStatus(invoice, allowedStatuses), (), ActionStatus.NotAllowedInCurrentStatus())
 }
 
 object InvoiceAlgebra {

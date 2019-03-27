@@ -5,7 +5,7 @@ import sample1.domain.command.invoicecommands.InvoiceUpdateCommand
 import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceAlgebra.calculateTotal
-import sample1.domain.invoice.InvoiceAlgebraHelpers.isInOneOfStatus
+import sample1.domain.invoice.InvoiceAlgebraHelpers._
 import sample1.domain.invoice.InvoiceStateBuilder.Instances._
 import sample1.domain.invoice._
 import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
@@ -37,11 +37,8 @@ final case class ApproveCmdProcessor[F[_]]()
                                permissions: InvoiceUserPermissions
                               ): Either[NotAllowed, Invoice] =
     for {
-      _ <- Either.cond(
-        permissions.hasAll(requiredPermissions),
-        (),
-        ActionStatus.NotEnoughPermissions(s"Minimum required permissions not found ($requiredPermissions)"))
-      _ <- Either.cond(isInOneOfStatus(entity, allowedStatuses), (), ActionStatus.NotAllowedInCurrentStatus())
+      _ <- validateRequiredPermissions(permissions, requiredPermissions)
+      _ <- validateAllowedStatus(entity, allowedStatuses)
       limit <- Either.fromOption(
         permissions.approvalLimit.map(_.limit),
         ActionStatus.NotEnoughPermissions("No approval limit found"))
