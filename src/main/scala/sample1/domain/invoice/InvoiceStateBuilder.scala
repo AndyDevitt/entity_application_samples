@@ -3,8 +3,8 @@ package sample1.domain.invoice
 import cats.Id
 import sample1.application.ApplicationTestsV5.{TestInvoiceBasicPermissionRetriever, TestInvoiceEntityPermissionRetriever}
 import sample1.domain.command.Command
-import sample1.domain.command.invoicecommands.CreateRfiInvoiceCmd
 import sample1.domain.errors.InvoiceError
+import sample1.domain.invoice.commands.CreateRfiInvoiceCmd
 import sample1.domain.user.UserId
 import sample1.domain.{Cost, Currency, MonetaryAmount}
 

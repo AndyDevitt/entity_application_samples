@@ -20,7 +20,7 @@ final case class UpdateRfiCmd[F[_]](userId: UserId,
   override def associatedAction: InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
 }
 
-case class UpdateRfiCmdProcessor[F[_]]()
+final case class UpdateRfiCmdProcessor[F[_]]()
   extends InvoiceEntityCommandProcessor[F, Invoice, InvoiceAction.UpdateRfi.type, UpdateRfiCmd[F]] {
   override def canDo(entity: Invoice,
                      action: InvoiceAction.UpdateRfi.type,

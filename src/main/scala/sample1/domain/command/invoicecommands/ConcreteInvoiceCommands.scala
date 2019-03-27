@@ -33,13 +33,6 @@ final case class ApproveCmdV2Mixin[F[_]](userId: UserId,
   override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
 }
 
-final case class CreateRfiInvoiceCmd[F[_]](userId: UserId,
-                                           permissionsRetriever: InvoiceBasicPermissionRetriever[F]
-                                          ) extends InvoiceCreateCommand[F] {
-  override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    Invoice.createRfiInvoice(this, permissions)
-}
-
 final case class UpdateRfiCmdMixin[F[_]](userId: UserId,
                                          id: InvoiceId,
                                          version: EntityVersion,
@@ -49,11 +42,4 @@ final case class UpdateRfiCmdMixin[F[_]](userId: UserId,
     InvoiceBehaviour(invoice).process(this, permissions)
 
   override def associatedAction: InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
-}
-
-final case class CreateSiteInvoiceCmd[F[_]](userId: UserId,
-                                            permissionsRetriever: InvoiceBasicPermissionRetriever[F]
-                                           ) extends InvoiceCreateCommand[F] {
-  override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    Invoice.createSiteInvoice(this, permissions)
 }
