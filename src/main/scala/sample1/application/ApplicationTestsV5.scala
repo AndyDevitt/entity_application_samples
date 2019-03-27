@@ -12,6 +12,7 @@ import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.errors.{CtaError, InvoiceError}
 import sample1.domain.invoice._
+import sample1.domain.invoice.commands.{AddCostCmd, ApproveCmd}
 import sample1.domain.permissions._
 import sample1.domain.shared.DateTime
 import sample1.domain.user.UserId
@@ -218,14 +219,14 @@ object ApplicationTestsV5 extends App {
 
   val res9 = for {
     inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(approver, testBasicPermissionsRetriever))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd(standardUser, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(approver, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res9: $res9")
 
   val res10 = for {
     inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(approver, testBasicPermissionsRetriever))
-    inv2 <- testProcessorApp.processCommand(ApproveCmd(standardUser, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(ApproveCmd(approverWithLimit, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
   } yield inv2
 
   println(s"res10: $res10")

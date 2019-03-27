@@ -1,10 +1,8 @@
 package sample1.domain.command.invoicecommands
 
-import sample1.domain.Cost
 import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
-import sample1.domain.invoice.commands.Approve
 import sample1.domain.invoice.mixinstatemachine.InvoiceBehaviour
 import sample1.domain.permissions.{InvoiceBasicPermissionRetriever, InvoiceEntityPermissionRetriever, InvoiceUserPermissions}
 import sample1.domain.user.UserId
@@ -13,34 +11,11 @@ import sample1.domain.user.UserId
   * Concrete command implementations
   */
 
-final case class AddCostCmd[F[_]](userId: UserId,
-                                  id: InvoiceId,
-                                  version: EntityVersion,
-                                  permissionsRetriever: InvoiceEntityPermissionRetriever[F],
-                                  cost: Cost
-                                 ) extends InvoiceUpdateCommand[F, AddCostCmd[F], InvoiceAction.AddCost.type] {
-  override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    InvoiceAlgebra.AddCost().process(invoice, this, permissions)
-
-  override def associatedAction: InvoiceAction.AddCost.type = InvoiceAction.AddCost
-}
-
-final case class ApproveCmd[F[_]](userId: UserId,
-                                  id: InvoiceId,
-                                  version: EntityVersion,
-                                  permissionsRetriever: InvoiceEntityPermissionRetriever[F]
-                                 ) extends InvoiceUpdateCommand[F, ApproveCmd[F], InvoiceAction.Approve.type] {
-  override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    InvoiceAlgebra.Approve3(invoice, this, permissions)
-
-  override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
-}
-
 final case class ApproveCmdMixin[F[_]](userId: UserId,
                                        id: InvoiceId,
                                        version: EntityVersion,
                                        permissionsRetriever: InvoiceEntityPermissionRetriever[F]
-                                      ) extends InvoiceUpdateCommand[F, ApproveCmd[F], InvoiceAction.Approve.type] {
+                                      ) extends InvoiceUpdateCommand[F, ApproveCmdMixin[F], InvoiceAction.Approve.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     InvoiceBehaviour(invoice).process(this, permissions)
 
@@ -65,22 +40,11 @@ final case class CreateRfiInvoiceCmd[F[_]](userId: UserId,
     Invoice.createRfiInvoice(this, permissions)
 }
 
-final case class UpdateRfiCmd[F[_]](userId: UserId,
-                                    id: InvoiceId,
-                                    version: EntityVersion,
-                                    permissionsRetriever: InvoiceEntityPermissionRetriever[F]
-                                   ) extends InvoiceUpdateCommand[F, UpdateRfiCmd[F], InvoiceAction.UpdateRfi.type] {
-  override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
-    InvoiceAlgebra.UpdateRfi().process(invoice, this, permissions)
-
-  override def associatedAction: InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
-}
-
 final case class UpdateRfiCmdMixin[F[_]](userId: UserId,
                                          id: InvoiceId,
                                          version: EntityVersion,
                                          permissionsRetriever: InvoiceEntityPermissionRetriever[F]
-                                        ) extends InvoiceUpdateCommand[F, UpdateRfiCmd[F], InvoiceAction.UpdateRfi.type] {
+                                        ) extends InvoiceUpdateCommand[F, UpdateRfiCmdMixin[F], InvoiceAction.UpdateRfi.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     InvoiceBehaviour(invoice).process(this, permissions)
 
@@ -92,10 +56,4 @@ final case class CreateSiteInvoiceCmd[F[_]](userId: UserId,
                                            ) extends InvoiceCreateCommand[F] {
   override def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     Invoice.createSiteInvoice(this, permissions)
-}
-
-final case class FindAll[F[_]](userId: UserId,
-                               permissionsRetriever: InvoiceBasicPermissionRetriever[F]
-                              ) extends InvoiceQueryCommand[F, Seq[Invoice]] {
-  override def query(repo: InvoiceRepo[F], permissions: InvoiceUserPermissions): F[Either[InvoiceError, Seq[Invoice]]] = repo.find()
 }
