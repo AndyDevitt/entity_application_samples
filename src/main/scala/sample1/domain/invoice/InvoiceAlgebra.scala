@@ -21,25 +21,30 @@ trait InvoiceEntityCommandProcessor[F[_], EntSubType <: Invoice, ActionType <: I
     InvoiceAlgebra.minimumAccessPermissionsCheck(entity, permissions).leftMap(_ => ActionStatus.AccessDenied())
 }
 
-object InvoiceAlgebra {
+object InvoiceAlgebraHelpers {
 
-  import cats.data.State
-  import sample1.domain.invoice.InvoiceUtils._
-
-  private def isInOneOfStatus(invoice: Invoice, statuses: Set[InvoiceStatus]): Boolean =
+  def isInOneOfStatus(invoice: Invoice, statuses: Set[InvoiceStatus]): Boolean =
     statuses.contains(invoice.status)
 
-  private def validateSiteInvoice(invoice: Invoice): Either[NotAllowed, SiteInvoice] =
+  def validateSiteInvoice(invoice: Invoice): Either[NotAllowed, SiteInvoice] =
     invoice match {
       case i: SiteInvoice => Right(i)
       case _: SponsorInvoice => Left(ActionStatus.NotAllowedForProcessType())
     }
 
-  private def validateSponsorInvoice(invoice: Invoice): Either[NotAllowed, SponsorInvoice] =
+  def validateSponsorInvoice(invoice: Invoice): Either[NotAllowed, SponsorInvoice] =
     invoice match {
       case i: SponsorInvoice => Right(i)
       case _: SiteInvoice => Left(ActionStatus.NotAllowedForProcessType())
     }
+
+}
+
+object InvoiceAlgebra {
+
+  import InvoiceAlgebraHelpers._
+  import cats.data.State
+  import sample1.domain.invoice.InvoiceUtils._
 
   def minimumAccessPermissionsCheck(invoice: Invoice, permissions: InvoiceUserPermissions
                                    ): Either[InvoiceError, Unit] =
