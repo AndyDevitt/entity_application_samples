@@ -1,6 +1,5 @@
 package sample1.infrastructure
 
-import cats.syntax.either._
 import cats.{Id, Monad}
 import sample1.application.persistence.invoice.InvoicePersistenceRepo
 import sample1.domain.entity.{EntityRepoCodec, EntityRepoImpl, Versioned}
@@ -20,10 +19,6 @@ class TestInvoiceRepo(override val persistenceRepo: InvoicePersistenceRepo[Id, I
   override def retrieve(id: InvoiceId)(implicit monad: Monad[Id]): Id[Either[InvoiceError, Invoice]] =
     retrieveEntity(id)
 
-  override def find(): Id[Either[InvoiceError, Seq[Invoice]]] =
-    Seq(
-      Invoice.createSiteInvoiceEmpty(),
-      Invoice.createSiteInvoiceEmpty(),
-      Invoice.createRfiInvoiceEmpty()
-    ).asRight[InvoiceError]
+  override def find(): Id[Either[InvoiceError, List[Invoice]]] =
+    persistenceRepo.find()
 }

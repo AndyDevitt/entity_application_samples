@@ -19,8 +19,8 @@ class ProductionInvoiceRepo()(implicit versioned: Versioned[Invoice], codec: Ent
   override def retrieve(id: InvoiceId)(implicit monad: Monad[IO]): IO[Either[InvoiceError, Invoice]] =
     entityRepo.retrieveEntity(id)
 
-  override def find(): IO[Either[InvoiceError, Seq[Invoice]]] =
-    IO.pure(Seq(
+  override def find(): IO[Either[InvoiceError, List[Invoice]]] =
+    IO.pure(List(
       Invoice.createSiteInvoiceEmpty(),
       Invoice.createSiteInvoiceEmpty(),
       Invoice.createRfiInvoiceEmpty()

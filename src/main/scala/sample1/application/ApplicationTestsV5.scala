@@ -80,12 +80,8 @@ object TestImplicits {
 
       override def staleErrorF: InvoiceId => InvoiceError = InvoiceError.StaleInvoiceError
 
-      override def find(): Id[Either[InvoiceError, Seq[Invoice]]] =
-        Seq(
-          Invoice.createSiteInvoiceEmpty(),
-          Invoice.createSiteInvoiceEmpty(),
-          Invoice.createRfiInvoiceEmpty()
-        ).asRight[InvoiceError]
+      override def find(): Id[Either[InvoiceError, List[Invoice]]] =
+        currentStateList.asRight[InvoiceError]
     }
 
   val ctaPersistenceRepo: CtaPersistenceRepo[Id, ClinicalTrialAgreementId, ClinicalTrialAgreement] =
@@ -94,7 +90,8 @@ object TestImplicits {
 
       override def staleErrorF: ClinicalTrialAgreementId => CtaError = CtaError.StaleCtaError
 
-      override def find(): Id[Either[CtaError, Seq[ClinicalTrialAgreement]]] = Right(Seq())
+      override def find(): Id[Either[CtaError, Seq[ClinicalTrialAgreement]]] =
+        currentStateList.asRight[CtaError]
     }
 
   implicit val invoiceToInvoiceView: Transform[EntityResult[Invoice, InvoiceUserPermissions, InvoiceAction], InvoiceView, InvoiceError] =
@@ -214,8 +211,12 @@ object ApplicationTestsV5 extends App {
   println(s"res3: $res3")
 
   val res4 = for {
-    inv1 <- testProcessorApp.processCommand(FindAll(approver, testBasicPermissionsRetriever))
-  } yield inv1
+    inv1 <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(approver, testBasicPermissionsRetriever))
+    _ <- testProcessorApp.processCommand(CreateRfiInvoiceCmd(approver, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(AddCostCmd(approver, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever, cost1usd))
+    _ <- testProcessorApp.processCommand(AddCostCmd(approver, inv2.entity.id, inv2.entity.version, testEntityPermissionsRetriever, cost2usd))
+    res <- testProcessorApp.processCommand(FindAll(approver, testBasicPermissionsRetriever))
+  } yield res
   println(s"res4: $res4")
 
   val res5 = for {

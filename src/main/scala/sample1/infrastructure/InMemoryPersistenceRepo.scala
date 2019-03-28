@@ -30,6 +30,14 @@ trait InMemoryPersistenceRepo[F[_], PersIdType <: EntityId, PersEntType <: Versi
       .map(_._2)
       .toRight(notFoundErrorF(aId)))
 
+  def currentStateStore(implicit monad: Monad[F]): F[Map[PersIdType, PersEntType]] =
+    monad.pure(store
+      .groupBy(groupByF)
+      .mapValues(_.reduceLeft(reduceF)._2))
+
+  def currentStateList(implicit monad: Monad[F]): F[List[PersEntType]] =
+    monad.map(currentStateStore)(_.values.toList)
+
   private val store: mutable.Map[(PersIdType, EntityVersion), PersEntType] =
     mutable.Map()
 
@@ -40,5 +48,7 @@ trait InMemoryPersistenceRepo[F[_], PersIdType <: EntityId, PersEntType <: Versi
 
   private val reduceF: (KeyValuePair, KeyValuePair) => KeyValuePair =
     (acc, next) => if (acc._1._2 > next._1._2) acc else next
+
+  private val groupByF: KeyValuePair => PersIdType = x => x._1._1
 
 }
