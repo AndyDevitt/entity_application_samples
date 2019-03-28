@@ -228,7 +228,7 @@ PermissionsType
 ] extends RunnableCommand[F, InpType, ResType, ErrType, PermissionsType] {
   def extractRepo(input: InpType): RepoType
 
-  def action(input: InpType, permissions: PermissionsType): F[Either[ErrType, ResType]]
+  def action(input: InpType, permissions: PermissionsType)(implicit monadF: Monad[F]): F[Either[ErrType, ResType]]
 
   def permissionsRetriever: BasicPermissionRetriever[F, PermissionsType]
 

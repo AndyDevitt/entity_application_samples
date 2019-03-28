@@ -15,6 +15,7 @@ import sample1.domain.invoice.commands.AddCost.AddCostCmd
 import sample1.domain.invoice.commands.Approve.ApproveCmd
 import sample1.domain.invoice.commands.CreateRfiInvoice.CreateRfiInvoiceCmd
 import sample1.domain.invoice.commands.CreateSiteInvoice.CreateSiteInvoiceCmd
+import sample1.domain.invoice.commands.ExampleDomainService.ExampleDomainServiceCmd
 import sample1.domain.invoice.commands.{FindAll, FindAllEntities}
 import sample1.domain.invoice.mixincommands.{ApproveCmdMixin, ApproveCmdV2Mixin}
 import sample1.domain.permissions._
@@ -108,23 +109,24 @@ object ApplicationTestsV5 extends App {
   val standardUser = UserId("StandardUser1")
   val approverWithLimit = UserId("ApproverWithLimit1")
 
-  val standardUserPermissions = InvoiceUserPermissions(Set(
+  val standardUserInvoicePermissions = InvoiceUserPermissions(Set(
     InvoicePermissions.Read,
     InvoicePermissions.AddCost,
     InvoicePermissions.ReadSiteInvoice,
     InvoicePermissions.ReadSponsorInvoice,
     InvoicePermissions.Create))
 
-  val standardCtaUserPermissions = CtaUserPermissions(Set(
+  val standardUserCtaPermissions = CtaUserPermissions(Set(
     CtaPermissions.Read,
     CtaPermissions.Create))
 
-  val approverPermissions = InvoiceUserPermissions(Set(
+  val approverInvoicePermissions = InvoiceUserPermissions(Set(
     InvoicePermissions.Read,
     InvoicePermissions.ReadSiteInvoice,
     InvoicePermissions.ReadSponsorInvoice,
     InvoicePermissions.AddCost,
     InvoicePermissions.Approve,
+    InvoicePermissions.RunDomainServices,
     InvoicePermissions.Create))
 
   val approverCtaUserPermissions = CtaUserPermissions(Set(
@@ -132,12 +134,13 @@ object ApplicationTestsV5 extends App {
     CtaPermissions.Approve,
     CtaPermissions.Create))
 
-  val approverWithLimitPermissions = InvoiceUserPermissions(Set(
+  val approverWithLimitInvoicePermissions = InvoiceUserPermissions(Set(
     InvoicePermissions.Read,
     InvoicePermissions.ReadSiteInvoice,
     InvoicePermissions.ReadSponsorInvoice,
     InvoicePermissions.AddCost,
     InvoicePermissions.Approve,
+    InvoicePermissions.RunDomainServices,
     InvoicePermissions.ApproveWithLimit(10000),
     InvoicePermissions.Create))
 
@@ -159,25 +162,25 @@ object ApplicationTestsV5 extends App {
 
   case class TestInvoiceBasicPermissionRetriever() extends InvoiceBasicPermissionRetriever[Id] {
     override def retrieve(userId: UserId): Id[InvoiceUserPermissions] = userId match {
-      case UserId(ApplicationTestsV5.standardUser.id) => standardUserPermissions
-      case UserId(ApplicationTestsV5.approver.id) => approverPermissions
-      case UserId(ApplicationTestsV5.approverWithLimit.id) => approverWithLimitPermissions
+      case UserId(ApplicationTestsV5.standardUser.id) => standardUserInvoicePermissions
+      case UserId(ApplicationTestsV5.approver.id) => approverInvoicePermissions
+      case UserId(ApplicationTestsV5.approverWithLimit.id) => approverWithLimitInvoicePermissions
       case _ => InvoiceUserPermissions(Set())
     }
   }
 
   case class TestInvoiceEntityPermissionRetriever() extends InvoiceEntityPermissionRetriever[Id] {
     override def retrieve(userId: UserId, entity: Invoice): Id[InvoiceUserPermissions] = userId match {
-      case UserId(ApplicationTestsV5.standardUser.id) => standardUserPermissions
-      case UserId(ApplicationTestsV5.approver.id) => approverPermissions
-      case UserId(ApplicationTestsV5.approverWithLimit.id) => approverWithLimitPermissions
+      case UserId(ApplicationTestsV5.standardUser.id) => standardUserInvoicePermissions
+      case UserId(ApplicationTestsV5.approver.id) => approverInvoicePermissions
+      case UserId(ApplicationTestsV5.approverWithLimit.id) => approverWithLimitInvoicePermissions
       case _ => InvoiceUserPermissions(Set())
     }
   }
 
   case class TestCtaBasicPermissionRetriever() extends CtaBasicPermissionRetriever[Id] {
     override def retrieve(userId: UserId): Id[CtaUserPermissions] = userId match {
-      case UserId(ApplicationTestsV5.standardUser.id) => standardCtaUserPermissions
+      case UserId(ApplicationTestsV5.standardUser.id) => standardUserCtaPermissions
       case UserId(ApplicationTestsV5.approver.id) => approverCtaUserPermissions
       case UserId(ApplicationTestsV5.approverWithLimit.id) => approverWithLimitCtaUserPermissions
       case _ => CtaUserPermissions(Set())
@@ -186,7 +189,7 @@ object ApplicationTestsV5 extends App {
 
   case class TestCtaEntityPermissionRetriever() extends CtaEntityPermissionRetriever[Id] {
     override def retrieve(userId: UserId, entity: ClinicalTrialAgreement): Id[CtaUserPermissions] = userId match {
-      case UserId(ApplicationTestsV5.standardUser.id) => standardCtaUserPermissions
+      case UserId(ApplicationTestsV5.standardUser.id) => standardUserCtaPermissions
       case UserId(ApplicationTestsV5.approver.id) => approverCtaUserPermissions
       case UserId(ApplicationTestsV5.approverWithLimit.id) => approverWithLimitCtaUserPermissions
       case _ => CtaUserPermissions(Set())
@@ -198,6 +201,16 @@ object ApplicationTestsV5 extends App {
 
   val testCtaBasicPermissionsRetriever = TestCtaBasicPermissionRetriever()
   val testCtaEntityPermissionsRetriever = TestCtaEntityPermissionRetriever()
+
+  val res2 = for {
+    inv1 <- testProcessorApp.processCommand(ExampleDomainServiceCmd(approver, testBasicPermissionsRetriever))
+  } yield inv1
+  println(s"res2: $res2")
+
+  val res3 = for {
+    inv1 <- testProcessorApp.processCommand(ExampleDomainServiceCmd(standardUser, testBasicPermissionsRetriever))
+  } yield inv1
+  println(s"res3: $res3")
 
   val res4 = for {
     inv1 <- testProcessorApp.processCommand(FindAll(approver, testBasicPermissionsRetriever))

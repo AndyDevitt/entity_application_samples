@@ -37,6 +37,11 @@ trait InvoiceGenericQueryCommand[F[_], R]
   override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
 }
 
+trait InvoiceDomainServiceCommand[F[_], R]
+  extends DomainServiceCommand[F, DomainCommandInput[F], InvoiceError, R, InvoiceRepo[F], InvoiceUserPermissions] {
+  override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
+}
+
 trait InvoiceUpdateCommand[F[_], CmdType, ActionType <: InvoiceAction]
   extends EntityUpdateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions, InvoiceAction, ActionType] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice]

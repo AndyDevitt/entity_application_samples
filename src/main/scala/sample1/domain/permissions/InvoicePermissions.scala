@@ -22,6 +22,8 @@ object InvoicePermissions {
 
   final case class ApproveWithLimit(limit: Int) extends InvoicePermissions
 
+  final case object RunDomainServices extends InvoicePermissions
+
 }
 
 final case class InvoiceUserPermissions(permissions: Set[InvoicePermissions]) extends EntityPermissions[InvoicePermissions] {
