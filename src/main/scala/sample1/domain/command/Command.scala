@@ -192,3 +192,30 @@ ActionsBaseType
       ActionsBaseType
       ](extractRepo(input))(this)
 }
+
+trait GenericQueryCommand[
+F[_],
+-InpType <: CommandInput,
+ErrType,
+ResType,
+RepoType <: GenericRepo[F, ErrType],
+PermissionsType
+] extends RunnableCommand[F, InpType, ResType, ErrType, PermissionsType] {
+  def extractRepo(input: InpType): RepoType
+
+  def query(repo: RepoType, permissions: PermissionsType): F[Either[ErrType, ResType]]
+
+  def permissionsRetriever: BasicPermissionRetriever[F, PermissionsType]
+
+  override def run[G[_]](input: InpType)(implicit monadF: Monad[F], transform: F ~> G): G[Either[ErrType, ResType]] =
+    EntityRepoManager.manageGenericQuery[
+      G,
+      F,
+      InpType,
+      GenericQueryCommand[F, InpType, ErrType, ResType, RepoType, PermissionsType],
+      ResType,
+      ErrType,
+      RepoType,
+      PermissionsType
+      ](extractRepo(input))(this)
+}

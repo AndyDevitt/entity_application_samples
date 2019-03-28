@@ -4,7 +4,7 @@ import cats.data.EitherT
 import cats.{Monad, ~>}
 import sample1.domain.command._
 
-object EntityRepoManager {
+object EntityRepoManager extends GenericRepoManager {
 
   def manageRetrieve[
   F[_],
