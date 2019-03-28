@@ -217,3 +217,30 @@ PermissionsType
       PermissionsType
       ](extractRepo(input))(this)
 }
+
+trait DomainServiceCommand[
+F[_],
+-InpType <: CommandInput,
+ErrType,
+ResType,
+RepoType <: GenericRepo[F, ErrType],
+PermissionsType
+] extends RunnableCommand[F, InpType, ResType, ErrType, PermissionsType] {
+  def extractRepo(input: InpType): RepoType
+
+  def action(input: InpType, permissions: PermissionsType): F[Either[ErrType, ResType]]
+
+  def permissionsRetriever: BasicPermissionRetriever[F, PermissionsType]
+
+  override def run[G[_]](input: InpType)(implicit monadF: Monad[F], transform: F ~> G): G[Either[ErrType, ResType]] =
+    EntityRepoManager.manageDomainService[
+      G,
+      F,
+      InpType,
+      DomainServiceCommand[F, InpType, ErrType, ResType, RepoType, PermissionsType],
+      ResType,
+      ErrType,
+      RepoType,
+      PermissionsType
+      ](input)(this)
+}
