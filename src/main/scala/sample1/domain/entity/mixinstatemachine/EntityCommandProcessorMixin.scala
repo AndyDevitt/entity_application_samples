@@ -18,10 +18,10 @@ trait EntityCommandProcessorMixin[ActionType, ErrType, EntType <: VersionedEntit
   private def toActionStatus(checkResult: Either[ErrType, EntType]): ActionStatus =
     checkResult.fold[ActionStatus](e => ActionStatus.NotAllowedInCurrentState(e.toString), _ => ActionStatus.Allowed)
 
-  protected def thisActionStatus(action: ActionType,
-                                 entity: EntType,
-                                 permissions: PermissionType,
-                                 checkF: (EntType, PermissionType) => Either[ErrType, EntType]
-                                ): Set[(ActionType, ActionStatus)] =
+  protected def thisActionStatus[EntSubType <: EntType](action: ActionType,
+                                                        entity: EntSubType,
+                                                        permissions: PermissionType,
+                                                        checkF: (EntSubType, PermissionType) => Either[ErrType, EntSubType]
+                                                       ): Set[(ActionType, ActionStatus)] =
     Set((action, toActionStatus(checkF(entity, permissions))))
 }

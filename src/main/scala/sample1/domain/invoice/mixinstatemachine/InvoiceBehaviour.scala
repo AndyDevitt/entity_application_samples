@@ -100,7 +100,7 @@ object Implementations {
 
   trait CanApprove extends InvoiceBehaviour.Approve {
 
-    self: InvoiceBehaviour.BaseInvoiceBehaviour =>
+    self: InvoiceBehaviour.SponsorInvoiceBehaviour =>
 
     override def actionStatus(permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
       super.actionStatus(permissions) ++ thisActionStatus(InvoiceAction.Approve, self.invoice, permissions, validateActionIsAllowed)
@@ -117,20 +117,13 @@ object Implementations {
 
     private val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.Approve)
 
-    private def validateActionIsAllowed(invoice: Invoice, permissions: InvoiceUserPermissions
+    private def validateActionIsAllowed(invoice: SponsorInvoice, permissions: InvoiceUserPermissions
                                        ): Either[InvoiceError, SponsorInvoice] =
       for {
         _ <- validateMinimumAccessPermissions(permissions)
-        sponsorInvoice <- invoice match {
-          case _: SiteInvoice =>
-            Left(InvoiceError.ActionNotAllowedForProcessType())
-          case sponsorInvoice: SponsorInvoice =>
-            for {
-              _ <- Either.cond(permissions.has(InvoicePermissions.Approve), (), InvoiceError.InsufficientPermissions("Approve permission not found for Approve command"))
-              _ <- Either.cond(invoice.costs.nonEmpty, (), InvoiceError.CannotApproveWithoutCosts())
-            } yield sponsorInvoice
-        }
-      } yield sponsorInvoice
+        _ <- Either.cond(permissions.hasAll(requiredPermissions), (), InvoiceError.InsufficientPermissions(s"Required permissions not found for Approve command ($requiredPermissions)"))
+        _ <- Either.cond(invoice.costs.nonEmpty, (), InvoiceError.CannotApproveWithoutCosts())
+      } yield invoice
 
   }
 
