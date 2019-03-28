@@ -55,9 +55,9 @@ object InvoiceAlgebra {
 
   private def actionStatus(invoice: Invoice, action: InvoiceAction, permissions: InvoiceUserPermissions): ActionStatus =
     action match {
-      case a: InvoiceAction.Approve.type => ApproveCmdProcessor().actionStatus(invoice, a, permissions)
-      case a: InvoiceAction.UpdateRfi.type => UpdateRfiCmdProcessor().actionStatus(invoice, a, permissions)
-      case a: InvoiceAction.AddCost.type => AddCostCmdProcessor().actionStatus(invoice, a, permissions)
+      case a: InvoiceAction.Approve.type => Approve.ApproveCmdProcessor().actionStatus(invoice, a, permissions)
+      case a: InvoiceAction.UpdateRfi.type => UpdateRfi.UpdateRfiCmdProcessor().actionStatus(invoice, a, permissions)
+      case a: InvoiceAction.AddCost.type => AddCost.AddCostCmdProcessor().actionStatus(invoice, a, permissions)
     }
 
   def calculateTotal(invoice: Invoice): Either[ValidationError, Option[MonetaryAmount]] =

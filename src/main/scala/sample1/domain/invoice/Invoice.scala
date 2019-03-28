@@ -3,7 +3,8 @@ package sample1.domain.invoice
 import sample1.domain.Cost
 import sample1.domain.entity.{EntityVersion, VersionedEntity}
 import sample1.domain.errors.InvoiceError
-import sample1.domain.invoice.commands.{CreateRfiInvoiceCmd, CreateSiteInvoiceCmd}
+import sample1.domain.invoice.commands.CreateRfiInvoice.CreateRfiInvoiceCmd
+import sample1.domain.invoice.commands.CreateSiteInvoice.CreateSiteInvoiceCmd
 import sample1.domain.permissions.InvoiceUserPermissions
 import sample1.domain.user.UserId
 

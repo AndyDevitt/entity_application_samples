@@ -1,7 +1,7 @@
 package sample1.domain.invoice
 
 import sample1.domain.command._
-import sample1.domain.invoice.commands.CreateRfiInvoiceCmd
+import sample1.domain.invoice.commands.CreateRfiInvoice.CreateRfiInvoiceCmd
 
 object InvoiceUtils {
 

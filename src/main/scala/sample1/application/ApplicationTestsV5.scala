@@ -12,7 +12,10 @@ import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
 import sample1.domain.errors.{CtaError, InvoiceError}
 import sample1.domain.invoice._
-import sample1.domain.invoice.commands.{AddCostCmd, ApproveCmd, CreateRfiInvoiceCmd, CreateSiteInvoiceCmd}
+import sample1.domain.invoice.commands.AddCost.AddCostCmd
+import sample1.domain.invoice.commands.Approve.ApproveCmd
+import sample1.domain.invoice.commands.CreateRfiInvoice.CreateRfiInvoiceCmd
+import sample1.domain.invoice.commands.CreateSiteInvoice.CreateSiteInvoiceCmd
 import sample1.domain.permissions._
 import sample1.domain.shared.DateTime
 import sample1.domain.user.UserId
