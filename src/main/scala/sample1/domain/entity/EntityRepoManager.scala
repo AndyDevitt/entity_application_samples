@@ -78,24 +78,24 @@ object EntityRepoManager extends GenericRepoManager {
                         ): Either[E, Unit] =
     Either.cond(cmd.version == entity.version, (), staleF(entity.id))
 
-  def manageQuery[
+  def manageEntityQuery[
   F[_],
   G[_],
   InpType <: CommandInput,
-  CmdType <: EntityQueryCommand[G, InpType, ErrType, IdType, EntType, ResType, RepoType, PermissionsType, ActionsBaseType],
+  CmdType <: EntityQueryCommand[G, InpType, ErrType, IdType, EntType, RepoType, PermissionsType, ActionsBaseType],
   IdType <: EntityId,
   EntType <: VersionedEntity[IdType],
-  ResType,
   ErrType,
   RepoType <: EntityRepo[G, IdType, EntType, ErrType],
   PermissionsType,
   ActionsBaseType](repo: RepoType)
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
-                  ): F[Either[ErrType, ResType]] =
+                  ): F[Either[ErrType, Seq[EntityResult[EntType, PermissionsType, ActionsBaseType]]]] =
     transform((for {
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId))
       results <- EitherT(cmd.query(repo, permissions))
-    } yield results).value)
+      res <- EitherT.pure[G, ErrType](results.map(ent => EntityResult(ent, permissions, cmd.extractActionStatuses(ent, permissions))))
+    } yield res).value)
 
 }

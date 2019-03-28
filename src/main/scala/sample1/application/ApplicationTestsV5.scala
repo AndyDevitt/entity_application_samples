@@ -15,7 +15,7 @@ import sample1.domain.invoice.commands.AddCost.AddCostCmd
 import sample1.domain.invoice.commands.Approve.ApproveCmd
 import sample1.domain.invoice.commands.CreateRfiInvoice.CreateRfiInvoiceCmd
 import sample1.domain.invoice.commands.CreateSiteInvoice.CreateSiteInvoiceCmd
-import sample1.domain.invoice.commands.FindAll
+import sample1.domain.invoice.commands.{FindAll, FindAllEntities}
 import sample1.domain.invoice.mixincommands.{ApproveCmdMixin, ApproveCmdV2Mixin}
 import sample1.domain.permissions._
 import sample1.domain.shared.DateTime
@@ -199,8 +199,13 @@ object ApplicationTestsV5 extends App {
   val testCtaBasicPermissionsRetriever = TestCtaBasicPermissionRetriever()
   val testCtaEntityPermissionsRetriever = TestCtaEntityPermissionRetriever()
 
-  val res5 = for {
+  val res4 = for {
     inv1 <- testProcessorApp.processCommand(FindAll(approver, testBasicPermissionsRetriever))
+  } yield inv1
+  println(s"res4: $res4")
+
+  val res5 = for {
+    inv1 <- testProcessorApp.processCommand(FindAllEntities(approver, testBasicPermissionsRetriever))
   } yield inv1
   println(s"res5: $res5")
 

@@ -24,8 +24,8 @@ trait InvoiceCreateCommand[F[_]]
     input.invoiceRepo
 }
 
-trait InvoiceQueryCommand[F[_], R]
-  extends EntityQueryCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, R, InvoiceRepo[F], InvoiceUserPermissions, InvoiceAction] {
+trait InvoiceEntityQueryCommand[F[_]]
+  extends EntityQueryCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceRepo[F], InvoiceUserPermissions, InvoiceAction] {
   override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
 
   override def extractActionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
