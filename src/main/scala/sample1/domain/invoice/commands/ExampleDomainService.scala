@@ -17,10 +17,16 @@ object ExampleDomainService {
     override def action(input: DomainCommandInput[F], permissions: InvoiceUserPermissions)
                        (implicit monadF: Monad[F]
                        ): F[Either[InvoiceError, Invoice]] =
-      ExampleDomainService().run(input, permissions)
+      input.service.run(input, permissions)
   }
 
-  final case class ExampleDomainService[F[_]]() {
+  trait ExampleDomainService[F[_]] {
+    def run(input: DomainCommandInput[F], permissions: InvoiceUserPermissions)
+           (implicit monadF: Monad[F]
+           ): F[Either[InvoiceError, Invoice]]
+  }
+
+  final case class ExampleDomainServiceImpl[F[_]]() extends ExampleDomainService[F] {
     def run(input: DomainCommandInput[F], permissions: InvoiceUserPermissions)
            (implicit monadF: Monad[F]): F[Either[InvoiceError, Invoice]] =
       monadF.pure(

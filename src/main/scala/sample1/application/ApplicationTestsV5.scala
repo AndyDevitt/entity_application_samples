@@ -15,7 +15,7 @@ import sample1.domain.invoice.commands.AddCost.AddCostCmd
 import sample1.domain.invoice.commands.Approve.ApproveCmd
 import sample1.domain.invoice.commands.CreateRfiInvoice.CreateRfiInvoiceCmd
 import sample1.domain.invoice.commands.CreateSiteInvoice.CreateSiteInvoiceCmd
-import sample1.domain.invoice.commands.ExampleDomainService.ExampleDomainServiceCmd
+import sample1.domain.invoice.commands.ExampleDomainService.{ExampleDomainServiceCmd, ExampleDomainServiceImpl}
 import sample1.domain.invoice.commands.{FindAll, FindAllEntities}
 import sample1.domain.invoice.mixincommands.{ApproveCmdMixin, ApproveCmdV2Mixin}
 import sample1.domain.permissions._
@@ -158,7 +158,8 @@ object ApplicationTestsV5 extends App {
   //  structure (i.e. deriving from the Codec family of traits). Also, should these simply be explicit parameters?
   val testProcessorApp = new TestApplication(
     new TestInvoiceRepo(invoicePersistenceRepo, invoiceRepoCodecV1),
-    new TestCtaRepo(ctaPersistenceRepo, ctaRepoCodec))
+    new TestCtaRepo(ctaPersistenceRepo, ctaRepoCodec),
+    ExampleDomainServiceImpl())
 
   case class TestInvoiceBasicPermissionRetriever() extends InvoiceBasicPermissionRetriever[Id] {
     override def retrieve(userId: UserId): Id[InvoiceUserPermissions] = userId match {

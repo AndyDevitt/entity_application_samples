@@ -5,6 +5,7 @@ import cats.effect.IO
 import sample1.domain.command.DomainCommandInput
 import sample1.domain.cta.CtaRepo
 import sample1.domain.invoice.InvoiceRepo
+import sample1.domain.invoice.commands.ExampleDomainService.ExampleDomainService
 
 import scala.concurrent.Future
 
@@ -19,7 +20,10 @@ trait InvoiceApplication[F[_], G[_], H[_]] extends EntityApplication[F, G, Domai
 
   def ctaRepo: CtaRepo[G]
 
-  override final val input: DomainCommandInput[G] = new DomainCommandInput[G](invoiceRepo, ctaRepo)
+  def exampleDomainService: ExampleDomainService[G]
+
+  override final val input: DomainCommandInput[G] =
+    new DomainCommandInput[G](invoiceRepo, ctaRepo, exampleDomainService)
 }
 
 /**
@@ -28,7 +32,10 @@ trait InvoiceApplication[F[_], G[_], H[_]] extends EntityApplication[F, G, Domai
   * @param invoiceRepo
   * @param ctaRepo
   */
-class ProdApplication(override val invoiceRepo: InvoiceRepo[IO], override val ctaRepo: CtaRepo[IO]) extends InvoiceApplication[Future, IO, Future]
+class ProdApplication(override val invoiceRepo: InvoiceRepo[IO],
+                      override val ctaRepo: CtaRepo[IO],
+                      override val exampleDomainService: ExampleDomainService[IO])
+  extends InvoiceApplication[Future, IO, Future]
 
 /**
   * An example test repo that simply uses the Id context
@@ -36,4 +43,7 @@ class ProdApplication(override val invoiceRepo: InvoiceRepo[IO], override val ct
   * @param invoiceRepo
   * @param ctaRepo
   */
-class TestApplication(override val invoiceRepo: InvoiceRepo[Id], override val ctaRepo: CtaRepo[Id]) extends InvoiceApplication[Id, Id, Id]
+class TestApplication(override val invoiceRepo: InvoiceRepo[Id],
+                      override val ctaRepo: CtaRepo[Id],
+                      override val exampleDomainService: ExampleDomainService[Id])
+  extends InvoiceApplication[Id, Id, Id]
