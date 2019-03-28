@@ -6,7 +6,6 @@ import cats.{Id, ~>}
 import sample1.application.persistence.clinicaltrialagreement.CtaPersistenceRepo
 import sample1.application.persistence.invoice.InvoicePersistenceRepo
 import sample1.domain._
-import sample1.domain.command.invoicecommands._
 import sample1.domain.command.{CreateCtaCmd, CtaRetrieveCommand, EntityResult}
 import sample1.domain.cta.{ClinicalTrialAgreement, ClinicalTrialAgreementId}
 import sample1.domain.entity.{EntityRepoCodec, Versioned}
@@ -16,6 +15,7 @@ import sample1.domain.invoice.commands.AddCost.AddCostCmd
 import sample1.domain.invoice.commands.Approve.ApproveCmd
 import sample1.domain.invoice.commands.CreateRfiInvoice.CreateRfiInvoiceCmd
 import sample1.domain.invoice.commands.CreateSiteInvoice.CreateSiteInvoiceCmd
+import sample1.domain.invoice.mixincommands.{ApproveCmdMixin, ApproveCmdV2Mixin}
 import sample1.domain.permissions._
 import sample1.domain.shared.DateTime
 import sample1.domain.user.UserId

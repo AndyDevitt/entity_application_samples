@@ -1,10 +1,10 @@
 package sample1.domain.invoice.mixinstatemachine
 
 import sample1.domain.ActionStatus
-import sample1.domain.command.invoicecommands.{ApproveCmdMixin, ApproveCmdV2Mixin, UpdateRfiCmdMixin}
 import sample1.domain.entity.mixinstatemachine.{Actions, EntityCommandProcessorMixin}
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
+import sample1.domain.invoice.mixincommands.{ApproveCmdMixin, ApproveCmdV2Mixin, UpdateRfiCmdMixin}
 import sample1.domain.permissions.{InvoicePermissions, InvoiceUserPermissions}
 
 trait InvoiceBehaviour
