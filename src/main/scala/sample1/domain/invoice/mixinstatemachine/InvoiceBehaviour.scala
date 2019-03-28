@@ -5,10 +5,12 @@ import sample1.domain.entity.mixinstatemachine.{Actions, EntityCommandProcessorM
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice._
 import sample1.domain.invoice.mixincommands.{ApproveCmdMixin, ApproveCmdV2Mixin, UpdateRfiCmdMixin}
+import sample1.domain.invoice.mixinstatemachine.InvoiceBehaviour.MinimumAccessPermissions
 import sample1.domain.permissions.{InvoicePermissions, InvoiceUserPermissions}
 
 trait InvoiceBehaviour
   extends Actions[Invoice, InvoiceAction, InvoiceUserPermissions]
+    with MinimumAccessPermissions
     with InvoiceBehaviour.Approve
     with InvoiceBehaviour.ApproveV2
     with InvoiceBehaviour.UpdateRfi
@@ -32,20 +34,41 @@ object InvoiceBehaviour {
 
   sealed trait BaseInvoiceBehaviour extends InvoiceBehaviour {
     def invoice: Invoice
+
+    override def validateMinimumAccessPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError.AccessDenied, Unit] =
+      for {
+        _ <- Either.cond(permissions.hasReadPermission, (), InvoiceError.AccessDenied())
+      } yield ()
   }
 
   case class SiteInvoiceBehaviour(override val invoice: SiteInvoice)
-    extends BaseInvoiceBehaviour
+    extends BaseInvoiceBehaviour {
+    override def validateMinimumAccessPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError.AccessDenied, Unit] =
+      for {
+        _ <- super.validateMinimumAccessPermissions(permissions)
+        _ <- Either.cond(permissions.has(InvoicePermissions.ReadSiteInvoice), (), InvoiceError.AccessDenied())
+      } yield ()
+  }
 
   //with Implementations.CanApprove
 
   case class SponsorInvoiceBehaviour(override val invoice: SponsorInvoice)
-    extends BaseInvoiceBehaviour
+    extends BaseInvoiceBehaviour {
+    override def validateMinimumAccessPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError.AccessDenied, Unit] =
+      for {
+        _ <- super.validateMinimumAccessPermissions(permissions)
+        _ <- Either.cond(permissions.has(InvoicePermissions.ReadSponsorInvoice), (), InvoiceError.AccessDenied())
+      } yield ()
+  }
 
   trait InvoiceCommandProcessorMixin
     extends EntityCommandProcessorMixin[InvoiceAction, InvoiceError, Invoice, InvoiceUserPermissions] {
     override def notAllowedResult: Either[InvoiceError, Invoice] =
       Left(InvoiceError.ActionNotAllowedInCurrentStatus())
+  }
+
+  trait MinimumAccessPermissions {
+    def validateMinimumAccessPermissions(permissions: InvoiceUserPermissions): Either[InvoiceError.AccessDenied, Unit]
   }
 
   // TODO: Should permissions validation ALWAYS come before any other kind of check? Probably yes...
@@ -92,17 +115,22 @@ object Implementations {
           .build()
       }
 
+    private val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.Approve)
+
     private def validateActionIsAllowed(invoice: Invoice, permissions: InvoiceUserPermissions
                                        ): Either[InvoiceError, SponsorInvoice] =
-      invoice match {
-        case _: SiteInvoice =>
-          Left(InvoiceError.ActionNotAllowedForProcessType())
-        case sponsorInvoice: SponsorInvoice =>
-          for {
-            _ <- Either.cond(permissions.has(InvoicePermissions.Approve), (), InvoiceError.InsufficientPermissions("Approve permission not found for Approve command"))
-            _ <- Either.cond(invoice.costs.nonEmpty, (), InvoiceError.CannotApproveWithoutCosts())
-          } yield sponsorInvoice
-      }
+      for {
+        _ <- validateMinimumAccessPermissions(permissions)
+        sponsorInvoice <- invoice match {
+          case _: SiteInvoice =>
+            Left(InvoiceError.ActionNotAllowedForProcessType())
+          case sponsorInvoice: SponsorInvoice =>
+            for {
+              _ <- Either.cond(permissions.has(InvoicePermissions.Approve), (), InvoiceError.InsufficientPermissions("Approve permission not found for Approve command"))
+              _ <- Either.cond(invoice.costs.nonEmpty, (), InvoiceError.CannotApproveWithoutCosts())
+            } yield sponsorInvoice
+        }
+      } yield sponsorInvoice
 
   }
 

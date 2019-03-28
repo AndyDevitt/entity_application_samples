@@ -36,6 +36,7 @@ object InvoiceAlgebraHelpers {
                             allowedStatuses: Set[InvoiceStatus]
                            ): Either[NotAllowed, Unit] =
     Either.cond(isInOneOfStatus(invoice, allowedStatuses), (), ActionStatus.NotAllowedInCurrentStatus())
+
 }
 
 object InvoiceAlgebra {
