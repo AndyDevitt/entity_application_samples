@@ -11,27 +11,32 @@ import sample1.domain.user.UserId
 object ExampleDomainService {
 
   final case class ExampleDomainServiceCmd[F[_]](userId: UserId,
-                                                 permissionsRetriever: InvoiceBasicPermissionRetriever[F]
+                                                 permissionsRetriever: InvoiceBasicPermissionRetriever[F],
+                                                 flag: Boolean
                                                 ) extends InvoiceDomainServiceCommand[F, Invoice] {
 
     override def action(input: DomainCommandInput[F], permissions: InvoiceUserPermissions)
                        (implicit monadF: Monad[F]
                        ): F[Either[InvoiceError, Invoice]] =
-      input.service.run(input, permissions)
+      input.service.run(input, permissions, this)
   }
 
   trait ExampleDomainService[F[_]] {
-    def run(input: DomainCommandInput[F], permissions: InvoiceUserPermissions)
+    def run(input: DomainCommandInput[F], permissions: InvoiceUserPermissions, cmd: ExampleDomainServiceCmd[F])
            (implicit monadF: Monad[F]
            ): F[Either[InvoiceError, Invoice]]
   }
 
   final case class ExampleDomainServiceImpl[F[_]]() extends ExampleDomainService[F] {
-    def run(input: DomainCommandInput[F], permissions: InvoiceUserPermissions)
+    def run(input: DomainCommandInput[F], permissions: InvoiceUserPermissions, cmd: ExampleDomainServiceCmd[F])
            (implicit monadF: Monad[F]): F[Either[InvoiceError, Invoice]] =
       monadF.pure(
         if (permissions.has(InvoicePermissions.RunDomainServices)) {
-          Right(Invoice.createSiteInvoiceEmpty())
+          if (cmd.flag) {
+            Right(Invoice.createSiteInvoiceEmpty())
+          } else {
+            Left(InvoiceError.CannotRunService())
+          }
         } else {
           Left(InvoiceError.InsufficientPermissions("Not enough permissions to run domain services, sorry"))
         }

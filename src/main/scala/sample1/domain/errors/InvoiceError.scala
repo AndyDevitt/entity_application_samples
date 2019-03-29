@@ -27,6 +27,8 @@ object InvoiceError {
 
   final case class CannotApproveWithoutCosts() extends InvoiceError
 
+  final case class CannotRunService() extends InvoiceError
+
   final case class CannotAddCostsWithDifferentCurrencies() extends InvoiceError
 
   final case class InsufficientPermissions(reason: String) extends PermissionsError

@@ -215,13 +215,18 @@ object ApplicationTestsV5 extends App {
   } yield inv7
   println(s"battle1: $battle1")
 
+  val res1 = for {
+    inv1 <- testProcessorApp.processCommand(ExampleDomainServiceCmd(approver, testBasicPermissionsRetriever, flag = true))
+  } yield inv1
+  println(s"res1: $res1")
+
   val res2 = for {
-    inv1 <- testProcessorApp.processCommand(ExampleDomainServiceCmd(approver, testBasicPermissionsRetriever))
+    inv1 <- testProcessorApp.processCommand(ExampleDomainServiceCmd(approver, testBasicPermissionsRetriever, flag = false))
   } yield inv1
   println(s"res2: $res2")
 
   val res3 = for {
-    inv1 <- testProcessorApp.processCommand(ExampleDomainServiceCmd(standardUser, testBasicPermissionsRetriever))
+    inv1 <- testProcessorApp.processCommand(ExampleDomainServiceCmd(standardUser, testBasicPermissionsRetriever, flag = true))
   } yield inv1
   println(s"res3: $res3")
 
