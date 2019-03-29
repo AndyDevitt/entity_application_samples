@@ -91,7 +91,7 @@ object EntityRepoManager extends GenericRepoManager {
   ActionsBaseType](repo: RepoType)
                   (cmd: CmdType)
                   (implicit monadG: Monad[G], transform: G ~> F
-                  ): F[Either[ErrType, Seq[EntityResult[EntType, PermissionsType, ActionsBaseType]]]] =
+                  ): F[Either[ErrType, List[EntityResult[EntType, PermissionsType, ActionsBaseType]]]] =
     transform((for {
       permissions <- EitherT.right(cmd.permissionsRetriever.retrieve(cmd.userId))
       results <- EitherT(cmd.query(repo, permissions))

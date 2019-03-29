@@ -255,16 +255,16 @@ EntType <: VersionedEntity[IdType],
 RepoType <: EntityRepo[F, IdType, EntType, ErrType],
 PermissionsType,
 ActionsBaseType]
-  extends EntityCommand[F, InpType, Seq[EntityResult[EntType, PermissionsType, ActionsBaseType]], ErrType, IdType, EntType, PermissionsType, ActionsBaseType] {
+  extends EntityCommand[F, InpType, List[EntityResult[EntType, PermissionsType, ActionsBaseType]], ErrType, IdType, EntType, PermissionsType, ActionsBaseType] {
   def extractRepo(input: InpType): RepoType
 
-  def query(repo: RepoType, permissions: PermissionsType): F[Either[ErrType, Seq[EntType]]]
+  def query(repo: RepoType, permissions: PermissionsType): F[Either[ErrType, List[EntType]]]
 
   def permissionsRetriever: BasicPermissionRetriever[F, PermissionsType]
 
   override def run[G[_]](input: InpType)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, Seq[EntityResult[EntType, PermissionsType, ActionsBaseType]]]] =
+                        ): G[Either[ErrType, List[EntityResult[EntType, PermissionsType, ActionsBaseType]]]] =
     EntityRepoManager.manageEntityQuery[
       G,
       F,

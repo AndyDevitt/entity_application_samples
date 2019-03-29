@@ -101,48 +101,45 @@ object InvoiceStateBuilder {
     * Implicit instances to implement each behaviour trait for valid ADT types. Super-type instances delegate to
     * sub-type instances to guarantee consistent implementation.
     */
-  object Instances {
 
-    implicit val updateLastEditedSite: UpdateLastEdited[SiteInvoice] = (inv, cmd) => inv.copy(lastEditedBy = cmd.userId)
-    implicit val updateLastEditedSponsor: UpdateLastEdited[SponsorInvoice] = (inv, cmd) => inv.copy(lastEditedBy = cmd.userId)
+  implicit val updateLastEditedSite: UpdateLastEdited[SiteInvoice] = (inv, cmd) => inv.copy(lastEditedBy = cmd.userId)
+  implicit val updateLastEditedSponsor: UpdateLastEdited[SponsorInvoice] = (inv, cmd) => inv.copy(lastEditedBy = cmd.userId)
 
-    implicit def updateLastEditedInvoice(implicit siteImpl: UpdateLastEdited[SiteInvoice], sponsorImpl: UpdateLastEdited[SponsorInvoice]): UpdateLastEdited[Invoice] = (inv, cmd) => inv match {
-      case i: SiteInvoice => siteImpl.updateLastEdited(i, cmd)
-      case i: SponsorInvoice => sponsorImpl.updateLastEdited(i, cmd)
-    }
+  implicit def updateLastEditedInvoice(implicit siteImpl: UpdateLastEdited[SiteInvoice], sponsorImpl: UpdateLastEdited[SponsorInvoice]): UpdateLastEdited[Invoice] = (inv, cmd) => inv match {
+    case i: SiteInvoice => siteImpl.updateLastEdited(i, cmd)
+    case i: SponsorInvoice => sponsorImpl.updateLastEdited(i, cmd)
+  }
 
-    implicit val clearCostsSite: ClearCosts[SiteInvoice] = inv => inv.copy(costs = Nil)
-    implicit val clearCostsSponsor: ClearCosts[SponsorInvoice] = inv => inv.copy(costs = Nil)
+  implicit val clearCostsSite: ClearCosts[SiteInvoice] = inv => inv.copy(costs = Nil)
+  implicit val clearCostsSponsor: ClearCosts[SponsorInvoice] = inv => inv.copy(costs = Nil)
 
-    implicit def clearCostsInvoice(implicit siteImpl: ClearCosts[SiteInvoice], sponsorImpl: ClearCosts[SponsorInvoice]): ClearCosts[Invoice] = {
-      case i: SiteInvoice => siteImpl.clearCosts(i)
-      case i: SponsorInvoice => sponsorImpl.clearCosts(i)
-    }
+  implicit def clearCostsInvoice(implicit siteImpl: ClearCosts[SiteInvoice], sponsorImpl: ClearCosts[SponsorInvoice]): ClearCosts[Invoice] = {
+    case i: SiteInvoice => siteImpl.clearCosts(i)
+    case i: SponsorInvoice => sponsorImpl.clearCosts(i)
+  }
 
-    implicit val setStatusSite: SetStatus[SiteInvoice] = (inv, status) => inv.copy(status = status)
-    implicit val setStatusSponsor: SetStatus[SponsorInvoice] = (inv, status) => inv.copy(status = status)
+  implicit val setStatusSite: SetStatus[SiteInvoice] = (inv, status) => inv.copy(status = status)
+  implicit val setStatusSponsor: SetStatus[SponsorInvoice] = (inv, status) => inv.copy(status = status)
 
-    implicit def setStatusInvoice(implicit siteImpl: SetStatus[SiteInvoice], sponsorImpl: SetStatus[SponsorInvoice]): SetStatus[Invoice] = (inv, status) => inv match {
-      case i: SiteInvoice => siteImpl.setStatus(i, status)
-      case i: SponsorInvoice => sponsorImpl.setStatus(i, status)
-    }
+  implicit def setStatusInvoice(implicit siteImpl: SetStatus[SiteInvoice], sponsorImpl: SetStatus[SponsorInvoice]): SetStatus[Invoice] = (inv, status) => inv match {
+    case i: SiteInvoice => siteImpl.setStatus(i, status)
+    case i: SponsorInvoice => sponsorImpl.setStatus(i, status)
+  }
 
-    implicit val updateRfiSponsor: UpdateRfi[SponsorInvoice] = (inv, rfi) => inv.copy(rfi = rfi)
+  implicit val updateRfiSponsor: UpdateRfi[SponsorInvoice] = (inv, rfi) => inv.copy(rfi = rfi)
 
-    implicit val addCostSite: AddCost[SiteInvoice] = (inv, cost) => Right(inv.copy(costs = inv.costs :+ cost))
-    implicit val addCostSponsor: AddCost[SponsorInvoice] = (inv, cost) => Right(inv.copy(costs = inv.costs :+ cost))
+  implicit val addCostSite: AddCost[SiteInvoice] = (inv, cost) => Right(inv.copy(costs = inv.costs :+ cost))
+  implicit val addCostSponsor: AddCost[SponsorInvoice] = (inv, cost) => Right(inv.copy(costs = inv.costs :+ cost))
 
-    implicit def addCostInvoice(implicit siteImpl: AddCost[SiteInvoice], sponsorImpl: AddCost[SponsorInvoice]): AddCost[Invoice] = (inv, cost) => inv match {
-      case i: SiteInvoice => siteImpl.addCost(i, cost)
-      case i: SponsorInvoice => sponsorImpl.addCost(i, cost)
-    }
+  implicit def addCostInvoice(implicit siteImpl: AddCost[SiteInvoice], sponsorImpl: AddCost[SponsorInvoice]): AddCost[Invoice] = (inv, cost) => inv match {
+    case i: SiteInvoice => siteImpl.addCost(i, cost)
+    case i: SponsorInvoice => sponsorImpl.addCost(i, cost)
   }
 
 }
 
 object InvoiceStateBuilderTest {
 
-  import InvoiceStateBuilder.Instances._
   import InvoiceStateBuilder._
 
   val testEntityPermissionsRetriever = TestInvoiceEntityPermissionRetriever()

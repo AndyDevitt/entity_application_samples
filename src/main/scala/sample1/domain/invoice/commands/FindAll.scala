@@ -8,9 +8,9 @@ import sample1.domain.user.UserId
 
 final case class FindAll[F[_]](userId: UserId,
                                permissionsRetriever: InvoiceBasicPermissionRetriever[F]
-                              ) extends InvoiceGenericQueryCommand[F, Seq[Invoice]] {
+                              ) extends InvoiceGenericQueryCommand[F, List[Invoice]] {
   override def query(repo: InvoiceRepo[F],
                      permissions: InvoiceUserPermissions
-                    ): F[Either[InvoiceError, Seq[Invoice]]] =
+                    ): F[Either[InvoiceError, List[Invoice]]] =
     repo.find()
 }

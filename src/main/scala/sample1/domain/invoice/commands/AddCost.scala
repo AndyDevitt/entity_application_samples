@@ -4,7 +4,7 @@ import sample1.domain.command.invoicecommands.InvoiceUpdateCommand
 import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceAlgebraHelpers._
-import sample1.domain.invoice.InvoiceStateBuilder.Instances._
+import sample1.domain.invoice.InvoiceStatus.{Assigned, Draft, NotApproved}
 import sample1.domain.invoice._
 import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
@@ -29,7 +29,7 @@ object AddCost {
   final case class AddCostCmdProcessor[F[_]]()
     extends InvoiceEntityCommandProcessor[F, SponsorInvoice, InvoiceAction.AddCost.type, AddCostCmd[F]] {
 
-    val allowedStatuses: Set[InvoiceStatus] = Set(NotApproved)
+    val allowedStatuses: Set[InvoiceStatus] = Set(Draft, Assigned, NotApproved)
     val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.Read, InvoicePermissions.AddCost)
 
     override def canDo(invoice: Invoice, action: InvoiceAction.AddCost.type, permissions: InvoiceUserPermissions

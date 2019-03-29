@@ -13,9 +13,13 @@ import sample1.domain.errors.{CtaError, InvoiceError}
 import sample1.domain.invoice._
 import sample1.domain.invoice.commands.AddCost.AddCostCmd
 import sample1.domain.invoice.commands.Approve.ApproveCmd
+import sample1.domain.invoice.commands.AssignToPayee.AssignToPayeeCmd
+import sample1.domain.invoice.commands.CreateDraftRfiInvoice.CreateDraftRfiInvoice
 import sample1.domain.invoice.commands.CreateRfiInvoice.CreateRfiInvoiceCmd
 import sample1.domain.invoice.commands.CreateSiteInvoice.CreateSiteInvoiceCmd
 import sample1.domain.invoice.commands.ExampleDomainService.{ExampleDomainServiceCmd, ExampleDomainServiceImpl}
+import sample1.domain.invoice.commands.MarkAsReadyToSend.MarkAsReadyToSendCmd
+import sample1.domain.invoice.commands.Withdraw.WithdrawCmd
 import sample1.domain.invoice.commands.{FindAll, FindAllEntities}
 import sample1.domain.invoice.mixincommands.{ApproveCmdMixin, ApproveCmdV2Mixin}
 import sample1.domain.permissions._
@@ -199,6 +203,17 @@ object ApplicationTestsV5 extends App {
 
   val testCtaBasicPermissionsRetriever = TestCtaBasicPermissionRetriever()
   val testCtaEntityPermissionsRetriever = TestCtaEntityPermissionRetriever()
+
+  val battle1 = for {
+    inv1 <- testProcessorApp.processCommand(CreateDraftRfiInvoice(approver, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(AssignToPayeeCmd(approver, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
+    inv3 <- testProcessorApp.processCommand(WithdrawCmd(approver, inv2.entity.id, inv2.entity.version, testEntityPermissionsRetriever))
+    inv4 <- testProcessorApp.processCommand(AddCostCmd(approver, inv3.entity.id, inv3.entity.version, testEntityPermissionsRetriever, cost1usd))
+    inv5 <- testProcessorApp.processCommand(AssignToPayeeCmd(approver, inv4.entity.id, inv4.entity.version, testEntityPermissionsRetriever))
+    inv6 <- testProcessorApp.processCommand(AddCostCmd(approver, inv5.entity.id, inv5.entity.version, testEntityPermissionsRetriever, cost2usd))
+    inv7 <- testProcessorApp.processCommand(MarkAsReadyToSendCmd(approver, inv6.entity.id, inv6.entity.version, testEntityPermissionsRetriever))
+  } yield inv7
+  println(s"battle1: $battle1")
 
   val res2 = for {
     inv1 <- testProcessorApp.processCommand(ExampleDomainServiceCmd(approver, testBasicPermissionsRetriever))

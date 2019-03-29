@@ -11,6 +11,6 @@ final case class FindAllEntities[F[_]](userId: UserId,
                                       ) extends InvoiceEntityQueryCommand[F] {
   override def query(repo: InvoiceRepo[F],
                      permissions: InvoiceUserPermissions
-                    ): F[Either[InvoiceError, Seq[Invoice]]] =
+                    ): F[Either[InvoiceError, List[Invoice]]] =
     repo.find()
 }

@@ -3,6 +3,7 @@ package sample1.domain.invoice.mixinstatemachine
 import sample1.domain.ActionStatus
 import sample1.domain.entity.mixinstatemachine.{Actions, EntityCommandProcessorMixin}
 import sample1.domain.errors.InvoiceError
+import sample1.domain.invoice.InvoiceStatus._
 import sample1.domain.invoice._
 import sample1.domain.invoice.mixincommands.{ApproveCmdMixin, ApproveCmdV2Mixin, UpdateRfiCmdMixin}
 import sample1.domain.invoice.mixinstatemachine.InvoiceBehaviour.MinimumAccessPermissions
@@ -23,11 +24,23 @@ object InvoiceBehaviour {
         new SiteInvoiceBehaviour(siteInvoice) // with Implementations.CanApprove
       case Approved =>
         SiteInvoiceBehaviour(siteInvoice)
+      case Draft =>
+        SiteInvoiceBehaviour(siteInvoice)
+      case Assigned =>
+        SiteInvoiceBehaviour(siteInvoice)
+      case ReadyToSend =>
+        SiteInvoiceBehaviour(siteInvoice)
     }
     case sponsorInvoice: SponsorInvoice => sponsorInvoice.status match {
       case NotApproved =>
         new SponsorInvoiceBehaviour(sponsorInvoice) with Implementations.CanApprove
       case Approved =>
+        SponsorInvoiceBehaviour(sponsorInvoice)
+      case Draft =>
+        SponsorInvoiceBehaviour(sponsorInvoice)
+      case Assigned =>
+        SponsorInvoiceBehaviour(sponsorInvoice)
+      case ReadyToSend =>
         SponsorInvoiceBehaviour(sponsorInvoice)
     }
   }
@@ -95,8 +108,6 @@ object InvoiceBehaviour {
 }
 
 object Implementations {
-
-  import InvoiceStateBuilder.Instances._
 
   trait CanApprove extends InvoiceBehaviour.Approve {
 

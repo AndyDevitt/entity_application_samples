@@ -3,6 +3,8 @@ package sample1.domain.invoice
 import sample1.domain.Cost
 import sample1.domain.entity.{EntityVersion, VersionedEntity}
 import sample1.domain.errors.InvoiceError
+import sample1.domain.invoice.InvoiceStatus.{Draft, NotApproved}
+import sample1.domain.invoice.commands.CreateDraftRfiInvoice.CreateDraftRfiInvoice
 import sample1.domain.invoice.commands.CreateRfiInvoice.CreateRfiInvoiceCmd
 import sample1.domain.invoice.commands.CreateSiteInvoice.CreateSiteInvoiceCmd
 import sample1.domain.permissions.InvoiceUserPermissions
@@ -34,6 +36,12 @@ object Invoice {
                              permissions: InvoiceUserPermissions): Either[InvoiceError, SponsorInvoice] =
     Either.cond(permissions.hasCreatePermission,
       SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, NotApproved, Nil, RequestForInvoice()),
+      InvoiceError.InsufficientPermissions("Create permission not found for update command"))
+
+  def createDraftRfiInvoice[F[_]](cmd: CreateDraftRfiInvoice[F],
+                                  permissions: InvoiceUserPermissions): Either[InvoiceError, SponsorInvoice] =
+    Either.cond(permissions.hasCreatePermission,
+      SponsorInvoice(InvoiceId(), EntityVersion(), cmd.userId, Draft, Nil, RequestForInvoice()),
       InvoiceError.InsufficientPermissions("Create permission not found for update command"))
 
 

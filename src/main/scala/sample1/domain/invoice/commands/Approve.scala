@@ -6,7 +6,7 @@ import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceAlgebra.calculateTotal
 import sample1.domain.invoice.InvoiceAlgebraHelpers._
-import sample1.domain.invoice.InvoiceStateBuilder.Instances._
+import sample1.domain.invoice.InvoiceStatus.{Approved, NotApproved}
 import sample1.domain.invoice._
 import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
