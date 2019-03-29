@@ -5,9 +5,8 @@ import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceStatus.Assigned
 import sample1.domain.invoice._
-import sample1.domain.permissions.{EntityPermissionsRetriever, InvoiceUserPermissions}
+import sample1.domain.permissions.{EntityPermissionsRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
-import sample1.domain.{ActionStatus, NotAllowed}
 
 object MarkAsReadyToSend {
 
@@ -23,15 +22,10 @@ object MarkAsReadyToSend {
   }
 
   final case class MarkAsReadyToSendCmdProcessor[F[_]]()
-    extends InvoiceEntityCommandProcessor[F, Invoice, InvoiceAction.MarkAsReadyToSend.type, MarkAsReadyToSendCmd[F]] {
+    extends InvoiceCommandProcessor[F, InvoiceAction.MarkAsReadyToSend.type, MarkAsReadyToSendCmd[F]] {
 
-    val allowedStatuses: Set[InvoiceStatus] = Set(Assigned)
-
-    override protected def canDo(entity: Invoice,
-                                 action: InvoiceAction.MarkAsReadyToSend.type,
-                                 permissions: InvoiceUserPermissions
-                                ): Either[NotAllowed, Invoice] =
-      Either.cond(allowedStatuses.contains(entity.status), entity, ActionStatus.NotAllowedInCurrentStatus())
+    override val allowedStatuses: Set[InvoiceStatus] = Set(Assigned)
+    override val requiredPermissions: Set[InvoicePermissions] = Set()
 
     override protected def action(entity: Invoice, cmd: MarkAsReadyToSendCmd[F], permissions: InvoiceUserPermissions
                                  ): Either[InvoiceError, Invoice] =

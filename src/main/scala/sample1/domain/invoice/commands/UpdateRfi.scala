@@ -5,7 +5,7 @@ import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceStatus.{Approved, NotApproved}
 import sample1.domain.invoice._
-import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoiceUserPermissions}
+import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
 import sample1.domain.{ActionStatus, NotAllowed}
 
@@ -23,15 +23,19 @@ object UpdateRfi {
   }
 
   final case class UpdateRfiCmdProcessor[F[_]]()
-    extends InvoiceEntityCommandProcessor[F, Invoice, InvoiceAction.UpdateRfi.type, UpdateRfiCmd[F]] {
-    override def canDo(entity: Invoice,
-                       action: InvoiceAction.UpdateRfi.type,
-                       permissions: InvoiceUserPermissions
-                      ): Either[NotAllowed, Invoice] = entity match {
-      case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
-      case _: SponsorInvoice => Left(ActionStatus.NotAllowedInCurrentStatus())
-      case _: SiteInvoice => Left(ActionStatus.NotAllowedForProcessType())
-    }
+    extends InvoiceCommandProcessor[F, InvoiceAction.UpdateRfi.type, UpdateRfiCmd[F]] {
+//    override def canDo(entity: Invoice,
+//                       action: InvoiceAction.UpdateRfi.type,
+//                       permissions: InvoiceUserPermissions
+//                      ): Either[NotAllowed, Invoice] = entity match {
+//      case si: SponsorInvoice if Set(NotApproved).exists(_ == si.status) => Right(si)
+//      case _: SponsorInvoice => Left(ActionStatus.NotAllowedInCurrentStatus())
+//      case _: SiteInvoice => Left(ActionStatus.NotAllowedForProcessType())
+//    }
+
+    override protected def requiredPermissions: Set[InvoicePermissions] = Set()
+
+    override protected def allowedStatuses: Set[InvoiceStatus] = Set(NotApproved)
 
     override protected def action(entity: Invoice,
                                   cmd: UpdateRfiCmd[F],
@@ -42,6 +46,7 @@ object UpdateRfi {
         .setStatus(Approved)
         .updateLastEdited(cmd)
         .build()
+
   }
 
 }

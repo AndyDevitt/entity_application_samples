@@ -5,7 +5,6 @@ import sample1.domain.command.invoicecommands.InvoiceUpdateCommand
 import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceAlgebra.calculateTotal
-import sample1.domain.invoice.InvoiceAlgebraHelpers._
 import sample1.domain.invoice.InvoiceStatus.{Approved, NotApproved}
 import sample1.domain.invoice._
 import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
@@ -29,18 +28,16 @@ object Approve {
   //  cannot approve an invoice over a certain amount). Use this to add some common comparison behaviour to permissions
   //  possibly..
   final case class ApproveCmdProcessor[F[_]]()
-    extends InvoiceEntityCommandProcessor[F, Invoice, InvoiceAction.Approve.type, ApproveCmd[F]] {
+    extends InvoiceCommandProcessor[F, InvoiceAction.Approve.type, ApproveCmd[F]] {
 
-    val allowedStatuses: Set[InvoiceStatus] = Set(NotApproved)
-    val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.Read, InvoicePermissions.Approve)
+    override val allowedStatuses: Set[InvoiceStatus] = Set(NotApproved)
+    override val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.Read, InvoicePermissions.Approve)
 
     override protected def canDo(entity: Invoice,
                                  action: InvoiceAction.Approve.type,
                                  permissions: InvoiceUserPermissions
                                 ): Either[NotAllowed, Invoice] =
       for {
-        _ <- validateRequiredPermissions(permissions, requiredPermissions)
-        _ <- validateAllowedStatus(entity, allowedStatuses)
         limit <- Either.fromOption(
           permissions.approvalLimit.map(_.limit),
           ActionStatus.NotEnoughPermissions("No approval limit found"))

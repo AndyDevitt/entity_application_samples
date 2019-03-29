@@ -1,7 +1,7 @@
 package sample1.domain.invoice
 
 import sample1.domain.Cost
-import sample1.domain.entity.{EntityVersion, VersionedEntity}
+import sample1.domain.entity.{EntityVersion, VersionedEntityWithStatus}
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceStatus.{Draft, NotApproved}
 import sample1.domain.invoice.commands.CreateDraftRfiInvoice.CreateDraftRfiInvoice
@@ -10,7 +10,7 @@ import sample1.domain.invoice.commands.CreateSiteInvoice.CreateSiteInvoiceCmd
 import sample1.domain.permissions.InvoiceUserPermissions
 import sample1.domain.user.UserId
 
-trait Invoice extends VersionedEntity[InvoiceId] {
+trait Invoice extends VersionedEntityWithStatus[InvoiceId, InvoiceStatus] {
   def status: InvoiceStatus
 
   def costs: List[Cost]
