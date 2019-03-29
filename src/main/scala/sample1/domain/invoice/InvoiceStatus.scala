@@ -14,4 +14,6 @@ object InvoiceStatus {
 
   case object NotApproved extends InvoiceStatus
 
+  case object Sent extends InvoiceStatus
+
 }

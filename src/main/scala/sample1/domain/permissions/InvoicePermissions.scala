@@ -30,6 +30,8 @@ object InvoicePermissions {
 
   final case object RunDomainServices extends InvoicePermissions
 
+  final case object Send extends InvoicePermissions
+
 }
 
 final case class InvoiceUserPermissions(permissions: Set[InvoicePermissions]) extends EntityPermissions[InvoicePermissions] {

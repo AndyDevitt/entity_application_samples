@@ -19,6 +19,7 @@ import sample1.domain.invoice.commands.CreateRfiInvoice.CreateRfiInvoiceCmd
 import sample1.domain.invoice.commands.CreateSiteInvoice.CreateSiteInvoiceCmd
 import sample1.domain.invoice.commands.ExampleDomainService.{ExampleDomainServiceCmd, ExampleDomainServiceImpl}
 import sample1.domain.invoice.commands.MarkAsReadyToSend.MarkAsReadyToSendCmd
+import sample1.domain.invoice.commands.Send.SendCmd
 import sample1.domain.invoice.commands.Withdraw.WithdrawCmd
 import sample1.domain.invoice.commands.{FindAll, FindAllEntities}
 import sample1.domain.invoice.mixincommands.{ApproveCmdMixin, ApproveCmdV2Mixin}
@@ -130,6 +131,7 @@ object ApplicationTestsV5 extends App {
     InvoicePermissions.ReadSponsorInvoice,
     InvoicePermissions.AddCost,
     InvoicePermissions.Approve,
+    InvoicePermissions.Send,
     InvoicePermissions.AssignToPayee,
     InvoicePermissions.MarkReadyToSend,
     InvoicePermissions.Withdraw,
@@ -218,7 +220,8 @@ object ApplicationTestsV5 extends App {
     inv5 <- testProcessorApp.processCommand(AssignToPayeeCmd(approver, inv4.entity.id, inv4.entity.version, testEntityPermissionsRetriever))
     inv6 <- testProcessorApp.processCommand(AddCostCmd(approver, inv5.entity.id, inv5.entity.version, testEntityPermissionsRetriever, cost2usd))
     inv7 <- testProcessorApp.processCommand(MarkAsReadyToSendCmd(approver, inv6.entity.id, inv6.entity.version, testEntityPermissionsRetriever))
-  } yield inv7
+    inv8 <- testProcessorApp.processCommand(SendCmd(approver, inv7.entity.id, inv7.entity.version, testEntityPermissionsRetriever))
+  } yield inv8
   println(s"battle1: $battle1_happyPath")
 
   val battle2_permissionsCheck = for {

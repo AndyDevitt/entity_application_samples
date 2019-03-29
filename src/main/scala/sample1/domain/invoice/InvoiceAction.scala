@@ -16,4 +16,6 @@ object InvoiceAction {
 
   case object AddCost extends InvoiceAction
 
+  case object Send extends InvoiceAction
+
 }

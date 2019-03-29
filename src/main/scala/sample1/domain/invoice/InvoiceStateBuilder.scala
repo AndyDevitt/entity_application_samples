@@ -160,7 +160,7 @@ object InvoiceStateBuilderTest {
   val updatedSite: SiteInvoice = siteInv
     .clearCosts()
     // The following line will not compile since there is no implementation for UpdateRfi[SiteInvoice]
-    // .updateRfi(RequestForInvoice())
+    //.updateRfi(RequestForInvoice())
     .updateLastEdited(cmd)
     .build()
 
