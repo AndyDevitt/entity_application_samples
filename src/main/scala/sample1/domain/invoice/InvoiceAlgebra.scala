@@ -6,39 +6,6 @@ import sample1.domain.invoice.commands._
 import sample1.domain.permissions.{InvoicePermissions, InvoiceUserPermissions}
 import sample1.utils.ReduceOptionWithFailure._
 
-
-object InvoiceAlgebraHelpers {
-
-  def isInOneOfStatus(invoice: Invoice, statuses: Set[InvoiceStatus]): Boolean =
-    statuses.contains(invoice.status)
-
-  def validateSiteInvoice(invoice: Invoice): Either[NotAllowed, SiteInvoice] =
-    invoice match {
-      case i: SiteInvoice => Right(i)
-      case _: SponsorInvoice => Left(ActionStatus.NotAllowedForProcessType())
-    }
-
-  def validateSponsorInvoice(invoice: Invoice): Either[NotAllowed, SponsorInvoice] =
-    invoice match {
-      case i: SponsorInvoice => Right(i)
-      case _: SiteInvoice => Left(ActionStatus.NotAllowedForProcessType())
-    }
-
-  def validateRequiredPermissions(permissions: InvoiceUserPermissions,
-                                  requiredPermissions: Set[InvoicePermissions]
-                                 ): Either[ActionStatus.NotEnoughPermissions, Unit] =
-    Either.cond(
-      permissions.hasAll(requiredPermissions),
-      (),
-      ActionStatus.NotEnoughPermissions(s"Not all permissions are present ($requiredPermissions)"))
-
-  def validateAllowedStatus(invoice: Invoice,
-                            allowedStatuses: Set[InvoiceStatus]
-                           ): Either[NotAllowed, Unit] =
-    Either.cond(isInOneOfStatus(invoice, allowedStatuses), (), ActionStatus.NotAllowedInCurrentStatus())
-
-}
-
 object InvoiceAlgebra {
 
   def minimumAccessPermissionsCheck(invoice: Invoice, permissions: InvoiceUserPermissions
