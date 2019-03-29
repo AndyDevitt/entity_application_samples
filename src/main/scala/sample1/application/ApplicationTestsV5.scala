@@ -115,7 +115,10 @@ object ApplicationTestsV5 extends App {
     InvoicePermissions.AddCost,
     InvoicePermissions.ReadSiteInvoice,
     InvoicePermissions.ReadSponsorInvoice,
-    InvoicePermissions.Create))
+    InvoicePermissions.AssignToPayee,
+    InvoicePermissions.Withdraw,
+    InvoicePermissions.Create
+  ))
 
   val standardUserCtaPermissions = CtaUserPermissions(Set(
     CtaPermissions.Read,
@@ -127,6 +130,9 @@ object ApplicationTestsV5 extends App {
     InvoicePermissions.ReadSponsorInvoice,
     InvoicePermissions.AddCost,
     InvoicePermissions.Approve,
+    InvoicePermissions.AssignToPayee,
+    InvoicePermissions.MarkReadyToSend,
+    InvoicePermissions.Withdraw,
     InvoicePermissions.RunDomainServices,
     InvoicePermissions.Create))
 
@@ -204,7 +210,7 @@ object ApplicationTestsV5 extends App {
   val testCtaBasicPermissionsRetriever = TestCtaBasicPermissionRetriever()
   val testCtaEntityPermissionsRetriever = TestCtaEntityPermissionRetriever()
 
-  val battle1 = for {
+  val battle1_happyPath = for {
     inv1 <- testProcessorApp.processCommand(CreateDraftRfiInvoice(approver, testBasicPermissionsRetriever))
     inv2 <- testProcessorApp.processCommand(AssignToPayeeCmd(approver, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
     inv3 <- testProcessorApp.processCommand(WithdrawCmd(approver, inv2.entity.id, inv2.entity.version, testEntityPermissionsRetriever))
@@ -213,7 +219,26 @@ object ApplicationTestsV5 extends App {
     inv6 <- testProcessorApp.processCommand(AddCostCmd(approver, inv5.entity.id, inv5.entity.version, testEntityPermissionsRetriever, cost2usd))
     inv7 <- testProcessorApp.processCommand(MarkAsReadyToSendCmd(approver, inv6.entity.id, inv6.entity.version, testEntityPermissionsRetriever))
   } yield inv7
-  println(s"battle1: $battle1")
+  println(s"battle1: $battle1_happyPath")
+
+  val battle2_permissionsCheck = for {
+    inv1 <- testProcessorApp.processCommand(CreateDraftRfiInvoice(standardUser, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(AssignToPayeeCmd(standardUser, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
+    inv3 <- testProcessorApp.processCommand(WithdrawCmd(standardUser, inv2.entity.id, inv2.entity.version, testEntityPermissionsRetriever))
+    inv4 <- testProcessorApp.processCommand(AddCostCmd(standardUser, inv3.entity.id, inv3.entity.version, testEntityPermissionsRetriever, cost1usd))
+    inv5 <- testProcessorApp.processCommand(AssignToPayeeCmd(standardUser, inv4.entity.id, inv4.entity.version, testEntityPermissionsRetriever))
+    inv6 <- testProcessorApp.processCommand(AddCostCmd(standardUser, inv5.entity.id, inv5.entity.version, testEntityPermissionsRetriever, cost2usd))
+    inv7 <- testProcessorApp.processCommand(MarkAsReadyToSendCmd(standardUser, inv6.entity.id, inv6.entity.version, testEntityPermissionsRetriever))
+  } yield inv7
+  println(s"battle2: $battle2_permissionsCheck")
+
+  val battle3_withdrawCheck = for {
+    inv1 <- testProcessorApp.processCommand(CreateDraftRfiInvoice(standardUser, testBasicPermissionsRetriever))
+    inv2 <- testProcessorApp.processCommand(AssignToPayeeCmd(approver, inv1.entity.id, inv1.entity.version, testEntityPermissionsRetriever))
+    inv3 <- testProcessorApp.processCommand(AddCostCmd(approver, inv2.entity.id, inv2.entity.version, testEntityPermissionsRetriever, cost2usd))
+    inv4 <- testProcessorApp.processCommand(WithdrawCmd(approver, inv3.entity.id, inv3.entity.version, testEntityPermissionsRetriever))
+  } yield inv4
+  println(s"battle3: $battle3_withdrawCheck")
 
   val res1 = for {
     inv1 <- testProcessorApp.processCommand(ExampleDomainServiceCmd(approver, testBasicPermissionsRetriever, flag = true))

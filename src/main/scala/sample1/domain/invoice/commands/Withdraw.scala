@@ -27,7 +27,7 @@ object Withdraw {
     extends InvoiceCommandProcessor[F, InvoiceAction.Withdraw.type, WithdrawCmd[F]] {
 
     override val allowedStatuses: Set[InvoiceStatus] = Set(Assigned)
-    override val requiredPermissions: Set[InvoicePermissions] = Set()
+    override val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.Withdraw)
 
     override protected def canDo(entity: Invoice,
                                  action: InvoiceAction.Withdraw.type,
@@ -35,7 +35,7 @@ object Withdraw {
                                 ): Either[NotAllowed, Invoice] =
       for {
         _ <- Either.cond(entity.costs.isEmpty, (), ActionStatus.NotAllowedInCurrentState(
-          "Cannot withdraw with associated costs"))
+          "Cannot withdraw when costs are associated"))
       } yield entity
 
     override protected def action(entity: Invoice,

@@ -25,7 +25,7 @@ object MarkAsReadyToSend {
     extends InvoiceCommandProcessor[F, InvoiceAction.MarkAsReadyToSend.type, MarkAsReadyToSendCmd[F]] {
 
     override val allowedStatuses: Set[InvoiceStatus] = Set(Assigned)
-    override val requiredPermissions: Set[InvoicePermissions] = Set()
+    override val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.MarkReadyToSend)
 
     override protected def action(entity: Invoice, cmd: MarkAsReadyToSendCmd[F], permissions: InvoiceUserPermissions
                                  ): Either[InvoiceError, Invoice] =

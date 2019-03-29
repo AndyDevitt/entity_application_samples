@@ -29,7 +29,7 @@ EntityStatusType] {
 
   private def commonChecks(entity: EntType, action: ActionType, permissions: UserPermissionsType): Either[NotAllowed, EntSubType] =
     minimumAccessPermissionsCheck(entity, permissions)
-      .flatMap(_ => checkRequiredPermissions(entity, permissions))
+      .flatMap(_ => checkRequiredPermissions(entity, action, permissions))
       .flatMap(_ => checkAllowedStatus(entity))
       .flatMap(_ => canDo(entity, action, permissions))
 
@@ -46,13 +46,12 @@ EntityStatusType] {
 
   protected def allowedStatuses: Set[EntityStatusType]
 
-  protected def checkRequiredPermissions(entity: EntType, permissions: UserPermissionsType): Either[NotAllowed, Unit] =
+  protected def checkRequiredPermissions(entity: EntType, action: ActionType, permissions: UserPermissionsType): Either[NotAllowed, Unit] =
     Either.cond(permissions.hasAll(requiredPermissions), (), ActionStatus.NotEnoughPermissions(
-      s"User does not have sufficient permissions to perform the action, required: $requiredPermissions"))
+      s"User does not have sufficient permissions to perform the action '${action.toString}', required: $requiredPermissions"))
 
   protected def checkAllowedStatus(entity: EntType): Either[NotAllowed, Unit] =
-    Either.cond(allowedStatuses.contains(entity.status), (), ActionStatus.NotEnoughPermissions(
-      s"User does not have sufficient permissions to perform the action, required: $requiredPermissions"))
+    Either.cond(allowedStatuses.contains(entity.status), (), ActionStatus.NotAllowedInCurrentStatus())
 
   protected def downCaster(entity: EntType): Either[NotAllowed, EntSubType]
 

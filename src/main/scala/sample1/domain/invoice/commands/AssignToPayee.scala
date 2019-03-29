@@ -25,7 +25,7 @@ object AssignToPayee {
     extends InvoiceCommandProcessor[F, InvoiceAction.AssignToPayee.type, AssignToPayeeCmd[F]] {
 
     override val allowedStatuses: Set[InvoiceStatus] = Set(Draft)
-    override val requiredPermissions: Set[InvoicePermissions] = Set()
+    override val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.AssignToPayee)
 
     override protected def action(entity: Invoice, cmd: AssignToPayeeCmd[F], permissions: InvoiceUserPermissions
                                  ): Either[InvoiceError, Invoice] =

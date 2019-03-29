@@ -16,6 +16,12 @@ object InvoicePermissions {
 
   final case object Approve extends InvoicePermissions
 
+  final case object AssignToPayee extends InvoicePermissions
+
+  final case object Withdraw extends InvoicePermissions
+
+  final case object MarkReadyToSend extends InvoicePermissions
+
   final case object Reject extends InvoicePermissions
 
   final case object AddCost extends InvoicePermissions
