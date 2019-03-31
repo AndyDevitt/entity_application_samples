@@ -33,9 +33,9 @@ object Approve {
     override val allowedStatuses: Set[InvoiceStatus] = Set(NotApproved)
     override val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.Read, InvoicePermissions.Approve)
 
-    override protected def canDo(entity: Invoice,
-                                 action: InvoiceAction.Approve.type,
-                                 permissions: InvoiceUserPermissions
+    override protected def checkAdditionalRequirements(entity: Invoice,
+                                                       action: InvoiceAction.Approve.type,
+                                                       permissions: InvoiceUserPermissions
                                 ): Either[NotAllowed, Invoice] =
       for {
         limit <- Either.fromOption(

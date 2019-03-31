@@ -29,9 +29,9 @@ object Withdraw {
     override val allowedStatuses: Set[InvoiceStatus] = Set(Assigned)
     override val requiredPermissions: Set[InvoicePermissions] = Set(InvoicePermissions.Withdraw)
 
-    override protected def canDo(entity: Invoice,
-                                 action: InvoiceAction.Withdraw.type,
-                                 permissions: InvoiceUserPermissions
+    override protected def checkAdditionalRequirements(entity: Invoice,
+                                                       action: InvoiceAction.Withdraw.type,
+                                                       permissions: InvoiceUserPermissions
                                 ): Either[NotAllowed, Invoice] =
       for {
         _ <- Either.cond(entity.costs.isEmpty, (), ActionStatus.NotAllowedInCurrentState(
