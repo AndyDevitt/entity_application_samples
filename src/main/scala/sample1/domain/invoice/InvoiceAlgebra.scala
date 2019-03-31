@@ -18,8 +18,45 @@ object InvoiceAlgebra {
       }
     } yield ()
 
-  def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
+  def actionStatuses_old(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     EnumerableAdt[InvoiceAction].map(action => (action, actionStatus(invoice, action, permissions)))
+
+  sealed trait MyActions
+
+  case object Action1 extends MyActions
+
+  case object Action2 extends MyActions
+
+  implicit val action1Resolver: RetrieveActionStatus[Action1.type, Invoice, InvoiceUserPermissions] =
+    (action: Action1.type, entity: Invoice, permissions: InvoiceUserPermissions) => ???
+
+  implicit val action2Resolver: RetrieveActionStatus[Action2.type, Invoice, InvoiceUserPermissions] =
+    (action: Action2.type, entity: Invoice, permissions: InvoiceUserPermissions) => ???
+
+  //  implicit def actionStatusEnumerator[C<:Coproduct](implicit
+  //                                                    gen: Generic.Aux[MyActions, C],
+  //                                                    allSingletonsVisitor: AllSingletonsVisitor[MyActions, C, Invoice, InvoiceUserPermissions]
+  //                                                   ): ActionStatusEnumerator[MyActions,Invoice,InvoiceUserPermissions] = new ActionStatusEnumerator[MyActions,Invoice,InvoiceUserPermissions] {
+  //    override def actionStatuses(entity: Invoice, permissions: InvoiceUserPermissions): Set[(MyActions, ActionStatus)] = ???
+  //  }
+
+  implicit val sendResolver: RetrieveActionStatus[InvoiceAction.Send.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.Send.type, entity: Invoice, permissions: InvoiceUserPermissions) => (action, Send.SendCmdProcessor().actionStatus(entity, action, permissions))
+  implicit val withdrawResolver: RetrieveActionStatus[InvoiceAction.Withdraw.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.Withdraw.type, entity: Invoice, permissions: InvoiceUserPermissions) => (action, Withdraw.WithdrawCmdProcessor().actionStatus(entity, action, permissions))
+  implicit val assingToPayeeResolver: RetrieveActionStatus[InvoiceAction.AssignToPayee.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.AssignToPayee.type, entity: Invoice, permissions: InvoiceUserPermissions) => (action, AssignToPayee.AssignToPayeeCmdProcessor().actionStatus(entity, action, permissions))
+  implicit val markAsReadyToSendResolver: RetrieveActionStatus[InvoiceAction.MarkAsReadyToSend.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.MarkAsReadyToSend.type, entity: Invoice, permissions: InvoiceUserPermissions) => (action, MarkAsReadyToSend.MarkAsReadyToSendCmdProcessor().actionStatus(entity, action, permissions))
+  implicit val addCostResolver: RetrieveActionStatus[InvoiceAction.AddCost.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.AddCost.type, entity: Invoice, permissions: InvoiceUserPermissions) => (action, AddCost.AddCostCmdProcessor().actionStatus(entity, action, permissions))
+  implicit val approveResolver: RetrieveActionStatus[InvoiceAction.Approve.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.Approve.type, entity: Invoice, permissions: InvoiceUserPermissions) => (action, Approve.ApproveCmdProcessor().actionStatus(entity, action, permissions))
+  implicit val updateRfiResolver: RetrieveActionStatus[InvoiceAction.UpdateRfi.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.UpdateRfi.type, entity: Invoice, permissions: InvoiceUserPermissions) => (action, UpdateRfi.UpdateRfiCmdProcessor().actionStatus(entity, action, permissions))
+
+  def actionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
+    ActionStatusEnumerator[InvoiceAction, Invoice, InvoiceUserPermissions](invoice, permissions)
 
   private def actionStatus(invoice: Invoice, action: InvoiceAction, permissions: InvoiceUserPermissions): ActionStatus =
     action match {
