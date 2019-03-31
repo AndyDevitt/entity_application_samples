@@ -30,6 +30,8 @@ object InvoiceBehaviour {
         SiteInvoiceBehaviour(siteInvoice)
       case ReadyToSend =>
         SiteInvoiceBehaviour(siteInvoice)
+      case Sent =>
+        SiteInvoiceBehaviour(siteInvoice)
     }
     case sponsorInvoice: SponsorInvoice => sponsorInvoice.status match {
       case NotApproved =>
@@ -41,6 +43,8 @@ object InvoiceBehaviour {
       case Assigned =>
         SponsorInvoiceBehaviour(sponsorInvoice)
       case ReadyToSend =>
+        SponsorInvoiceBehaviour(sponsorInvoice)
+      case Sent =>
         SponsorInvoiceBehaviour(sponsorInvoice)
     }
   }

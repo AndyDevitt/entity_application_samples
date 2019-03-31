@@ -1,6 +1,7 @@
 package sample1.domain.invoice
 
 import sample1.domain._
+import sample1.domain.entity.{ActionStatusEnumerator, RetrieveActionStatus}
 import sample1.domain.errors.{InvoiceError, ValidationError}
 import sample1.domain.invoice.commands._
 import sample1.domain.permissions.{InvoicePermissions, InvoiceUserPermissions}
@@ -20,25 +21,6 @@ object InvoiceAlgebra {
 
   def actionStatuses_old(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     EnumerableAdt[InvoiceAction].map(action => (action, actionStatus(invoice, action, permissions)))
-
-  sealed trait MyActions
-
-  case object Action1 extends MyActions
-
-  case object Action2 extends MyActions
-
-  implicit val action1Resolver: RetrieveActionStatus[Action1.type, Invoice, InvoiceUserPermissions] =
-    (action: Action1.type, entity: Invoice, permissions: InvoiceUserPermissions) => ???
-
-  implicit val action2Resolver: RetrieveActionStatus[Action2.type, Invoice, InvoiceUserPermissions] =
-    (action: Action2.type, entity: Invoice, permissions: InvoiceUserPermissions) => ???
-
-  //  implicit def actionStatusEnumerator[C<:Coproduct](implicit
-  //                                                    gen: Generic.Aux[MyActions, C],
-  //                                                    allSingletonsVisitor: AllSingletonsVisitor[MyActions, C, Invoice, InvoiceUserPermissions]
-  //                                                   ): ActionStatusEnumerator[MyActions,Invoice,InvoiceUserPermissions] = new ActionStatusEnumerator[MyActions,Invoice,InvoiceUserPermissions] {
-  //    override def actionStatuses(entity: Invoice, permissions: InvoiceUserPermissions): Set[(MyActions, ActionStatus)] = ???
-  //  }
 
   implicit val sendResolver: RetrieveActionStatus[InvoiceAction.Send.type, Invoice, InvoiceUserPermissions] =
     (action: InvoiceAction.Send.type, entity: Invoice, permissions: InvoiceUserPermissions) => (action, Send.SendCmdProcessor().actionStatus(entity, action, permissions))
