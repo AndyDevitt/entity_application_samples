@@ -14,7 +14,7 @@ object Send {
                                  version: EntityVersion,
                                  permissionsRetriever: EntityPermissionsRetriever[F, InvoiceId, Invoice, InvoiceUserPermissions]
                                 )
-    extends InvoiceUpdateCommand[F, SendCmd[F], InvoiceAction.Send.type] {
+    extends InvoiceUpdateCommand[F, InvoiceAction.Send.type] {
     override def action(invoice: Invoice,
                         permissions: InvoiceUserPermissions,
                        ): Either[InvoiceError, Invoice] =

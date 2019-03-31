@@ -17,7 +17,7 @@ object Approve {
                                     id: InvoiceId,
                                     version: EntityVersion,
                                     permissionsRetriever: InvoiceEntityPermissionRetriever[F]
-                                   ) extends InvoiceUpdateCommand[F, ApproveCmd[F], InvoiceAction.Approve.type] {
+                                   ) extends InvoiceUpdateCommand[F, InvoiceAction.Approve.type] {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       ApproveCmdProcessor().process(invoice, this, permissions)
   }

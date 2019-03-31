@@ -16,7 +16,7 @@ object AddCost {
                                     version: EntityVersion,
                                     permissionsRetriever: InvoiceEntityPermissionRetriever[F],
                                     cost: Cost
-                                   ) extends InvoiceUpdateCommand[F, AddCostCmd[F], InvoiceAction.AddCost.type] {
+                                   ) extends InvoiceUpdateCommand[F, InvoiceAction.AddCost.type] {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       AddCostCmdProcessor().process(invoice, this, permissions)
   }

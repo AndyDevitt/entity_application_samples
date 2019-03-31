@@ -14,7 +14,7 @@ object UpdateRfi {
                                       id: InvoiceId,
                                       version: EntityVersion,
                                       permissionsRetriever: InvoiceEntityPermissionRetriever[F]
-                                     ) extends InvoiceUpdateCommand[F, UpdateRfiCmd[F], InvoiceAction.UpdateRfi.type] {
+                                     ) extends InvoiceUpdateCommand[F, InvoiceAction.UpdateRfi.type] {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       UpdateRfiCmdProcessor().process(invoice, this, permissions)
   }

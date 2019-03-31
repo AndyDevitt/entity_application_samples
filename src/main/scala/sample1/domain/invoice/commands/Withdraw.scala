@@ -9,15 +9,6 @@ import sample1.domain.invoice._
 import sample1.domain.permissions.{EntityPermissionsRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
 import sample1.domain.{ActionStatus, NotAllowed}
-import shapeless.Witness
-
-trait SingletonInstance[A] {
-  def instance(): A
-}
-
-object SingletonInstance {
-  implicit def singletonInstance[A](implicit witness: Witness.Aux[A]): SingletonInstance[A] = () => witness.value
-}
 
 object Withdraw {
 
@@ -25,7 +16,7 @@ object Withdraw {
                                      id: InvoiceId,
                                      version: EntityVersion,
                                      permissionsRetriever: EntityPermissionsRetriever[F, InvoiceId, Invoice, InvoiceUserPermissions])
-    extends InvoiceUpdateCommand[F, WithdrawCmd[F], InvoiceAction.Withdraw.type] {
+    extends InvoiceUpdateCommand[F, InvoiceAction.Withdraw.type] {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       WithdrawCmdProcessor().process(invoice, this, permissions)
   }

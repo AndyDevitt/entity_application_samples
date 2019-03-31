@@ -12,7 +12,7 @@ final case class ApproveCmdMixin[F[_]](userId: UserId,
                                        id: InvoiceId,
                                        version: EntityVersion,
                                        permissionsRetriever: InvoiceEntityPermissionRetriever[F])
-  extends InvoiceUpdateCommand[F, ApproveCmdMixin[F], InvoiceAction.Approve.type] {
+  extends InvoiceUpdateCommand[F, InvoiceAction.Approve.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     InvoiceBehaviour(invoice).process(this, permissions)
 }
