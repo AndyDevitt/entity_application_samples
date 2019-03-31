@@ -15,8 +15,6 @@ object AssignToPayee {
                                           version: EntityVersion,
                                           permissionsRetriever: EntityPermissionsRetriever[F, InvoiceId, Invoice, InvoiceUserPermissions])
     extends InvoiceUpdateCommand[F, AssignToPayeeCmd[F], InvoiceAction.AssignToPayee.type] {
-    override val associatedAction: InvoiceAction.AssignToPayee.type = InvoiceAction.AssignToPayee
-
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       AssignToPayeeCmdProcessor().process(invoice, this, permissions)
   }

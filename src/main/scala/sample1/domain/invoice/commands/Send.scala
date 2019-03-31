@@ -19,8 +19,6 @@ object Send {
                         permissions: InvoiceUserPermissions,
                        ): Either[InvoiceError, Invoice] =
       SendCmdProcessor().process(invoice, this, permissions)
-
-    override def associatedAction: InvoiceAction.Send.type = InvoiceAction.Send
   }
 
   final case class SendCmdProcessor[F[_]]()

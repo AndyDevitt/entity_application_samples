@@ -15,8 +15,6 @@ object MarkAsReadyToSend {
                                               version: EntityVersion,
                                               permissionsRetriever: EntityPermissionsRetriever[F, InvoiceId, Invoice, InvoiceUserPermissions])
     extends InvoiceUpdateCommand[F, MarkAsReadyToSendCmd[F], InvoiceAction.MarkAsReadyToSend.type] {
-    override val associatedAction: InvoiceAction.MarkAsReadyToSend.type = InvoiceAction.MarkAsReadyToSend
-
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       MarkAsReadyToSendCmdProcessor().process(invoice, this, permissions)
   }

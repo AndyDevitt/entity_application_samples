@@ -15,6 +15,4 @@ final case class ApproveCmdV2Mixin[F[_]](userId: UserId,
   extends InvoiceUpdateCommand[F, ApproveCmdV2Mixin[F], InvoiceAction.Approve.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     InvoiceBehaviour(invoice).process(this, permissions)
-
-  override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
 }

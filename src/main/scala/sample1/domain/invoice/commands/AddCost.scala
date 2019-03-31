@@ -19,8 +19,6 @@ object AddCost {
                                    ) extends InvoiceUpdateCommand[F, AddCostCmd[F], InvoiceAction.AddCost.type] {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       AddCostCmdProcessor().process(invoice, this, permissions)
-
-    override def associatedAction: InvoiceAction.AddCost.type = InvoiceAction.AddCost
   }
 
   // TODO: provide this action as an example of where the command state is required to check full permissions (i.e.

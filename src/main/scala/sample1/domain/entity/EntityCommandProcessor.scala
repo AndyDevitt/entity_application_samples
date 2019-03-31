@@ -4,6 +4,7 @@ import cats.syntax.either._
 import sample1.domain.command.{Command, EntityUpdateCommand}
 import sample1.domain.permissions.EntityPermissions
 import sample1.domain.{ActionStatus, NotAllowed}
+import shapeless.Witness
 
 trait EntityCommandProcessor[
 F[_],
@@ -21,7 +22,7 @@ EntityStatusType] {
 
   import scala.language.implicitConversions
 
-  def process(entity: EntType, cmd: CmdType, permissions: UserPermissionsType): Either[ErrType, EntType] =
+  def process(entity: EntType, cmd: CmdType, permissions: UserPermissionsType)(implicit witness: Witness.Aux[ActionType]): Either[ErrType, EntType] =
     commonChecks(entity, cmd.associatedAction, permissions)
       .left.map(statusToErrF)
       .flatMap(checkOptimisticLocking(_, cmd))

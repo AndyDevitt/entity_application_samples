@@ -20,8 +20,6 @@ object Approve {
                                    ) extends InvoiceUpdateCommand[F, ApproveCmd[F], InvoiceAction.Approve.type] {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       ApproveCmdProcessor().process(invoice, this, permissions)
-
-    override def associatedAction: InvoiceAction.Approve.type = InvoiceAction.Approve
   }
 
   // TODO: provide this action as an example of where the command state is NOT required to check full permissions (i.e.

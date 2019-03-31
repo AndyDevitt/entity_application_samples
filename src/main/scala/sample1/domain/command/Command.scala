@@ -5,6 +5,7 @@ import sample1.domain.ActionStatus
 import sample1.domain.entity._
 import sample1.domain.permissions.{BasicPermissionRetriever, EntityPermissionsRetriever}
 import sample1.domain.user.UserId
+import shapeless.Witness
 
 /**
   * Base trait for all commands. Requires that a UserId be defined for all commands.
@@ -195,11 +196,14 @@ ActionsBaseType,
 ActionType <: ActionsBaseType]
   extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType, ActionsBaseType], ErrType, IdType, EntType, PermissionsType, ActionsBaseType]
     with OptimisticLocking {
+
   def id: IdType
 
   def version: EntityVersion
 
-  def associatedAction: ActionType
+  private def instance[A](implicit witness: Witness.Aux[A]): A = witness.value
+
+  def associatedAction(implicit witness: Witness.Aux[ActionType]): ActionType = instance[ActionType]
 
   def action(entity: EntType, permissions: PermissionsType): Either[ErrType, EntType]
 

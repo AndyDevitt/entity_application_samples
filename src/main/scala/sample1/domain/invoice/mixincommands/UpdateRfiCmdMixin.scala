@@ -15,6 +15,4 @@ final case class UpdateRfiCmdMixin[F[_]](userId: UserId,
   extends InvoiceUpdateCommand[F, UpdateRfiCmdMixin[F], InvoiceAction.UpdateRfi.type] {
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
     InvoiceBehaviour(invoice).process(this, permissions)
-
-  override def associatedAction: InvoiceAction.UpdateRfi.type = InvoiceAction.UpdateRfi
 }

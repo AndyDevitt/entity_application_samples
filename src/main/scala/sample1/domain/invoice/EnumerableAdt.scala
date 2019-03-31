@@ -1,6 +1,5 @@
 package sample1.domain.invoice
 
-import sample1.domain.ActionStatus
 import shapeless.{:+:, CNil, Coproduct, Generic, Witness}
 
 /**
@@ -49,7 +48,22 @@ object EnumerableTest extends App {
   val vals1: List[Action] = implicitly[AllSingletons[Action, ApproveIt.type :+: CommitIt.type :+: CNil]].values
   val vals2 = implicitly[EnumerableAdt[Action]].values
   val vals3 = EnumerableAdt[Action]
+
   //val vals3: Set[Action] = Values[Action]
+  def instance[A](implicit witness: Witness.Aux[A]): A = witness.value
+
+  val x = instance[ApproveIt.type]
+
+  trait t[A] {
+    def a(implicit witness: Witness.Aux[A]): A = instance[A]
+  }
+
+  case class t2() extends t[ApproveIt.type]
+
+  val y = t2().a
+
+  println(x)
+  println(y)
 
   println(vals1)
   println(vals2)
