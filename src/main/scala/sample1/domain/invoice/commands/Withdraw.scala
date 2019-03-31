@@ -32,7 +32,7 @@ object Withdraw {
     override protected def checkAdditionalRequirements(entity: Invoice,
                                                        action: InvoiceAction.Withdraw.type,
                                                        permissions: InvoiceUserPermissions
-                                ): Either[NotAllowed, Invoice] =
+                                                      ): Either[NotAllowed, Invoice] =
       for {
         _ <- Either.cond(entity.costs.isEmpty, (), ActionStatus.NotAllowedInCurrentState(
           "Cannot withdraw when costs are associated"))

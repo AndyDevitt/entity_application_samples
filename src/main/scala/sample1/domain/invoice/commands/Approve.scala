@@ -36,7 +36,7 @@ object Approve {
     override protected def checkAdditionalRequirements(entity: Invoice,
                                                        action: InvoiceAction.Approve.type,
                                                        permissions: InvoiceUserPermissions
-                                ): Either[NotAllowed, Invoice] =
+                                                      ): Either[NotAllowed, Invoice] =
       for {
         limit <- Either.fromOption(
           permissions.approvalLimit.map(_.limit),
