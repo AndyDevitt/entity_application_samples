@@ -35,7 +35,8 @@ EntityStatusType] {
     minimumAccessPermissionsCheck(entity, permissions)
       .flatMap(_ => checkRequiredPermissions(entity, action, permissions))
       .flatMap(_ => checkAllowedStatus(entity))
-      .flatMap(_ => checkAdditionalRequirements(entity, action, permissions))
+      .flatMap(_ => downCaster(entity))
+      .flatMap(checkAdditionalRequirements(_, action, permissions))
 
   def actionStatus(entity: EntType, action: ActionType, permissions: UserPermissionsType): ActionStatus =
     commonChecks(entity, action, permissions)
@@ -43,11 +44,11 @@ EntityStatusType] {
 
   protected def minimumAccessPermissionsCheck(entity: EntType, permissions: UserPermissionsType): Either[NotAllowed, Unit]
 
-  protected def checkAdditionalRequirements(entity: EntType,
+  protected def checkAdditionalRequirements(entity: EntSubType,
                                             action: ActionType,
                                             permissions: UserPermissionsType
                                            ): Either[NotAllowed, EntSubType] =
-    downCaster(entity)
+    entity.asRight[NotAllowed]
 
   protected def requiredPermissions: Set[EntityPermissionType]
 
