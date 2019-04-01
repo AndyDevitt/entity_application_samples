@@ -5,7 +5,7 @@ import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceStatus.Assigned
 import sample1.domain.invoice._
-import sample1.domain.permissions.{EntityPermissionsRetriever, InvoicePermissions, InvoiceUserPermissions}
+import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
 
 object MarkAsReadyToSend {
@@ -13,7 +13,7 @@ object MarkAsReadyToSend {
   final case class MarkAsReadyToSendCmd[F[_]](userId: UserId,
                                               id: InvoiceId,
                                               version: EntityVersion,
-                                              permissionsRetriever: EntityPermissionsRetriever[F, InvoiceId, Invoice, InvoiceUserPermissions])
+                                              permissionsRetriever: InvoiceEntityPermissionRetriever[F])
     extends InvoiceUpdateCommand[F, InvoiceAction.MarkAsReadyToSend.type] {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       MarkAsReadyToSendCmdProcessor().process(invoice, this, permissions)

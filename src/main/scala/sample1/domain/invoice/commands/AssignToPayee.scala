@@ -5,7 +5,7 @@ import sample1.domain.entity.EntityVersion
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceStatus.Draft
 import sample1.domain.invoice._
-import sample1.domain.permissions.{EntityPermissionsRetriever, InvoicePermissions, InvoiceUserPermissions}
+import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
 
 object AssignToPayee {
@@ -13,7 +13,7 @@ object AssignToPayee {
   final case class AssignToPayeeCmd[F[_]](userId: UserId,
                                           id: InvoiceId,
                                           version: EntityVersion,
-                                          permissionsRetriever: EntityPermissionsRetriever[F, InvoiceId, Invoice, InvoiceUserPermissions])
+                                          permissionsRetriever: InvoiceEntityPermissionRetriever[F])
     extends InvoiceUpdateCommand[F, InvoiceAction.AssignToPayee.type] {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       AssignToPayeeCmdProcessor().process(invoice, this, permissions)

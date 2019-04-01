@@ -6,7 +6,7 @@ import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceStateBuilder._
 import sample1.domain.invoice.InvoiceStatus.Assigned
 import sample1.domain.invoice._
-import sample1.domain.permissions.{EntityPermissionsRetriever, InvoicePermissions, InvoiceUserPermissions}
+import sample1.domain.permissions.{InvoiceEntityPermissionRetriever, InvoicePermissions, InvoiceUserPermissions}
 import sample1.domain.user.UserId
 import sample1.domain.{ActionStatus, NotAllowed}
 
@@ -15,7 +15,7 @@ object Withdraw {
   final case class WithdrawCmd[F[_]](userId: UserId,
                                      id: InvoiceId,
                                      version: EntityVersion,
-                                     permissionsRetriever: EntityPermissionsRetriever[F, InvoiceId, Invoice, InvoiceUserPermissions])
+                                     permissionsRetriever: InvoiceEntityPermissionRetriever[F])
     extends InvoiceUpdateCommand[F, InvoiceAction.Withdraw.type] {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       WithdrawCmdProcessor().process(invoice, this, permissions)
