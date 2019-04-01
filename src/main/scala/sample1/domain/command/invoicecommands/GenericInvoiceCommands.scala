@@ -13,8 +13,14 @@ import sample1.domain.user.UserId
   * Generic Invoice commands
   */
 
-trait InvoiceCreateCommand[F[_]]
-  extends EntityCreateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions, InvoiceAction] {
+trait InvoiceCreateCommand[F[_]] extends EntityCreateCommand[F] {
+  override type Input = DomainCommandInput[F]
+  override type Error = InvoiceError
+  override type Id = InvoiceId
+  override type Entity = Invoice
+  override type Permissions = InvoiceUserPermissions
+  override type Actions = InvoiceAction
+
   def create(permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice]
 
   override def extractActionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
@@ -24,26 +30,50 @@ trait InvoiceCreateCommand[F[_]]
     input.invoiceRepo
 }
 
-trait InvoiceEntityQueryCommand[F[_]]
-  extends EntityQueryCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceRepo[F], InvoiceUserPermissions, InvoiceAction] {
-  override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
+trait InvoiceEntityQueryCommand[F[_]] extends EntityQueryCommand[F] {
+  override type Input = DomainCommandInput[F]
+  override type Error = InvoiceError
+  override type Id = InvoiceId
+  override type Entity = Invoice
+  override type Permissions = InvoiceUserPermissions
+  override type Actions = InvoiceAction
+  override type Repo = InvoiceRepo[F]
+
+  override def extractRepo(input: DomainCommandInput[F]): Repo = input.invoiceRepo
 
   override def extractActionStatuses(invoice: Invoice, permissions: InvoiceUserPermissions): Set[(InvoiceAction, ActionStatus)] =
     InvoiceAlgebra.actionStatuses(invoice, permissions)
 }
 
-trait InvoiceGenericQueryCommand[F[_], R]
-  extends GenericQueryCommand[F, DomainCommandInput[F], InvoiceError, R, InvoiceRepo[F], InvoiceUserPermissions] {
-  override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
+trait InvoiceGenericQueryCommand[F[_], R] extends GenericQueryCommand[F] {
+  override type Input = DomainCommandInput[F]
+  override type Repo = InvoiceRepo[F]
+  override type Result = R
+  override type Error = InvoiceError
+  override type Permissions = InvoiceUserPermissions
+
+  override def extractRepo(input: Input): Repo = input.invoiceRepo
 }
 
-trait InvoiceDomainServiceCommand[F[_], R]
-  extends DomainServiceCommand[F, DomainCommandInput[F], InvoiceError, R, InvoiceRepo[F], InvoiceUserPermissions] {
-  override def extractRepo(input: DomainCommandInput[F]): InvoiceRepo[F] = input.invoiceRepo
+trait InvoiceDomainServiceCommand[F[_], R] extends DomainServiceCommand[F] {
+  override type Input = DomainCommandInput[F]
+  override type Repo = InvoiceRepo[F]
+  override type Result = R
+  override type Error = InvoiceError
+  override type Permissions = InvoiceUserPermissions
+
+  override def extractRepo(input: Input): Repo = input.invoiceRepo
 }
 
-trait InvoiceUpdateCommand[F[_], ActionType <: InvoiceAction]
-  extends EntityUpdateCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions, InvoiceAction, ActionType] {
+trait InvoiceUpdateCommand[F[_], ActionType <: InvoiceAction] extends EntityUpdateCommand[F] {
+  override type Input = DomainCommandInput[F]
+  override type Error = InvoiceError
+  override type Id = InvoiceId
+  override type Entity = Invoice
+  override type Permissions = InvoiceUserPermissions
+  override type Actions = InvoiceAction
+  override type Action = ActionType
+
   override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice]
 
   override def staleF(id: InvoiceId): InvoiceError = InvoiceError.StaleInvoiceError(id)
@@ -58,7 +88,14 @@ trait InvoiceUpdateCommand[F[_], ActionType <: InvoiceAction]
 final case class InvoiceRetrieveCommand[F[_]](userId: UserId,
                                               id: InvoiceId,
                                               permissionsRetriever: InvoiceEntityPermissionRetriever[F])
-  extends EntityRetrieveCommand[F, DomainCommandInput[F], InvoiceError, InvoiceId, Invoice, InvoiceUserPermissions, InvoiceAction] {
+  extends EntityRetrieveCommand[F] {
+  override type Input = DomainCommandInput[F]
+  override type Error = InvoiceError
+  override type Id = InvoiceId
+  override type Entity = Invoice
+  override type Permissions = InvoiceUserPermissions
+  override type Actions = InvoiceAction
+
   override def extractRepo(input: DomainCommandInput[F]): EntityRepo[F, InvoiceId, Invoice, InvoiceError] =
     input.invoiceRepo
 

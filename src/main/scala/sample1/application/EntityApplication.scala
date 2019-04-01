@@ -1,7 +1,7 @@
 package sample1.application
 
 import cats.{Monad, ~>}
-import sample1.domain.command.{CommandInput, RunnableCommand}
+import sample1.domain.command.{Command, CommandInput, RunnableCommand}
 
 trait EntityApplication[F[_], G[_], I <: CommandInput] {
 
@@ -20,19 +20,21 @@ trait EntityApplication[F[_], G[_], I <: CommandInput] {
     * @tparam PermissionsType the permissions type for this command
     * @return
     */
-  def processCommand[R, Error, PermissionsType](cmd: RunnableCommand[G, I, R, Error, PermissionsType])
-                                               (implicit monadF: Monad[F],
-                                                monadG: Monad[G],
-                                                naturalTransformation: G ~> F,
-                                               ): F[Either[Error, R]] =
+  def processCommand[R, Error, PermissionsType, CmdType <: RunnableCommand[G], Input](cmd: CmdType)
+                                                                                     (implicit monadF: Monad[F],
+                                                                                      monadG: Monad[G],
+                                                                                      ev0: Command.AuxInputOutputError[F, CmdType, Input, R, Error],
+                                                                                      ev1: Input =:= I,
+                                                                                      naturalTransformation: G ~> F,
+                                                                                     ): F[Either[Error, R]] =
     cmd.run(input)
 
 
-  def processCommand[R, T, Error, PermissionsType](cmd: RunnableCommand[G, I, R, Error, PermissionsType],
-                                                   transformer: R => Either[Error, T])
-                                                  (implicit monadF: Monad[F],
-                                                   monadG: Monad[G],
-                                                   naturalTransformation: G ~> F,
-                                                  ): F[Either[Error, T]] =
-    monadF.map(cmd.run(input))(_.flatMap(transformer))
+  //  def processCommand[R, T, Error, PermissionsType](cmd: RunnableCommand[G, I, R, Error, PermissionsType],
+  //                                                   transformer: R => Either[Error, T])
+  //                                                  (implicit monadF: Monad[F],
+  //                                                   monadG: Monad[G],
+  //                                                   naturalTransformation: G ~> F,
+  //                                                  ): F[Either[Error, T]] =
+  //    monadF.map(cmd.run(input))(_.flatMap(transformer))
 }

@@ -10,15 +10,14 @@ import sample1.domain.user.UserId
 
 sealed trait CtaPermissions
 
-sealed trait CtaCreateCommand[F[_]]
-  extends EntityCreateCommand[
-    F,
-    DomainCommandInput[F],
-    CtaError,
-    ClinicalTrialAgreementId,
-    ClinicalTrialAgreement,
-    CtaUserPermissions,
-    CtaAction] {
+sealed trait CtaCreateCommand[F[_]] extends EntityCreateCommand[F] {
+  override type Input = DomainCommandInput[F]
+  override type Error = CtaError
+  override type Id = ClinicalTrialAgreementId
+  override type Entity = ClinicalTrialAgreement
+  override type Permissions = CtaUserPermissions
+  override type Actions = CtaAction
+
   override def create(permissions: CtaUserPermissions): Either[CtaError, ClinicalTrialAgreement]
 
   override def extractRepo(input: DomainCommandInput[F]
@@ -29,16 +28,15 @@ sealed trait CtaCreateCommand[F[_]]
                                     ): Set[(CtaAction, ActionStatus)] = Set.empty
 }
 
-sealed trait CtaUpdateCommand[F[_], CmdType]
-  extends EntityUpdateCommand[
-    F,
-    DomainCommandInput[F],
-    CtaError,
-    ClinicalTrialAgreementId,
-    ClinicalTrialAgreement,
-    CtaUserPermissions,
-    CtaAction,
-    CtaAction] {
+sealed trait CtaUpdateCommand[F[_]] extends EntityUpdateCommand[F] {
+  override type Input = DomainCommandInput[F]
+  override type Error = CtaError
+  override type Id = ClinicalTrialAgreementId
+  override type Entity = ClinicalTrialAgreement
+  override type Permissions = CtaUserPermissions
+  override type Actions = CtaAction
+  override type Action = CtaAction
+
   override def staleF(id: ClinicalTrialAgreementId): CtaError = CtaError.StaleCtaError(id)
 
   override def extractRepo(input: DomainCommandInput[F]
@@ -53,14 +51,14 @@ sealed trait CtaUpdateCommand[F[_], CmdType]
 final case class CtaRetrieveCommand[F[_]](userId: UserId,
                                           id: ClinicalTrialAgreementId,
                                           permissionsRetriever: CtaEntityPermissionRetriever[F])
-  extends EntityRetrieveCommand[
-    F,
-    DomainCommandInput[F],
-    CtaError,
-    ClinicalTrialAgreementId,
-    ClinicalTrialAgreement,
-    CtaUserPermissions,
-    CtaAction] {
+  extends EntityRetrieveCommand[F] {
+  override type Input = DomainCommandInput[F]
+  override type Error = CtaError
+  override type Id = ClinicalTrialAgreementId
+  override type Entity = ClinicalTrialAgreement
+  override type Permissions = CtaUserPermissions
+  override type Actions = CtaAction
+
   override def extractRepo(input: DomainCommandInput[F]
                           ): EntityRepo[F, ClinicalTrialAgreementId, ClinicalTrialAgreement, CtaError] =
     input.ctaRepo

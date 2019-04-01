@@ -1,5 +1,6 @@
 package sample1.domain.command
 
+import cats.data.EitherT
 import cats.{Monad, ~>}
 import sample1.domain.ActionStatus
 import sample1.domain.entity._
@@ -29,7 +30,12 @@ trait CommandInput
   * @tparam ResType the success result type
   * @tparam ErrType error type
   */
-trait RunnableCommand[F[_], -InpType <: CommandInput, ResType, ErrType, PermissionsType] extends Command {
+trait RunnableCommand[F[_]] extends Command {
+  type Result
+  type Input <: CommandInput
+  type Error
+  type Permissions
+
   /**
     *
     * @param input     the command input that will contain any runtime references supplied by the application layer
@@ -38,20 +44,23 @@ trait RunnableCommand[F[_], -InpType <: CommandInput, ResType, ErrType, Permissi
     * @tparam G the application context
     * @return returns the result of executing the command
     */
-  def run[G[_]](input: InpType)(implicit monadF: Monad[F], transform: F ~> G): G[Either[ErrType, ResType]]
+  def run[G[_]](input: RunnableCommand[F]#Input)(implicit monadF: Monad[F], transform: F ~> G): G[Either[Error, Result]]
 }
 
-sealed trait EntityCommand[
-F[_],
--InpType <: CommandInput,
-ResType,
-ErrType,
-IdType <: EntityId,
-EntType <: VersionedEntity[IdType],
-PermissionsType,
-ActionsBaseType]
-  extends RunnableCommand[F, InpType, ResType, ErrType, PermissionsType] {
-  def extractActionStatuses(entity: EntType, permissions: PermissionsType): Set[(ActionsBaseType, ActionStatus)]
+object Command {
+  type AuxInputOutputError[F[_], CmdType <: RunnableCommand[F], Input0, Result0, Error0] = RunnableCommand[F] {
+    type Result = Result0
+    type Input = Input0
+    type Error = Error0
+  }
+}
+
+sealed trait EntityCommand[F[_]] extends RunnableCommand[F] {
+  type Id <: EntityId
+  type Entity <: VersionedEntity[Id]
+  type Actions
+
+  def extractActionStatuses(entity: Entity, permissions: Permissions): Set[(Actions, ActionStatus)]
 }
 
 sealed trait OptimisticLocking {
@@ -81,35 +90,24 @@ trait IgnoreOptimisticLocking extends OptimisticLocking {
   * @tparam PermissionsType permissions type for this entity / application
   * @tparam ActionsBaseType base type for the actions supported by the entity
   */
-trait EntityCreateCommand[
-F[_],
--InpType <: CommandInput,
-ErrType,
-IdType <: EntityId,
-EntType <: VersionedEntity[IdType],
-PermissionsType,
-ActionsBaseType]
-  extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType, ActionsBaseType], ErrType, IdType, EntType, PermissionsType, ActionsBaseType] {
-  def create(permissions: PermissionsType): Either[ErrType, EntType]
+trait EntityCreateCommand[F[_]] extends EntityCommand[F] {
+  override type Result = EntityResult[Entity, Permissions, Actions]
 
-  def extractRepo(input: InpType): EntityRepo[F, IdType, EntType, ErrType]
+  def create(permissions: Permissions): Either[Error, Entity]
 
-  def permissionsRetriever: BasicPermissionRetriever[F, PermissionsType]
+  def extractRepo(input: Input): EntityRepo[F, Id, Entity, Error]
 
-  override def run[G[_]](input: InpType)
+  def permissionsRetriever: BasicPermissionRetriever[F, Permissions]
+
+  override def run[G[_]](input: this.Input)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =
-    EntityRepoManager.manageCreate[
-      G,
-      F,
-      InpType,
-      EntityCreateCommand[F, InpType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType],
-      IdType,
-      EntType,
-      ErrType,
-      PermissionsType,
-      ActionsBaseType
-      ](extractRepo(input))(this)
+                        ): G[Either[this.Error, EntityResult[this.Entity, this.Permissions, this.Actions]]] =
+    transform((for {
+      permissions <- EitherT.right(this.permissionsRetriever.retrieve(this.userId))
+      created <- EitherT.fromEither[F](this.create(permissions))
+      saved <- EitherT(extractRepo(input).save(created))
+      actions <- EitherT.pure[F, this.Error](this.extractActionStatuses(saved, permissions))
+    } yield EntityResult(saved, permissions, actions)).value)
 }
 
 /**
@@ -130,37 +128,26 @@ ActionsBaseType]
   * @tparam PermissionsType permissions type for this entity / application
   * @tparam ActionsBaseType base type for the actions supported by the entity
   */
-trait EntityRetrieveCommand[
-F[_],
--InpType <: CommandInput,
-ErrType,
-IdType <: EntityId,
-EntType <: VersionedEntity[IdType],
-PermissionsType,
-ActionsBaseType]
-  extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType, ActionsBaseType], ErrType, IdType, EntType, PermissionsType, ActionsBaseType] {
-  def id: IdType
+trait EntityRetrieveCommand[F[_]] extends EntityCommand[F] {
+  override type Result = EntityResult[Entity, Permissions, Actions]
 
-  def extractRepo(input: InpType): EntityRepo[F, IdType, EntType, ErrType]
+  def id: Id
 
-  def permissionsRetriever: EntityPermissionsRetriever[F, IdType, EntType, PermissionsType]
+  def extractRepo(input: Input): EntityRepo[F, Id, Entity, Error]
 
-  def minimumAccessPermissionsCheck(entity: EntType, permissions: PermissionsType): Either[ErrType, Unit]
+  def permissionsRetriever: EntityPermissionsRetriever[F, Id, Entity, Permissions]
 
-  override def run[G[_]](input: InpType)
+  def minimumAccessPermissionsCheck(entity: Entity, permissions: Permissions): Either[Error, Unit]
+
+  override def run[G[_]](input: Input)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =
-    EntityRepoManager.manageRetrieve[
-      G,
-      F,
-      InpType,
-      EntityRetrieveCommand[F, InpType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType],
-      IdType,
-      EntType,
-      ErrType,
-      PermissionsType,
-      ActionsBaseType
-      ](extractRepo(input))(this)
+                        ): G[Either[Error, EntityResult[Entity, Permissions, Actions]]] =
+    transform((for {
+      entity <- EitherT(extractRepo(input).retrieve(this.id))
+      permissions <- EitherT.right(this.permissionsRetriever.retrieve(this.userId, entity))
+      _ <- EitherT.fromEither(this.minimumAccessPermissionsCheck(entity, permissions))
+      actions <- EitherT.pure[F, this.Error](this.extractActionStatuses(entity, permissions))
+    } yield EntityResult(entity, permissions, actions)).value)
 }
 
 /**
@@ -185,49 +172,41 @@ ActionsBaseType]
   * @tparam ActionsBaseType base type for the actions supported by the entity
   * @tparam ActionType      the specific action type that is supported by this command
   */
-trait EntityUpdateCommand[
-F[_],
--InpType <: CommandInput,
-ErrType,
-IdType <: EntityId,
-EntType <: VersionedEntity[IdType],
-PermissionsType,
-ActionsBaseType,
-ActionType <: ActionsBaseType]
-  extends EntityCommand[F, InpType, EntityResult[EntType, PermissionsType, ActionsBaseType], ErrType, IdType, EntType, PermissionsType, ActionsBaseType]
-    with OptimisticLocking {
+trait EntityUpdateCommand[F[_]] extends EntityCommand[F] with OptimisticLocking {
 
-  def id: IdType
+  override type Result = EntityResult[Entity, Permissions, Actions]
+  type Action <: Actions
+
+  def id: Id
 
   def version: EntityVersion
 
   private def instance[A](implicit witness: Witness.Aux[A]): A = witness.value
 
-  def associatedAction(implicit witness: Witness.Aux[ActionType]): ActionType = instance[ActionType]
+  def associatedAction(implicit witness: Witness.Aux[Action]): Action = instance[Action]
 
-  def action(entity: EntType, permissions: PermissionsType): Either[ErrType, EntType]
+  def action(entity: Entity, permissions: Permissions): Either[Error, Entity]
 
-  def staleF(id: IdType): ErrType
+  def staleF(id: Id): Error
 
-  def extractRepo(input: InpType): EntityRepo[F, IdType, EntType, ErrType]
+  def extractRepo(input: Input): EntityRepo[F, Id, Entity, Error]
 
-  def permissionsRetriever: EntityPermissionsRetriever[F, IdType, EntType, PermissionsType]
+  def permissionsRetriever: EntityPermissionsRetriever[F, Id, Entity, Permissions]
 
-  override def run[G[_]](input: InpType)
+  override def run[G[_]](input: Input)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, EntityResult[EntType, PermissionsType, ActionsBaseType]]] =
-    EntityRepoManager.manageUpdate[
-      G,
-      F,
-      InpType,
-      IdType,
-      EntType,
-      ErrType,
-      PermissionsType,
-      ActionsBaseType,
-      ActionType,
-      EntityUpdateCommand[F, InpType, ErrType, IdType, EntType, PermissionsType, ActionsBaseType, ActionType]
-      ](extractRepo(input))(this)(staleF)
+                        ): G[Either[Error, EntityResult[Entity, Permissions, Actions]]] =
+    transform((for {
+      entity <- EitherT(extractRepo(input).retrieve(this.id))
+      permissions <- EitherT.right(this.permissionsRetriever.retrieve(this.userId, entity))
+      _ <- EitherT.fromEither(checkOptimisticLocking(entity))
+      updated <- EitherT.fromEither[F](this.action(entity, permissions))
+      saved <- EitherT(extractRepo(input).save(updated))
+      actions <- EitherT.pure[F, Error](this.extractActionStatuses(saved, permissions))
+    } yield EntityResult(saved, permissions, actions)).value)
+
+  private def checkOptimisticLocking(entity: Entity): Either[Error, Unit] =
+    Either.cond(this.version == entity.version, (), staleF(entity.id))
 }
 
 /**
@@ -250,37 +229,25 @@ ActionType <: ActionsBaseType]
   * @tparam PermissionsType permissions type for this entity / application
   * @tparam ActionsBaseType base type for the actions supported by the entity
   */
-trait EntityQueryCommand[
-F[_],
--InpType <: CommandInput,
-ErrType,
-IdType <: EntityId,
-EntType <: VersionedEntity[IdType],
-RepoType <: EntityRepo[F, IdType, EntType, ErrType],
-PermissionsType,
-ActionsBaseType]
-  extends EntityCommand[F, InpType, List[EntityResult[EntType, PermissionsType, ActionsBaseType]], ErrType, IdType, EntType, PermissionsType, ActionsBaseType] {
-  def extractRepo(input: InpType): RepoType
+trait EntityQueryCommand[F[_]] extends EntityCommand[F] {
+  override type Result = List[EntityResult[Entity, Permissions, Actions]]
+  type Repo <: EntityRepo[F, Id, Entity, Error]
 
-  def query(repo: RepoType, permissions: PermissionsType): F[Either[ErrType, List[EntType]]]
+  def extractRepo(input: Input): Repo
 
-  def permissionsRetriever: BasicPermissionRetriever[F, PermissionsType]
+  def query(repo: Repo, permissions: Permissions): F[Either[Error, List[Entity]]]
 
-  override def run[G[_]](input: InpType)
+  def permissionsRetriever: BasicPermissionRetriever[F, Permissions]
+
+  override def run[G[_]](input: Input)
                         (implicit monadF: Monad[F], transform: F ~> G
-                        ): G[Either[ErrType, List[EntityResult[EntType, PermissionsType, ActionsBaseType]]]] =
-    EntityRepoManager.manageEntityQuery[
-      G,
-      F,
-      InpType,
-      EntityQueryCommand[F, InpType, ErrType, IdType, EntType, RepoType, PermissionsType, ActionsBaseType],
-      IdType,
-      EntType,
-      ErrType,
-      RepoType,
-      PermissionsType,
-      ActionsBaseType
-      ](extractRepo(input))(this)
+                        ): G[Either[Error, List[EntityResult[Entity, Permissions, Actions]]]] =
+    transform((for {
+      permissions <- EitherT.right(this.permissionsRetriever.retrieve(this.userId))
+      results <- EitherT(this.query(extractRepo(input), permissions))
+      res <- EitherT.pure[F, this.Error](results.map(ent =>
+        EntityResult(ent, permissions, this.extractActionStatuses(ent, permissions))))
+    } yield res).value)
 }
 
 /**
@@ -298,31 +265,20 @@ ActionsBaseType]
   * @tparam RepoType        the specific repo used in this query command
   * @tparam PermissionsType permissions type for this entity / application
   */
-trait GenericQueryCommand[
-F[_],
--InpType <: CommandInput,
-ErrType,
-ResType,
-RepoType <: GenericRepo[F, ErrType],
-PermissionsType]
-  extends RunnableCommand[F, InpType, ResType, ErrType, PermissionsType] {
-  def extractRepo(input: InpType): RepoType
+trait GenericQueryCommand[F[_]] extends RunnableCommand[F] {
+  type Repo <: GenericRepo[F, Error]
 
-  def query(repo: RepoType, permissions: PermissionsType): F[Either[ErrType, ResType]]
+  def extractRepo(input: Input): Repo
 
-  def permissionsRetriever: BasicPermissionRetriever[F, PermissionsType]
+  def query(repo: Repo, permissions: Permissions): F[Either[Error, Result]]
 
-  override def run[G[_]](input: InpType)(implicit monadF: Monad[F], transform: F ~> G): G[Either[ErrType, ResType]] =
-    EntityRepoManager.manageGenericQuery[
-      G,
-      F,
-      InpType,
-      GenericQueryCommand[F, InpType, ErrType, ResType, RepoType, PermissionsType],
-      ResType,
-      ErrType,
-      RepoType,
-      PermissionsType
-      ](extractRepo(input))(this)
+  def permissionsRetriever: BasicPermissionRetriever[F, Permissions]
+
+  override def run[G[_]](input: Input)(implicit monadF: Monad[F], transform: F ~> G): G[Either[Error, Result]] =
+    transform((for {
+      permissions <- EitherT.right(this.permissionsRetriever.retrieve(this.userId))
+      results <- EitherT(this.query(extractRepo(input), permissions))
+    } yield results).value)
 }
 
 /**
@@ -345,29 +301,18 @@ PermissionsType]
   * @tparam RepoType        the specific repo used in this query command
   * @tparam PermissionsType permissions type for this entity / application
   */
-trait DomainServiceCommand[
-F[_],
--InpType <: CommandInput,
-ErrType,
-ResType,
-RepoType <: GenericRepo[F, ErrType],
-PermissionsType]
-  extends RunnableCommand[F, InpType, ResType, ErrType, PermissionsType] {
-  def extractRepo(input: InpType): RepoType
+trait DomainServiceCommand[F[_]] extends RunnableCommand[F] {
+  type Repo <: GenericRepo[F, Error]
 
-  def action(input: InpType, permissions: PermissionsType)(implicit monadF: Monad[F]): F[Either[ErrType, ResType]]
+  def extractRepo(input: Input): Repo
 
-  def permissionsRetriever: BasicPermissionRetriever[F, PermissionsType]
+  def action(input: Input, permissions: Permissions)(implicit monadF: Monad[F]): F[Either[Error, Result]]
 
-  override def run[G[_]](input: InpType)(implicit monadF: Monad[F], transform: F ~> G): G[Either[ErrType, ResType]] =
-    EntityRepoManager.manageDomainService[
-      G,
-      F,
-      InpType,
-      DomainServiceCommand[F, InpType, ErrType, ResType, RepoType, PermissionsType],
-      ResType,
-      ErrType,
-      RepoType,
-      PermissionsType
-      ](input)(this)
+  def permissionsRetriever: BasicPermissionRetriever[F, Permissions]
+
+  override def run[G[_]](input: Input)(implicit monadF: Monad[F], transform: F ~> G): G[Either[Error, Result]] =
+    transform((for {
+      permissions <- EitherT.right(this.permissionsRetriever.retrieve(this.userId))
+      result <- EitherT(this.action(input, permissions))
+    } yield result).value)
 }
