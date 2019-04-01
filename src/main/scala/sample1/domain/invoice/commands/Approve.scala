@@ -2,7 +2,7 @@ package sample1.domain.invoice.commands
 
 import cats.syntax.either._
 import sample1.domain.command.invoicecommands.InvoiceUpdateCommand
-import sample1.domain.entity.EntityVersion
+import sample1.domain.entity.{EntityVersion, RetrieveActionStatus}
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceAlgebra.calculateTotal
 import sample1.domain.invoice.InvoiceStatus.{Approved, NotApproved}
@@ -21,6 +21,10 @@ object Approve {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       ApproveCmdProcessor().process(invoice, this, permissions)
   }
+
+  implicit val approveResolver: RetrieveActionStatus[InvoiceAction.Approve.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.Approve.type, entity: Invoice, permissions: InvoiceUserPermissions) =>
+      (action, Approve.ApproveCmdProcessor().actionStatus(entity, action, permissions))
 
   // TODO: provide this action as an example of where the command state is NOT required to check full permissions (i.e.
   //  cannot approve an invoice over a certain amount). Use this to add some common comparison behaviour to permissions

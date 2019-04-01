@@ -1,7 +1,7 @@
 package sample1.domain.invoice.commands
 
 import sample1.domain.command.invoicecommands.InvoiceUpdateCommand
-import sample1.domain.entity.EntityVersion
+import sample1.domain.entity.{EntityVersion, RetrieveActionStatus}
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceStateBuilder._
 import sample1.domain.invoice.InvoiceStatus.Assigned
@@ -20,6 +20,10 @@ object Withdraw {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       WithdrawCmdProcessor().process(invoice, this, permissions)
   }
+
+  implicit val withdrawResolver: RetrieveActionStatus[InvoiceAction.Withdraw.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.Withdraw.type, entity: Invoice, permissions: InvoiceUserPermissions) =>
+      (action, Withdraw.WithdrawCmdProcessor().actionStatus(entity, action, permissions))
 
   final case class WithdrawCmdProcessor[F[_]]()
     extends InvoiceCommandProcessor[F, InvoiceAction.Withdraw.type, WithdrawCmd[F]] {

@@ -1,7 +1,7 @@
 package sample1.domain.invoice.commands
 
 import sample1.domain.command.invoicecommands.InvoiceUpdateCommand
-import sample1.domain.entity.EntityVersion
+import sample1.domain.entity.{EntityVersion, RetrieveActionStatus}
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceStatus.{Approved, NotApproved}
 import sample1.domain.invoice._
@@ -18,6 +18,10 @@ object UpdateRfi {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       UpdateRfiCmdProcessor().process(invoice, this, permissions)
   }
+
+  implicit val updateRfiResolver: RetrieveActionStatus[InvoiceAction.UpdateRfi.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.UpdateRfi.type, entity: Invoice, permissions: InvoiceUserPermissions) =>
+      (action, UpdateRfi.UpdateRfiCmdProcessor().actionStatus(entity, action, permissions))
 
   final case class UpdateRfiCmdProcessor[F[_]]()
     extends InvoiceCommandProcessor[F, InvoiceAction.UpdateRfi.type, UpdateRfiCmd[F]] {

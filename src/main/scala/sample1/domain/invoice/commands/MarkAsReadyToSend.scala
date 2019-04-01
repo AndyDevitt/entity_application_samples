@@ -1,7 +1,7 @@
 package sample1.domain.invoice.commands
 
 import sample1.domain.command.invoicecommands.InvoiceUpdateCommand
-import sample1.domain.entity.EntityVersion
+import sample1.domain.entity.{EntityVersion, RetrieveActionStatus}
 import sample1.domain.errors.InvoiceError
 import sample1.domain.invoice.InvoiceStatus.Assigned
 import sample1.domain.invoice._
@@ -18,6 +18,10 @@ object MarkAsReadyToSend {
     override def action(invoice: Invoice, permissions: InvoiceUserPermissions): Either[InvoiceError, Invoice] =
       MarkAsReadyToSendCmdProcessor().process(invoice, this, permissions)
   }
+
+  implicit val markAsReadyToSendResolver: RetrieveActionStatus[InvoiceAction.MarkAsReadyToSend.type, Invoice, InvoiceUserPermissions] =
+    (action: InvoiceAction.MarkAsReadyToSend.type, entity: Invoice, permissions: InvoiceUserPermissions) =>
+      (action, MarkAsReadyToSend.MarkAsReadyToSendCmdProcessor().actionStatus(entity, action, permissions))
 
   final case class MarkAsReadyToSendCmdProcessor[F[_]]()
     extends InvoiceCommandProcessor[F, InvoiceAction.MarkAsReadyToSend.type, MarkAsReadyToSendCmd[F]] {

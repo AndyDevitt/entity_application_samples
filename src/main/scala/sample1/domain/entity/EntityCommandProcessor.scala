@@ -23,9 +23,12 @@ EntityStatusType] {
   import scala.language.implicitConversions
 
   def process(entity: EntType, cmd: CmdType, permissions: UserPermissionsType)
-             (implicit witness: Witness.Aux[ActionType]
+             (implicit
+              witness: Witness.Aux[ActionType],
+              retrieveActionStatus: RetrieveActionStatus[ActionType, EntType, UserPermissionsType],
+              actionAllowed: ActionAllowed[ActionType, EntityStatusType, EntType, EntSubType, EntityPermissionType, UserPermissionsType]
              ): Either[ErrType, EntType] =
-    commonChecks(entity, cmd.associatedAction, permissions)
+    actionAllowed.actionAllowed(entity, permissions)
       .left.map(statusToErrF)
       .flatMap(checkOptimisticLocking(_, cmd))
       .flatMap(action(_, cmd, permissions))
